@@ -1,0 +1,3929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+    <title>LunaClock v7</title>
+    <!-- Static hosting (e.g. aaPanel): upload clock7.html to a subfolder; cookies use pathname-derived path -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Rubik:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Jost:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Quicksand:wght@400;500;600;700&family=Comfortaa:wght@400;500;600;700&family=Fredoka:wght@400;500;600;700&family=Caveat:wght@400;500;600;700&family=Pacifico&family=Varela+Round&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
+        :root {
+            --bg: #e8e8ec;
+            --bg2: #d8d8de;
+            --face: #f5f5f7;
+            --face-dim: #d8d8de;
+            --number: #2c2c2e;
+            --accent: #6e6e73;
+            --panel-bg: rgba(255,255,255,0.5);
+            --panel-border: rgba(255,255,255,0.55);
+            --font: 'Nunito', sans-serif;
+            --font-display: 'Nunito', sans-serif;
+            --font-ui: 'Nunito', sans-serif;
+            --font-body: 'Nunito', sans-serif;
+            --font-caption: 'Nunito', sans-serif;
+            --font-ui-fallback: 'Inter', system-ui, -apple-system, sans-serif;
+            --text-primary: #2c2c2e;
+            --text-secondary: #5a5a64;
+            --text-muted: #7a7a88;
+            --chrome-bg: rgba(255,255,255,0.6);
+            --chrome-border: rgba(0,0,0,0.12);
+            --flip-size: clamp(26px, 7.5vw, 40px);
+            --page-pad: clamp(12px, 4vw, 20px);
+        }
+
+        /* ─── Typography roles ─── */
+        .typo-display { font-family: var(--font-display); font-weight: 800; }
+        .typo-ui { font-family: var(--font-ui); font-weight: 600; }
+        .typo-body { font-family: var(--font-body); font-weight: 500; }
+        .typo-caption {
+            font-family: var(--font-caption);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-variant: small-caps;
+        }
+        body.font-script .typo-ui,
+        body.font-script .btn,
+        body.font-script .top-bar-btn,
+        body.font-script .settings-row,
+        body.font-script .settings-header h2,
+        body.font-script .format-toggle,
+        body.font-script .preset-btn,
+        body.font-script .random-theme-btn,
+        body.font-script .reset-custom-btn,
+        body.font-script .settings-close,
+        body.font-script .panel-header,
+        body.font-script .mode-indicator {
+            font-weight: 400;
+        }
+        body.font-script .typo-caption { font-weight: 600; }
+
+        .flip-digit-group { font-family: var(--font-display); }
+        body {
+            min-height: 100vh;
+            min-height: 100dvh;
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(145deg, var(--bg), var(--bg2));
+            font-family: var(--font);
+            gap: clamp(10px, 2.5vw, 18px);
+            padding: var(--page-pad);
+            padding-bottom: calc(var(--page-pad) + env(safe-area-inset-bottom, 0px));
+            transition: background 0.5s ease;
+        }
+
+        .page-shell {
+            width: 100%;
+            max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: clamp(10px, 2.5vw, 16px);
+            min-width: 0;
+        }
+
+        .greeting-banner {
+            width: 100%;
+            max-width: 100%;
+            text-align: center;
+            padding: clamp(10px, 3vw, 16px) clamp(12px, 3.5vw, 22px);
+            background: var(--panel-bg);
+            border-radius: 20px;
+            color: var(--number);
+            font-size: clamp(13px, 3.2vw, 16px);
+            font-weight: 600;
+            border: 1px solid var(--panel-border);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(107,74,122,0.06);
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            hyphens: auto;
+        }
+        .greeting-banner span { font-weight: 800; }
+        .greeting-banner .time-display { opacity: 0.65; font-weight: 500; font-size: clamp(12px, 3vw, 14px); display: block; margin-top: 2px; }
+        .greeting-banner.compact { padding: 8px 16px; font-size: 13px; }
+        .greeting-banner.compact .time-display { display: none; }
+        .settings-text-input {
+            flex: 1 1 100%;
+            min-width: 0;
+            max-width: 100%;
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 50px;
+            border: 1px solid rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.65);
+            font-family: var(--font);
+            font-size: 13px;
+            color: var(--number);
+            font-weight: 600;
+            min-height: 44px;
+        }
+        .random-theme-btn {
+            margin: 4px 16px 8px;
+            min-height: 50px;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 9999px;
+            background: linear-gradient(135deg, #8e8e93, #636366);
+            color: white;
+            cursor: pointer;
+            font-family: var(--font);
+            font-size: 13px;
+            font-weight: 700;
+            width: calc(100% - 32px);
+            transition: transform 0.2s;
+        }
+        .random-theme-btn:hover { transform: scale(1.02); }
+        .settings-footer {
+            flex-shrink: 0;
+            padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+            text-align: center;
+            font-size: 11px;
+            color: var(--number);
+            opacity: 0.45;
+            font-weight: 600;
+            border-top: 1px solid rgba(107,74,122,0.08);
+            line-height: 1.5;
+        }
+        .settings-footer a {
+            color: inherit;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        .font-preview {
+            padding: 10px 14px;
+            margin: 0 16px 10px;
+            width: calc(100% - 32px);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.5);
+            border: 1px solid rgba(0,0,0,0.08);
+            font-size: 15px;
+            color: var(--number);
+            text-align: center;
+            line-height: 1.4;
+        }
+        .quote-attribution {
+            display: block;
+            font-size: 11px;
+            opacity: 0.55;
+            font-style: normal;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .top-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: stretch;
+            gap: clamp(8px, 2vw, 10px);
+            width: 100%;
+            max-width: 100%;
+        }
+        .top-bar-btn {
+            flex: 1 1 calc(50% - 4px);
+            min-width: 0;
+            min-height: 50px;
+            min-width: 44px;
+            padding: 10px clamp(12px, 3vw, 18px);
+            border-radius: 9999px;
+            background: var(--chrome-bg);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-family: var(--font-ui);
+            font-size: clamp(13px, 3.2vw, 14px);
+            font-weight: 600;
+            transition: transform 0.2s, background 0.2s;
+            border: 1px solid var(--chrome-border);
+            box-shadow: 0 2px 10px rgba(107,74,122,0.06);
+        }
+        .top-bar-btn:hover, .top-bar-btn:active { transform: scale(1.03); filter: brightness(1.05); }
+
+        /* ─── Settings drawer ─── */
+        .settings-drawer {
+            position: fixed;
+            inset: 0;
+            z-index: 10050;
+            pointer-events: none;
+            visibility: hidden;
+        }
+        .settings-drawer.open {
+            pointer-events: auto;
+            visibility: visible;
+        }
+        .settings-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.08);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .settings-drawer.open .settings-overlay { opacity: 1; }
+        .settings-panel {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            max-width: 100vw;
+            background: linear-gradient(180deg, rgba(255,255,255,0.97), rgba(250,245,255,0.98));
+            backdrop-filter: blur(16px);
+            box-shadow: -8px 0 40px rgba(0,0,0,0.15);
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .settings-drawer.open .settings-panel { transform: translateX(0); }
+        .settings-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px;
+            border-bottom: 1px solid rgba(107,74,122,0.1);
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: inherit;
+        }
+        .settings-header h2 {
+            font-size: 18px;
+            color: var(--number);
+            font-weight: 800;
+        }
+        .settings-close {
+            min-width: 44px;
+            min-height: 44px;
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: 50%;
+            background: rgba(107,74,122,0.08);
+            color: var(--number);
+            font-size: 18px;
+            cursor: pointer;
+            font-family: var(--font);
+        }
+        .settings-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 16px 24px;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+        }
+        .settings-section {
+            margin-bottom: 14px;
+            border-radius: 16px;
+            padding: 14px;
+            border: 1px solid;
+            overflow: hidden;
+        }
+        .settings-section.profile-section {
+            background: rgba(100,150,255,0.08);
+            border-color: rgba(100,150,255,0.22);
+        }
+        .settings-section.appearance-section {
+            background: rgba(160,120,220,0.08);
+            border-color: rgba(160,120,220,0.22);
+        }
+        .settings-section.clock-section {
+            background: rgba(230,180,80,0.08);
+            border-color: rgba(230,180,80,0.25);
+        }
+        .settings-section.display-section {
+            background: rgba(100,190,130,0.08);
+            border-color: rgba(100,190,130,0.22);
+        }
+        .settings-section.pomodoro-section {
+            background: rgba(240,130,100,0.08);
+            border-color: rgba(240,130,100,0.22);
+        }
+        .settings-section.sound-section {
+            background: rgba(80,190,180,0.08);
+            border-color: rgba(80,190,180,0.22);
+        }
+        .settings-section.sync-section {
+            background: rgba(99,102,241,0.1);
+            border-color: rgba(99,102,241,0.28);
+        }
+        .sync-hint {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            opacity: 0.85;
+            line-height: 1.45;
+            margin: 0 0 10px;
+            padding: 0 2px;
+        }
+        .sync-btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .sync-btn {
+            flex: 1 1 calc(50% - 4px);
+            min-width: 0;
+            min-height: 50px;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 9999px;
+            background: rgba(255,255,255,0.72);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 700;
+            transition: transform 0.2s, background 0.2s;
+            border: 1px solid rgba(99,102,241,0.2);
+        }
+        .sync-btn:hover { transform: scale(1.02); background: rgba(255,255,255,0.9); }
+        .sync-btn-primary {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: #fff;
+            border-color: transparent;
+        }
+        .sync-btn-primary:hover { background: linear-gradient(135deg, #4f46e5, #4338ca); }
+        .sync-textarea {
+            width: 100%;
+            min-height: 72px;
+            padding: 10px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(99,102,241,0.25);
+            background: rgba(255,255,255,0.65);
+            font-family: var(--font);
+            font-size: 12px;
+            color: var(--number);
+            font-weight: 600;
+            resize: vertical;
+            margin-bottom: 10px;
+        }
+        .sync-import-block { margin-top: 6px; padding-top: 10px; border-top: 1px solid rgba(99,102,241,0.15); }
+        .qr-modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(6px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s, visibility 0.25s;
+        }
+        .qr-modal-overlay.open { opacity: 1; visibility: visible; }
+        .qr-modal {
+            background: var(--face, #f5f5f7);
+            border-radius: 20px;
+            padding: 20px 20px 16px;
+            max-width: min(320px, 100%);
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .qr-modal h3 {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--number);
+            margin-bottom: 6px;
+        }
+        .qr-modal p {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+            line-height: 1.4;
+        }
+        .qr-modal-canvas {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+            margin-bottom: 14px;
+        }
+        .qr-modal-canvas img,
+        .qr-modal-canvas canvas { border-radius: 8px; }
+        .qr-modal-close {
+            min-height: 50px;
+            width: 100%;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 9999px;
+            background: rgba(99,102,241,0.15);
+            color: var(--number);
+            font-family: var(--font);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .scan-modal-reader {
+            width: 100%;
+            max-width: 280px;
+            margin: 0 auto 12px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .settings-toast {
+            position: fixed;
+            bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            z-index: 11000;
+            padding: 12px 20px;
+            border-radius: 9999px;
+            background: rgba(44,44,46,0.92);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 14px;
+            font-weight: 700;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+            white-space: nowrap;
+            max-width: calc(100vw - 32px);
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .settings-toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .hidden { display: none !important; }
+        .settings-section-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-variant: small-caps;
+            color: var(--text-primary);
+            opacity: 0.82;
+            padding: 0 0 10px;
+            margin: 0;
+        }
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 2px;
+            border-top: 1px solid rgba(0,0,0,0.06);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            flex-wrap: wrap;
+        }
+        .settings-row:first-of-type { border-top: none; }
+        .settings-row label { flex: 1 1 100%; min-width: 0; }
+        .settings-row input[type="range"] { flex: 2 1 140px; min-width: 0; accent-color: var(--accent); }
+        .settings-row .val { min-width: 32px; text-align: right; font-weight: 800; font-size: 13px; }
+        .toggle-switch {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            width: 52px;
+            height: 32px;
+            min-height: 32px;
+            flex-shrink: 0;
+        }
+        .toggle-switch input[type="checkbox"] {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+            margin: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            inset: 0;
+            cursor: pointer;
+            background: rgba(0,0,0,0.14);
+            border-radius: 9999px;
+            transition: background 0.25s ease;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            height: 26px;
+            width: 26px;
+            left: 2px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.25s ease;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.22);
+        }
+        .toggle-switch input:checked + .toggle-slider {
+            background: color-mix(in srgb, var(--accent) 70%, #6e6e73);
+            border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+        }
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translate(20px, -50%);
+        }
+        .toggle-switch input:focus-visible + .toggle-slider {
+            outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+            outline-offset: 2px;
+        }
+        .settings-row input[type="color"] {
+            width: 44px; height: 44px;
+            border: 2px solid rgba(0,0,0,0.12);
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 0;
+            -webkit-appearance: none;
+            appearance: none;
+            background: none;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+        }
+        .settings-row input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; border-radius: 50%; }
+        .settings-row input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+        .settings-row input[type="color"]::-moz-color-swatch { border: none; border-radius: 50%; }
+        .appearance-colors-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 10px 16px 6px;
+            border-top: none;
+        }
+        .appearance-color-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .appearance-color-item label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.55;
+            flex: none;
+            min-width: 0;
+        }
+        .appearance-color-item input[type="color"] {
+            width: 32px;
+            height: 32px;
+            border: 2px solid rgba(0,0,0,0.12);
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+        }
+        .appearance-compact-row {
+            padding: 8px 16px 10px;
+            border-top: 1px solid rgba(255,255,255,0.4);
+        }
+        .appearance-compact-row label {
+            flex: 1;
+            min-width: 60px;
+            font-size: 13px;
+        }
+        .appearance-compact-row select {
+            min-height: 38px;
+            padding: 8px 12px;
+        }
+        .appearance-section .preset-row {
+            padding: 6px 16px 10px;
+            gap: 6px;
+        }
+        .appearance-section .preset-btn {
+            min-height: 50px;
+            padding: 8px 14px;
+            font-size: 11px;
+        }
+        .appearance-section .random-theme-btn {
+            margin: 2px 16px 6px;
+            min-height: 50px;
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+        .appearance-section .reset-custom-btn {
+            margin: 2px 16px 10px;
+            min-height: 50px;
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+        .appearance-section .settings-section-title {
+            padding: 0 0 8px;
+        }
+        .settings-row select {
+            padding: 10px 14px;
+            border-radius: 9999px;
+            border: 1px solid rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.65);
+            font-size: 13px;
+            color: var(--number);
+            font-family: var(--font);
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 44px;
+            max-width: 100%;
+        }
+        .preset-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 8px 16px 14px;
+        }
+        .preset-btn {
+            min-height: 50px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: var(--font);
+            color: white;
+            transition: transform 0.2s;
+        }
+        .preset-btn:hover { transform: scale(1.04); }
+        .preset-blush { background: #c45a7a; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15); }
+        .preset-babyblue { background: #7fb9d9; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15); }
+        .preset-lavender { background: #a88fd4; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15); }
+        .preset-peach { background: #f0a878; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15); }
+        .preset-mint { background: #78c4a8; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15); }
+        .preset-sunset { background: #e89878; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15); }
+        .preset-charcoal { background: #3a3a40; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); }
+        .preset-midnight { background: #1a2238; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); }
+        .preset-forest { background: #1e3028; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); }
+        .preset-plum { background: #2a2038; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); }
+        .reset-custom-btn {
+            margin: 4px 16px 14px;
+            min-height: 50px;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 9999px;
+            background: rgba(220,100,120,0.8);
+            color: white;
+            cursor: pointer;
+            font-family: var(--font);
+            font-size: 13px;
+            font-weight: 700;
+            width: calc(100% - 32px);
+        }
+        .format-toggle {
+            min-height: 50px;
+            padding: 8px 18px;
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 9999px;
+            background: rgba(255,255,255,0.6);
+            color: var(--number);
+            font-family: var(--font);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .format-toggle:hover { background: rgba(255,255,255,0.85); }
+        .settings-section.hidden { display: none; }
+
+        #fullscreenStage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: clamp(12px, 3vw, 20px);
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            margin-top: clamp(4px, 1.5vw, 10px);
+            position: relative;
+            z-index: 1;
+        }
+
+        .top-bar {
+            position: relative;
+            z-index: 2;
+        }
+
+        .clock {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: clamp(3px, 1.2vw, 20px);
+            background: var(--panel-bg);
+            backdrop-filter: blur(14px);
+            padding: clamp(36px, 7vw, 52px) clamp(10px, 3vw, 50px) clamp(14px, 4vw, 44px);
+            border-radius: clamp(16px, 4vw, 36px);
+            box-shadow: 0 16px 48px rgba(107,74,122,0.1);
+            border: 1px solid rgba(255,255,255,0.5);
+            position: relative;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            overflow: visible;
+        }
+
+        .flip-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 0 1 auto;
+            min-width: 0;
+        }
+        .flip-card.hidden { display: none !important; }
+        .flip-card .label {
+            color: var(--text-muted);
+            font-size: clamp(9px, 2.2vw, 11px);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-top: clamp(8px, 2vw, 14px);
+            font-weight: 600;
+            font-family: var(--font-caption);
+            font-variant: small-caps;
+        }
+
+        /* ─── ResponsiveFlipper digit structure (Arthur Shlain) ─── */
+        .flip-digit-group {
+            display: flex;
+            gap: clamp(1px, 0.6vw, 6px);
+            font-size: var(--flip-size);
+            line-height: 100%;
+            min-width: 0;
+        }
+        .flipper-digit {
+            position: relative;
+            display: inline-block;
+            height: 1.2em;
+            width: 0.62em;
+            min-width: clamp(18px, 5.5vw, 30px);
+            max-width: clamp(28px, 9vw, 48px);
+            overflow-y: hidden;
+            overflow-x: hidden;
+            color: var(--number);
+            white-space: nowrap;
+            flex-shrink: 1;
+        }
+        .flipper-digit::after {
+            content: '';
+            position: absolute;
+            height: 2px;
+            background: rgba(0,0,0,0.14);
+            top: 50%;
+            left: 0; right: 0;
+            z-index: 30;
+            pointer-events: none;
+        }
+        .flipper-digit.r { pointer-events: none; }
+
+        .digit-next {
+            display: block;
+            position: relative;
+            height: 1.2em;
+            border-radius: 0.1em;
+            z-index: 8;
+            background: var(--face);
+            padding-top: 0.1em;
+            padding-bottom: 0.1em;
+            padding-left: 0.1em;
+            padding-right: 0.1em;
+            box-sizing: border-box;
+            text-align: center;
+            user-select: none;
+            font-weight: 800;
+        }
+        .digit-top {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 50%;
+            overflow: hidden;
+            background: var(--face);
+            padding-top: 0.1em;
+            padding-bottom: 0;
+            padding-left: 0.1em;
+            padding-right: 0.1em;
+            border-top-left-radius: 0.1em;
+            border-top-right-radius: 0.1em;
+            box-sizing: border-box;
+            text-align: center;
+            user-select: none;
+            font-weight: 800;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            transform-origin: 0 0.6em 0 !important;
+            -webkit-transform-origin: 0 0.6em 0 !important;
+            z-index: 20;
+            pointer-events: none;
+            transition: transform 0s linear, background 0s linear;
+        }
+        .digit-top.r {
+            transition: transform 0.2s linear, background 0.2s linear;
+            transform: rotateX(90deg);
+            background: var(--face-dim);
+        }
+        .digit-top2 {
+            visibility: hidden;
+            position: absolute;
+            height: 50%;
+            left: 0; right: 0;
+            top: 50% !important;
+            bottom: auto !important;
+            background: var(--face-dim);
+            padding-top: 0;
+            padding-bottom: 0.1em;
+            padding-left: 0.1em;
+            padding-right: 0.1em;
+            border-bottom-left-radius: 0.1em;
+            border-bottom-right-radius: 0.1em;
+            overflow: hidden;
+            text-align: center;
+            user-select: none;
+            font-weight: 800;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            transform-origin: 0 0 0 !important;
+            -webkit-transform-origin: 0 0 0 !important;
+            transform: rotateX(-90deg);
+            z-index: 20;
+            pointer-events: none;
+            line-height: 0em !important;
+            transition: transform 0s linear, background 0s linear, visibility 0s;
+        }
+        .digit-top2.r {
+            visibility: visible;
+            transition: transform 0.2s linear 0.2s, background 0.2s linear 0.2s, visibility 0s;
+            transform: rotateX(0deg);
+            background: var(--face);
+        }
+        .digit-bottom {
+            position: absolute;
+            overflow: hidden;
+            background: var(--face);
+            height: 50%;
+            left: 0; right: 0;
+            bottom: 0;
+            z-index: 9;
+            padding-top: 0;
+            padding-bottom: 0.1em;
+            padding-left: 0.1em;
+            padding-right: 0.1em;
+            border-bottom-left-radius: 0.1em;
+            border-bottom-right-radius: 0.1em;
+            box-sizing: border-box;
+            text-align: center;
+            user-select: none;
+            font-weight: 800;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            pointer-events: none;
+            line-height: 0em;
+            transition: none;
+        }
+        .digit-bottom.r {
+            transition: background 0.2s linear;
+            background: var(--face-dim);
+        }
+
+        .simple-digit {
+            display: none;
+            position: relative;
+            z-index: 10;
+            font-size: 1em;
+            font-weight: 800;
+            line-height: 1.2em;
+            text-align: center;
+            color: var(--number);
+            user-select: none;
+            min-width: 0.62em;
+        }
+        .clock.simple-digits .simple-digit { display: block; }
+        .clock.simple-digits .flipper-digit .digit-next,
+        .clock.simple-digits .flipper-digit .digit-top,
+        .clock.simple-digits .flipper-digit .digit-top2,
+        .clock.simple-digits .flipper-digit .digit-bottom { display: none !important; }
+        .clock.simple-digits .flipper-digit::after { display: none; }
+        .clock.simple-digits .flipper-digit {
+            overflow: visible;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .separator {
+            display: flex;
+            align-items: center;
+            font-size: clamp(14px, 3.8vw, 34px);
+            color: color-mix(in srgb, var(--number) 22%, transparent);
+            font-weight: 300;
+            padding: 0 1px;
+            align-self: center;
+            margin-bottom: clamp(14px, 3.5vw, 28px);
+            flex-shrink: 0;
+        }
+        .separator.hidden { display: none !important; }
+
+        .mode-indicator {
+            position: absolute;
+            top: clamp(8px, 2vw, 14px);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            background: var(--panel-bg);
+            backdrop-filter: blur(8px);
+            padding: 5px clamp(10px, 3vw, 18px);
+            border-radius: 9999px;
+            font-size: clamp(8px, 2.2vw, 11px);
+            max-width: calc(100% - 24px);
+            color: var(--text-primary);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-weight: 700;
+            font-family: var(--font-ui);
+            border: 1px solid rgba(0,0,0,0.12);
+            white-space: normal;
+            text-align: center;
+            line-height: 1.25;
+            max-width: min(90vw, 100%);
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            box-shadow: 0 4px 14px rgba(107,74,122,0.08);
+        }
+        .session-badge {
+            display: block;
+            font-size: clamp(8px, 2vw, 10px);
+            color: var(--text-secondary);
+            opacity: 1;
+            margin-top: 2px;
+            letter-spacing: 0.08em;
+            line-height: 1.2;
+            font-family: var(--font-caption);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-variant: small-caps;
+        }
+
+        .am-pm {
+            font-size: clamp(18px, 4.5vw, 24px);
+            color: var(--number);
+            opacity: 0.45;
+            display: none;
+            align-items: center;
+            padding-left: 6px;
+            font-weight: 800;
+            margin-bottom: clamp(18px, 4vw, 28px);
+        }
+
+        .quote-display {
+            text-align: center;
+            font-size: clamp(13px, 3.2vw, 18px);
+            color: var(--text-primary);
+            font-style: italic;
+            opacity: 0.88;
+            width: 100%;
+            max-width: 100%;
+            padding: 8px clamp(8px, 2vw, 16px);
+            min-height: 44px;
+            font-weight: 500;
+            line-height: 1.45;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            hyphens: auto;
+        }
+        .quote-display.hidden { display: none; }
+        .quote-display.pomodoro-quote { opacity: 0.95; font-weight: 600; font-style: normal; }
+        .quote-attribution { color: var(--text-secondary); opacity: 1; }
+
+        .sticker-burst {
+            position: fixed;
+            pointer-events: none;
+            z-index: 10001;
+            font-size: 28px;
+            font-weight: 800;
+            animation: stickerPop 1.2s ease-out forwards;
+            color: var(--number);
+            text-shadow: 0 2px 8px rgba(255,255,255,0.8);
+        }
+        @keyframes stickerPop {
+            0% { transform: scale(0.3) translateY(20px); opacity: 0; }
+            30% { transform: scale(1.1) translateY(-10px); opacity: 1; }
+            100% { transform: scale(1) translateY(-40px); opacity: 0; }
+        }
+
+        .celebration-banner {
+            position: fixed;
+            left: 50%;
+            top: 42%;
+            transform: translate(-50%, -50%);
+            z-index: 10002;
+            pointer-events: none;
+            text-align: center;
+            padding: 20px 32px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            animation: celebrationIn 0.7s ease-out forwards;
+        }
+        .celebration-banner div {
+            font-size: clamp(22px, 4.5vw, 34px);
+            font-weight: 800;
+            color: var(--number);
+            text-shadow: 0 2px 12px rgba(255, 255, 255, 0.9);
+            line-height: 1.35;
+        }
+        .celebration-banner div + div {
+            margin-top: 10px;
+            font-size: clamp(18px, 3.5vw, 26px);
+        }
+        .celebration-banner.fade-out {
+            animation: celebrationFadeOut 2s ease-in forwards;
+        }
+        @keyframes celebrationIn {
+            0% { transform: translate(-50%, -50%) scale(0.45); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        @keyframes celebrationFadeOut {
+            from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            to { opacity: 0; transform: translate(-50%, -58%) scale(0.96); }
+        }
+
+        #confettiCanvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10000;
+        }
+
+        .btn {
+            min-height: 50px;
+            padding: 10px 22px;
+            border-radius: 9999px;
+            font-family: var(--font);
+            font-size: clamp(13px, 3.2vw, 14px);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            background: rgba(255,255,255,0.88);
+            color: var(--number);
+            border: 1px solid rgba(0,0,0,0.12);
+            user-select: none;
+        }
+        .btn:hover, .btn:active { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(107,74,122,0.1); }
+        .btn.active { background: rgba(110,110,115,0.25); border-color: rgba(110,110,115,0.4); }
+        .btn-mode { background: var(--chrome-bg); color: var(--text-primary); }
+        .btn-mode:not(.active) { border: 1px solid var(--chrome-border); color: var(--text-secondary); }
+        .btn-mode.active {
+            background: color-mix(in srgb, var(--accent) 22%, var(--chrome-bg));
+            border-color: color-mix(in srgb, var(--accent) 50%, var(--chrome-border));
+            color: var(--text-primary);
+            font-weight: 700;
+            box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+        }
+        .btn-primary { background: rgba(120,200,150,0.95); color: white; padding: 12px 28px; box-shadow: 0 2px 8px rgba(120,200,150,0.18); }
+        .btn-danger { background: rgba(220,100,120,0.85); color: white; }
+        .btn-warning { background: rgba(255,190,100,0.9); color: #5a3a20; }
+
+        .mode-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+        .mode-bar .btn-mode {
+            flex: 1 1 0;
+            min-width: 0;
+            max-width: none;
+            padding: 12px 16px;
+            border-radius: 9999px;
+            text-align: center;
+        }
+
+        .mode-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            padding: clamp(16px, 4vw, 22px);
+            border-radius: 22px;
+            border: 1px solid rgba(255,255,255,0.48);
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+            width: 100%;
+        }
+        .mode-panel.show { display: flex; }
+
+        .panel-header {
+            font-size: 15px;
+            color: var(--text-primary);
+            font-weight: 700;
+            margin: 0;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--panel-border);
+        }
+        .stopwatch-elapsed {
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            opacity: 1;
+            letter-spacing: 1px;
+            padding: 4px 0;
+        }
+        .stopwatch-controls, .pomodoro-controls {
+            display: flex;
+            gap: clamp(8px, 2vw, 10px);
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 100%;
+        }
+        .laps-container {
+            max-height: 200px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100%;
+            background: rgba(255,255,255,0.42);
+            border-radius: 16px;
+            padding: 6px 0;
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+        .lap-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            padding: 12px clamp(12px, 3vw, 18px);
+            color: var(--number);
+            font-size: clamp(12px, 3vw, 14px);
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            min-height: 44px;
+            min-width: 0;
+        }
+        .lap-item:nth-child(odd) { background: rgba(255,255,255,0.25); }
+        .lap-item .lap-num { font-size: 12px; opacity: 0.6; font-weight: 700; min-width: 50px; }
+        .lap-item .lap-time { font-size: 16px; font-weight: 800; }
+        .lap-item.best-lap { background: rgba(120,200,150,0.25); }
+        .lap-item.best-lap .lap-time { color: rgba(60,140,90,1); }
+        .no-laps { color: rgba(107,74,122,0.4); text-align: center; padding: 16px; font-style: italic; font-size: 13px; }
+
+        .daily-goal-bar {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--panel-bg);
+            border-radius: 14px;
+            border: 1px solid var(--panel-border);
+        }
+        .daily-goal-bar .goal-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        .goal-track {
+            height: 10px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 50px;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.06);
+        }
+        .goal-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #5cb88a, #78c896);
+            border-radius: 50px;
+            transition: width 0.4s ease;
+            box-shadow: 0 0 10px rgba(92,184,138,0.35);
+        }
+        .pomo-stats {
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            padding: 10px;
+            background: var(--panel-bg);
+            border-radius: 14px;
+            border: 1px solid var(--panel-border);
+        }
+
+        .clock.stopwatch-mode { --flip-size: clamp(34px, 9.5vw, 68px); }
+
+        .exit-fullscreen-btn {
+            display: none;
+            position: fixed;
+            top: max(16px, env(safe-area-inset-top, 16px));
+            right: max(16px, env(safe-area-inset-right, 16px));
+            min-height: 50px;
+            padding: 12px 22px;
+            border: none;
+            border-radius: 9999px;
+            background: rgba(220,100,120,0.92);
+            color: white;
+            cursor: pointer;
+            font-family: var(--font);
+            font-size: 14px;
+            font-weight: 700;
+            z-index: 10002;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .exit-fullscreen-btn.show { display: block; }
+        .fullscreen-pomo-pause {
+            display: none;
+            position: fixed;
+            bottom: max(24px, env(safe-area-inset-bottom, 24px));
+            left: 50%;
+            transform: translateX(-50%);
+            min-height: 50px;
+            padding: 12px 28px;
+            border: none;
+            border-radius: 9999px;
+            background: rgba(255,190,100,0.95);
+            color: #5a3a20;
+            cursor: pointer;
+            font-family: var(--font);
+            font-size: 14px;
+            font-weight: 700;
+            z-index: 10002;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .fullscreen-pomo-pause.show { display: block; }
+
+        /* Fullscreen */
+        .fullscreen-mode { overflow: hidden; }
+        .fullscreen-mode .page-shell > .greeting-banner,
+        .fullscreen-mode .page-shell > .top-bar,
+        .fullscreen-mode .page-shell > .mode-bar,
+        .fullscreen-mode .page-shell > .mode-panel {
+            display: none !important;
+        }
+        .fullscreen-mode #fullscreenStage {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            background: linear-gradient(160deg, var(--bg), var(--bg2));
+            gap: clamp(16px, 3vmin, 28px);
+            padding: var(--page-pad);
+        }
+        .fullscreen-mode .clock {
+            width: min(80vw, 100%);
+            max-width: 80%;
+            padding: clamp(36px, 5vmin, 52px) clamp(12px, 4vw, 72px) clamp(16px, 4vw, 56px);
+            --flip-size: clamp(48px, 12vmin, 140px);
+            overflow: visible;
+        }
+        .fullscreen-mode .mode-indicator {
+            top: clamp(10px, 2vmin, 16px);
+            z-index: 5;
+            font-size: clamp(10px, 2vmin, 13px);
+            padding: 6px clamp(12px, 2.5vmin, 20px);
+        }
+        .fullscreen-mode .quote-display {
+            font-size: clamp(14px, 2.8vmin, 22px);
+            max-width: min(80vw, 640px);
+        }
+        .fullscreen-mode .fullscreen-pomo-pause {
+            bottom: max(32px, env(safe-area-inset-bottom, 32px));
+            font-size: clamp(14px, 2.5vmin, 16px);
+            padding: clamp(12px, 2vmin, 16px) clamp(24px, 4vmin, 36px);
+            border: 1px solid rgba(0,0,0,0.12);
+        }
+
+        /* ─── Mobile-first breakpoints ─── */
+
+        /* Very narrow phones: stack mode buttons */
+        @media (max-width: 359px) {
+            .mode-bar { flex-direction: column; align-items: stretch; }
+            .mode-bar .btn-mode { flex: 1 1 auto; width: 100%; }
+            .top-bar { flex-direction: column; }
+            .top-bar-btn { flex: 1 1 auto; width: 100%; }
+        }
+
+        @media (min-width: 480px) {
+            .settings-panel {
+                width: min(360px, 92vw);
+                min-width: 360px;
+            }
+        }
+
+        /* iPad: 768px+ */
+        @media (min-width: 768px) {
+            :root {
+                --flip-size: clamp(44px, 6vw, 72px);
+                --page-pad: clamp(16px, 3vw, 24px);
+            }
+            .page-shell { max-width: min(720px, 100%); }
+            .settings-panel {
+                width: min(420px, 92vw);
+                max-width: 420px;
+                min-width: 360px;
+            }
+            .settings-text-input {
+                flex: 2 1 auto;
+                min-width: 120px;
+                width: auto;
+            }
+            .settings-row label { flex: 1; min-width: 120px; }
+            .settings-row input[type="range"] { min-width: 100px; }
+            .top-bar { justify-content: flex-end; flex-wrap: nowrap; }
+            .top-bar-btn { flex: 0 1 auto; min-width: 44px; }
+            .clock { gap: clamp(8px, 1.5vw, 20px); padding: clamp(24px, 4vw, 44px) clamp(20px, 4vw, 50px); }
+            .flip-digit-group { gap: clamp(3px, 0.8vw, 6px); }
+            .flipper-digit {
+                width: auto;
+                min-width: 0;
+                max-width: none;
+            }
+            .separator { font-size: clamp(22px, 4vw, 34px); padding: 0 2px; }
+            .mode-indicator { font-size: clamp(9px, 2.2vw, 11px); padding: 5px 14px; letter-spacing: 0.5px; }
+            #fullscreenStage { margin-top: 8px; }
+            .session-badge { font-size: 10px; }
+            .quote-display { max-width: min(520px, 92vw); font-size: clamp(15px, 3.5vw, 18px); }
+            .mode-bar .btn-mode {
+                flex: 1 1 0;
+                min-width: 0;
+                max-width: none;
+                font-size: clamp(13px, 3vw, 14px);
+            }
+            .clock.stopwatch-mode { --flip-size: clamp(40px, 6.5vw, 68px); }
+            .fullscreen-mode .clock { --flip-size: clamp(48px, 11vmin, 130px); }
+            .fullscreen-mode .clock.stopwatch-mode { --flip-size: clamp(44px, 10vmin, 120px); }
+        }
+
+        /* Desktop: 1024px+ */
+        @media (min-width: 1024px) {
+            :root {
+                --flip-size: clamp(48px, 5vw, 80px);
+                --page-pad: clamp(20px, 2.5vw, 28px);
+            }
+            .page-shell { max-width: min(920px, 100%); }
+            .clock.stopwatch-mode { --flip-size: clamp(44px, 5.5vw, 72px); }
+            .fullscreen-mode .clock { --flip-size: clamp(56px, 12vmin, 140px); }
+            .fullscreen-mode .clock.stopwatch-mode { --flip-size: clamp(48px, 11vmin, 130px); }
+        }
+
+        /* ─── Inversion mode chrome (derived from inverted palette) ─── */
+        body.inversion-mode {
+            --text-primary: #f0f0f5;
+            --text-secondary: #a8a8b8;
+            --text-muted: #8a8a9a;
+            --panel-bg: rgba(30,30,40,0.88);
+            --panel-border: rgba(255,255,255,0.08);
+            --chrome-bg: rgba(42,42,56,0.92);
+            --chrome-border: rgba(255,255,255,0.1);
+        }
+        body.inversion-mode .settings-drawer.open .settings-overlay {
+            background: rgba(0,0,0,0.55);
+        }
+        body.inversion-mode .settings-panel {
+            background: #1a1a24;
+            color: #e8e8f0;
+            box-shadow: -8px 0 40px rgba(0,0,0,0.45);
+        }
+        body.inversion-mode .settings-header {
+            border-bottom-color: rgba(255,255,255,0.08);
+            background: #1a1a24;
+        }
+        body.inversion-mode .settings-header h2,
+        body.inversion-mode .settings-row,
+        body.inversion-mode .settings-section-title,
+        body.inversion-mode .settings-footer {
+            color: #e8e8f0;
+        }
+        body.inversion-mode .settings-section-title {
+            opacity: 0.92;
+            color: #f0f0f5;
+        }
+        body.inversion-mode .settings-row {
+            border-top-color: rgba(255,255,255,0.06);
+        }
+        body.inversion-mode .settings-text-input,
+        body.inversion-mode .settings-row select {
+            background: #252532;
+            border-color: rgba(255,255,255,0.12);
+            color: #f0f0f5;
+        }
+        body.inversion-mode .settings-close {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.12);
+            color: #e8e8f0;
+        }
+        body.inversion-mode .font-preview {
+            background: #252532;
+            border-color: rgba(255,255,255,0.12);
+            color: #f0f0f5;
+        }
+        body.inversion-mode .settings-row input[type="color"],
+        body.inversion-mode .appearance-color-item input[type="color"] {
+            border-color: rgba(255,255,255,0.28);
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.15);
+        }
+        body.inversion-mode .appearance-color-item label {
+            color: #a8a8b8;
+            opacity: 1;
+        }
+        body.inversion-mode .settings-section.profile-section {
+            background: rgba(100,150,255,0.12);
+            border-color: rgba(100,150,255,0.28);
+        }
+        body.inversion-mode .settings-section.appearance-section {
+            background: rgba(160,120,220,0.12);
+            border-color: rgba(160,120,220,0.28);
+        }
+        body.inversion-mode .settings-section.clock-section {
+            background: rgba(230,180,80,0.1);
+            border-color: rgba(230,180,80,0.28);
+        }
+        body.inversion-mode .settings-section.display-section {
+            background: rgba(100,190,130,0.1);
+            border-color: rgba(100,190,130,0.28);
+        }
+        body.inversion-mode .settings-section.pomodoro-section {
+            background: rgba(240,130,100,0.1);
+            border-color: rgba(240,130,100,0.28);
+        }
+        body.inversion-mode .settings-section.sound-section {
+            background: rgba(80,190,180,0.1);
+            border-color: rgba(80,190,180,0.28);
+        }
+        body.inversion-mode .settings-section.sync-section {
+            background: rgba(99,102,241,0.14);
+            border-color: rgba(99,102,241,0.32);
+        }
+        body.inversion-mode .sync-btn {
+            background: rgba(37,37,50,0.85);
+            color: #f0f0f5;
+            border-color: rgba(99,102,241,0.35);
+        }
+        body.inversion-mode .sync-textarea {
+            background: rgba(37,37,50,0.85);
+            color: #f0f0f5;
+            border-color: rgba(99,102,241,0.35);
+        }
+        body.inversion-mode .qr-modal {
+            background: #1e1e28;
+            border-color: rgba(255,255,255,0.1);
+        }
+        body.inversion-mode .qr-modal h3 { color: #f0f0f5; }
+        body.inversion-mode .qr-modal-close {
+            background: rgba(99,102,241,0.25);
+            color: #f0f0f5;
+        }
+        body.inversion-mode .settings-footer {
+            border-top-color: rgba(255,255,255,0.08);
+            opacity: 0.65;
+        }
+        body.inversion-mode .format-toggle {
+            background: #252532;
+            border-color: rgba(255,255,255,0.12);
+            color: #f0f0f5;
+        }
+        body.inversion-mode .greeting-banner,
+        body.inversion-mode .mode-panel,
+        body.inversion-mode .clock {
+            border-color: rgba(255,255,255,0.08);
+        }
+        body.inversion-mode .top-bar-btn {
+            background: var(--chrome-bg);
+            border-color: var(--chrome-border);
+            color: var(--text-primary);
+        }
+        body.inversion-mode .btn-mode:not(.active) {
+            color: var(--text-secondary);
+        }
+        body.inversion-mode .goal-track {
+            background: rgba(255,255,255,0.12);
+            border-color: rgba(255,255,255,0.08);
+        }
+        body.inversion-mode .lap-item { color: var(--text-primary); }
+        body.inversion-mode .no-laps { color: var(--text-muted); }
+        body.inversion-mode .mode-indicator {
+            background: var(--panel-bg);
+            border-color: var(--panel-border);
+            color: var(--text-primary);
+        }
+        body.inversion-mode .toggle-slider {
+            background: rgba(255,255,255,0.12);
+            border-color: rgba(255,255,255,0.1);
+        }
+        body.inversion-mode .toggle-slider::before {
+            background: #f0f0f5;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="confettiCanvas"></canvas>
+
+<div class="page-shell">
+    <div class="greeting-banner typo-body" id="greetingBanner">
+        <span id="greetingMessage">Good evening</span>
+        <span class="time-display" id="timeDisplay"></span>
+    </div>
+
+    <div class="top-bar">
+        <button class="top-bar-btn typo-ui" id="settingsOpenBtn" aria-expanded="false" aria-controls="settingsDrawer">⚙️ Settings</button>
+        <button class="top-bar-btn typo-ui" id="fullscreenBtn">⛶ Full Screen</button>
+    </div>
+
+    <div id="fullscreenStage">
+        <div class="clock" id="clock">
+            <div class="mode-indicator" id="modeIndicator">
+                <span id="modeIndicatorText">⏰ Clock</span>
+                <span class="session-badge" id="sessionBadge" style="display:none;"></span>
+            </div>
+
+            <div class="flip-card" id="hoursCard">
+                <div class="flip-digit-group">
+                    <div class="flipper-digit" id="hoursTens">
+                        <span class="simple-digit">0</span>
+                        <div class="digit-next">0</div>
+                        <div class="digit-bottom">0</div>
+                        <div class="digit-top2">0</div>
+                        <div class="digit-top">0</div>
+                    </div>
+                    <div class="flipper-digit" id="hoursOnes">
+                        <span class="simple-digit">0</span>
+                        <div class="digit-next">0</div>
+                        <div class="digit-bottom">0</div>
+                        <div class="digit-top2">0</div>
+                        <div class="digit-top">0</div>
+                    </div>
+                </div>
+                <span class="label" id="hoursLabel">Hours</span>
+            </div>
+
+            <div class="separator" id="sep1">:</div>
+
+            <div class="flip-card" id="minutesCard">
+                <div class="flip-digit-group">
+                    <div class="flipper-digit" id="minutesTens">
+                        <span class="simple-digit">0</span>
+                        <div class="digit-next">0</div>
+                        <div class="digit-bottom">0</div>
+                        <div class="digit-top2">0</div>
+                        <div class="digit-top">0</div>
+                    </div>
+                    <div class="flipper-digit" id="minutesOnes">
+                        <span class="simple-digit">0</span>
+                        <div class="digit-next">0</div>
+                        <div class="digit-bottom">0</div>
+                        <div class="digit-top2">0</div>
+                        <div class="digit-top">0</div>
+                    </div>
+                </div>
+                <span class="label" id="minutesLabel">Minutes</span>
+            </div>
+
+            <div class="separator" id="sep2">:</div>
+
+            <div class="flip-card" id="secondsCard">
+                <div class="flip-digit-group">
+                    <div class="flipper-digit" id="secondsTens">
+                        <span class="simple-digit">0</span>
+                        <div class="digit-next">0</div>
+                        <div class="digit-bottom">0</div>
+                        <div class="digit-top2">0</div>
+                        <div class="digit-top">0</div>
+                    </div>
+                    <div class="flipper-digit" id="secondsOnes">
+                        <span class="simple-digit">0</span>
+                        <div class="digit-next">0</div>
+                        <div class="digit-bottom">0</div>
+                        <div class="digit-top2">0</div>
+                        <div class="digit-top">0</div>
+                    </div>
+                </div>
+                <span class="label" id="secondsLabel">Seconds</span>
+            </div>
+
+            <div class="flip-card hidden" id="millisecondsCard">
+                <div class="flip-digit-group">
+                    <div class="flipper-digit" id="millisTens">
+                        <div class="digit-next">0</div>
+                        <div class="digit-bottom">0</div>
+                        <div class="digit-top2">0</div>
+                        <div class="digit-top">0</div>
+                    </div>
+                    <div class="flipper-digit" id="millisOnes">
+                        <div class="digit-next">0</div>
+                        <div class="digit-bottom">0</div>
+                        <div class="digit-top2">0</div>
+                        <div class="digit-top">0</div>
+                    </div>
+                </div>
+                <span class="label">MS</span>
+            </div>
+
+            <div class="am-pm" id="amPmDisplay">AM</div>
+        </div>
+        <div class="quote-display typo-body" id="quoteDisplay">✨ Focus on the present moment</div>
+    </div>
+
+    <div class="mode-bar" id="modeBar">
+        <button class="btn btn-mode typo-ui" id="stopwatchModeBtn">⏱️ Stopwatch</button>
+        <button class="btn btn-mode typo-ui active" id="clockModeBtn">⏰ Clock</button>
+        <button class="btn btn-mode typo-ui" id="pomodoroModeBtn">🍅 Pomodoro</button>
+    </div>
+
+    <div class="mode-panel stopwatch-panel" id="stopwatchPanel">
+        <h3 class="panel-header">⏱️ Stopwatch</h3>
+        <div class="stopwatch-elapsed" id="stopwatchElapsed">Elapsed: 00:00:00</div>
+        <div class="stopwatch-controls">
+            <button class="btn btn-primary" id="startStopBtn">▶️ Start</button>
+            <button class="btn btn-danger" id="resetBtn">↺ Reset</button>
+            <button class="btn" id="lapBtn">⏱️ Lap</button>
+        </div>
+        <div class="laps-container" id="lapsContainer"><div class="no-laps">No laps recorded</div></div>
+    </div>
+
+    <div class="mode-panel pomodoro-panel" id="pomodoroPanel">
+        <h3 class="panel-header">🍅 Pomodoro</h3>
+        <div class="pomodoro-controls">
+            <button class="btn btn-primary" id="pomodoroStartBtn">▶️ Start Focus</button>
+        </div>
+        <div class="daily-goal-bar" id="dailyGoalBar">
+            <div class="goal-label">
+                <span>📊 Daily goal</span>
+                <span id="dailyGoalProgress">0 / 4</span>
+            </div>
+            <div class="goal-track"><div class="goal-fill" id="goalFill" style="width:0%"></div></div>
+        </div>
+        <div class="pomo-stats" id="pomoStats">Today: 0 / 4 sessions</div>
+    </div>
+</div>
+
+<button class="exit-fullscreen-btn" id="exitFullscreenBtn">✕ Exit Full Screen</button>
+<button class="fullscreen-pomo-pause" id="fullscreenPomoPause">⏸️ Pause</button>
+
+<!-- Settings drawer -->
+<div class="settings-drawer" id="settingsDrawer" aria-hidden="true">
+    <div class="settings-overlay" id="settingsOverlay"></div>
+    <div class="settings-panel" role="dialog" aria-label="Settings">
+        <div class="settings-header">
+            <h2>⚙️ Settings</h2>
+            <button class="settings-close" id="settingsCloseBtn" aria-label="Close settings">✕</button>
+        </div>
+        <div class="settings-body">
+            <div class="settings-section profile-section">
+                <div class="settings-section-title">Profile</div>
+                <div class="settings-row">
+                    <label for="userNameInput">Your name</label>
+                    <input type="text" class="settings-text-input typo-ui" id="userNameInput" placeholder="Your name" maxlength="20" value="">
+                </div>
+            </div>
+
+            <div class="settings-section appearance-section">
+                <div class="settings-section-title">Appearance</div>
+                <div class="settings-row">
+                    <label for="inversionModeEnabled">Inversion mode</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="inversionModeEnabled">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="appearance-colors-row">
+                    <div class="appearance-color-item">
+                        <label for="bgColor" title="Background">BG</label>
+                        <input type="color" id="bgColor" value="#e8e8ec" title="Background color">
+                    </div>
+                    <div class="appearance-color-item">
+                        <label for="clockFaceColor" title="Clock face">Face</label>
+                        <input type="color" id="clockFaceColor" value="#f5f5f7" title="Clock face color">
+                    </div>
+                    <div class="appearance-color-item">
+                        <label for="numberColor" title="Numbers">#</label>
+                        <input type="color" id="numberColor" value="#2c2c2e" title="Number color">
+                    </div>
+                </div>
+                <div class="settings-row appearance-compact-row">
+                    <label for="fontSelector">Font</label>
+                    <select id="fontSelector">
+                        <option value="'Inter', sans-serif" style="font-family: 'Inter', sans-serif">Inter (Modern)</option>
+                        <option value="'DM Sans', sans-serif" style="font-family: 'DM Sans', sans-serif">DM Sans</option>
+                        <option value="'Work Sans', sans-serif" style="font-family: 'Work Sans', sans-serif">Work Sans</option>
+                        <option value="'Outfit', sans-serif" style="font-family: 'Outfit', sans-serif">Outfit</option>
+                        <option value="'Rubik', sans-serif" style="font-family: 'Rubik', sans-serif">Rubik</option>
+                        <option value="'IBM Plex Sans', sans-serif" style="font-family: 'IBM Plex Sans', sans-serif">IBM Plex Sans</option>
+                        <option value="'Jost', sans-serif" style="font-family: 'Jost', sans-serif">Jost (Geometric)</option>
+                        <option value="'Montserrat', sans-serif" style="font-family: 'Montserrat', sans-serif">Montserrat</option>
+                        <option value="'Nunito', sans-serif" selected style="font-family: 'Nunito', sans-serif">Nunito</option>
+                        <option value="'Quicksand', sans-serif" style="font-family: 'Quicksand', sans-serif">Quicksand</option>
+                        <option value="'Comfortaa', sans-serif" style="font-family: 'Comfortaa', sans-serif">Comfortaa</option>
+                        <option value="'Fredoka', sans-serif" style="font-family: 'Fredoka', sans-serif">Fredoka</option>
+                        <option value="'Caveat', cursive" style="font-family: 'Caveat', cursive">Caveat</option>
+                        <option value="'Pacifico', cursive" style="font-family: 'Pacifico', cursive">Pacifico</option>
+                        <option value="'Varela Round', sans-serif" style="font-family: 'Varela Round', sans-serif">Varela Round</option>
+                        <option value="'Comic Neue', cursive" style="font-family: 'Comic Neue', cursive">Comic Neue</option>
+                        <option value="Georgia, 'Times New Roman', serif" style="font-family: Georgia, 'Times New Roman', serif">Serif</option>
+                        <option value="'Courier New', monospace" style="font-family: 'Courier New', monospace">Monospace</option>
+                    </select>
+                </div>
+                <div class="font-preview" id="fontPreview">Aa Bb 123 — The quick brown fox</div>
+                <div class="settings-section-title" style="padding-top:4px;">Presets</div>
+                <div class="preset-row">
+                    <button class="preset-btn preset-blush" data-preset="blush">Blush</button>
+                    <button class="preset-btn preset-babyblue" data-preset="babyblue">Baby Blue</button>
+                    <button class="preset-btn preset-lavender" data-preset="lavender">Lavender</button>
+                    <button class="preset-btn preset-peach" data-preset="peach">Peach</button>
+                    <button class="preset-btn preset-mint" data-preset="mint">Mint</button>
+                    <button class="preset-btn preset-sunset" data-preset="sunset">Sunset</button>
+                    <button class="preset-btn preset-charcoal" data-preset="charcoal">Charcoal</button>
+                    <button class="preset-btn preset-midnight" data-preset="midnight">Midnight</button>
+                    <button class="preset-btn preset-forest" data-preset="forest">Forest</button>
+                    <button class="preset-btn preset-plum" data-preset="plum">Plum</button>
+                </div>
+                <button class="random-theme-btn" id="randomThemeBtn">🎲 Random Theme</button>
+                <button class="reset-custom-btn" id="resetCustomBtn">↺ Reset theme</button>
+            </div>
+
+            <div class="settings-section clock-section">
+                <div class="settings-section-title">Clock</div>
+                <div class="settings-row">
+                    <label>Time format</label>
+                    <button type="button" class="format-toggle" id="timeFormatBtn">24-hour</button>
+                </div>
+            </div>
+
+            <div class="settings-section display-section">
+                <div class="settings-section-title">Display</div>
+                <div class="settings-row">
+                    <label for="simpleDigitsMode">Calm mode (simple digits)</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="simpleDigitsMode">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-row">
+                    <label for="quotesEnabled">Motivational quotes</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="quotesEnabled" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-row">
+                    <label for="quoteEmojisEnabled">Quote emojis</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="quoteEmojisEnabled" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-row">
+                    <label for="quotesInterval">Quote change interval</label>
+                    <select id="quotesInterval">
+                        <option value="5">Every 5 min</option>
+                        <option value="10" selected>Every 10 min</option>
+                        <option value="15">Every 15 min</option>
+                        <option value="30">Every 30 min</option>
+                        <option value="60">Every 60 min</option>
+                    </select>
+                </div>
+                <div class="settings-row" style="font-size:12px;opacity:0.6;justify-content:center;">
+                    <span id="quoteSourceNote">Quotes from Quotable.io</span>
+                </div>
+            </div>
+
+            <div class="settings-section pomodoro-section" id="pomodoroSettingsSection">
+                <div class="settings-section-title">Pomodoro</div>
+                <div class="settings-row">
+                    <label for="focusTime">Focus time</label>
+                    <input type="range" id="focusTime" min="5" max="60" value="25">
+                    <span class="val" id="focusTimeVal">25</span>
+                </div>
+                <div class="settings-row">
+                    <label for="shortBreak">Short break</label>
+                    <input type="range" id="shortBreak" min="1" max="15" value="5">
+                    <span class="val" id="shortBreakVal">5</span>
+                </div>
+                <div class="settings-row">
+                    <label for="longBreak">Long break</label>
+                    <input type="range" id="longBreak" min="10" max="30" value="15">
+                    <span class="val" id="longBreakVal">15</span>
+                </div>
+                <div class="settings-row">
+                    <label for="sessionsBeforeLong">Sessions before long break</label>
+                    <input type="range" id="sessionsBeforeLong" min="2" max="8" value="4">
+                    <span class="val" id="sessionsBeforeLongVal">4</span>
+                </div>
+                <div class="settings-row">
+                    <label for="dailyGoal">Daily session goal</label>
+                    <input type="range" id="dailyGoal" min="1" max="12" value="4">
+                    <span class="val" id="dailyGoalVal">4</span>
+                </div>
+                <div class="settings-row">
+                    <label for="autoStartBreaks">Auto-start breaks</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="autoStartBreaks">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-row">
+                    <label for="autoStartFocus">Auto-start next focus</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="autoStartFocus">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-section sound-section">
+                <div class="settings-section-title">Sound</div>
+                <div class="settings-row">
+                    <label for="flipTickSound">Flip tick sound</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="flipTickSound">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-row">
+                    <label for="soundOnComplete">Chime on complete</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="soundOnComplete" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-row">
+                    <label for="bgNoiseType">Background noise</label>
+                    <select id="bgNoiseType">
+                        <option value="none">None</option>
+                        <option value="white">White noise</option>
+                        <option value="brown">Brown noise</option>
+                        <option value="rain">Rain</option>
+                        <option value="ocean">Ocean waves</option>
+                        <option value="forest">Forest birds</option>
+                        <option value="cafe">Coffee shop ambience</option>
+                        <option value="fireplace">Campfire</option>
+                        <option value="piano">Soft piano</option>
+                        <option value="beautifulDream">Beautiful Dream (Diego Nava)</option>
+                        <option value="weddingHarp">Wedding Harp (Francisco Alvear)</option>
+                    </select>
+                </div>
+                <div class="settings-row">
+                    <label for="bgNoiseVolume">Noise volume</label>
+                    <input type="range" id="bgNoiseVolume" min="0" max="100" value="30">
+                    <span class="val" id="bgNoiseVolumeVal">30</span>
+                </div>
+                <div class="settings-row">
+                    <label for="bgNoiseEnabled">Background noise on/off</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="bgNoiseEnabled">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-section sync-section">
+                <div class="settings-section-title">Sync across devices</div>
+                <div class="sync-btn-row">
+                    <button type="button" class="sync-btn" id="copySettingsBtn">📋 Copy settings code</button>
+                    <button type="button" class="sync-btn" id="copyShortLinkBtn">🔗 Copy short link</button>
+                    <button type="button" class="sync-btn" id="showQrBtn">📱 Show QR code</button>
+                </div>
+                <p class="sync-hint">Paste this on another device to restore your theme and preferences</p>
+                <div class="sync-import-block">
+                    <textarea class="sync-textarea" id="importSettingsInput" placeholder="Paste settings code here" rows="3" spellcheck="false"></textarea>
+                    <div class="sync-btn-row">
+                        <button type="button" class="sync-btn sync-btn-primary" id="applySettingsBtn">✨ Apply settings</button>
+                        <button type="button" class="sync-btn" id="scanQrBtn">📷 Scan QR code</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="settings-footer">Made with ❤️ by Luna &amp; Nathan Petralia<br>Ambient sounds &amp; music from <a href="https://mixkit.co/" target="_blank" rel="noopener">Mixkit</a> — Beautiful Dream (Diego Nava), Wedding Harp (Francisco Alvear)</div>
+    </div>
+</div>
+
+<div class="qr-modal-overlay" id="qrModalOverlay" aria-hidden="true">
+    <div class="qr-modal" role="dialog" aria-labelledby="qrModalTitle">
+        <h3 id="qrModalTitle">Scan with your other device</h3>
+        <p id="qrModalHint">Open your camera and scan to sync settings</p>
+        <div class="qr-modal-canvas" id="qrModalCanvas"></div>
+        <div class="scan-modal-reader hidden" id="scanModalReader"></div>
+        <button type="button" class="qr-modal-close" id="qrModalCloseBtn">Close</button>
+    </div>
+</div>
+<div class="settings-toast" id="settingsToast" role="status" aria-live="polite"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const STORAGE_KEY = 'lunaclock_v7';
+    const FLIP_MS = 400;
+    const HALF = FLIP_MS / 2;
+
+    // ─── FlipEngine (ResponsiveFlipper / Arthur Shlain pattern) ───
+    const FlipEngine = (function() {
+        const units = new Map();
+
+        function init(container, onComplete) {
+            units.set(container, { flipping: false, queue: null, onComplete: onComplete });
+        }
+
+        function setInstant(container, value) {
+            const top = container.querySelector('.digit-top');
+            const top2 = container.querySelector('.digit-top2');
+            const bottom = container.querySelector('.digit-bottom');
+            const next = container.querySelector('.digit-next');
+            if (!top) return;
+            const v = String(value).slice(-1);
+            top.textContent = v;
+            top2.textContent = v;
+            bottom.textContent = v;
+            next.textContent = v;
+            top.classList.remove('r');
+            top2.classList.remove('r');
+            bottom.classList.remove('r');
+            top.style.display = '';
+            top2.style.visibility = '';
+            container.classList.remove('r');
+            const state = units.get(container);
+            if (state) { state.flipping = false; state.queue = null; }
+        }
+
+        function flip(container, newValue, playTick) {
+            const state = units.get(container);
+            if (!state) return;
+            const top = container.querySelector('.digit-top');
+            const top2 = container.querySelector('.digit-top2');
+            const bottom = container.querySelector('.digit-bottom');
+            const next = container.querySelector('.digit-next');
+            const nextVal = String(newValue).slice(-1);
+            const current = top.textContent;
+            if (current === nextVal) return;
+
+            if (state.flipping) {
+                state.queue = nextVal;
+                return;
+            }
+
+            state.flipping = true;
+            container.classList.add('r');
+            next.textContent = nextVal;
+            top2.textContent = nextVal;
+
+            top.classList.add('r');
+            top2.classList.add('r');
+            bottom.classList.add('r');
+
+            setTimeout(function() {
+                top.textContent = nextVal;
+                top.style.display = 'none';
+                top2.textContent = nextVal;
+                setTimeout(function() {
+                    bottom.textContent = nextVal;
+                    bottom.classList.remove('r');
+                    top.classList.remove('r');
+                    top.style.display = '';
+                    top2.textContent = nextVal;
+                    top2.classList.remove('r');
+                    container.classList.remove('r');
+                    state.flipping = false;
+                    if (playTick && state.onComplete) state.onComplete();
+                    if (state.queue !== null) {
+                        const queued = state.queue;
+                        state.queue = null;
+                        if (queued !== nextVal) flip(container, queued, playTick);
+                    }
+                }, HALF);
+            }, HALF);
+        }
+
+        return { init: init, flip: flip, setInstant: setInstant };
+    })();
+
+    // ─── Digit elements ───
+    const digitEls = {
+        hoursTens: document.getElementById('hoursTens'),
+        hoursOnes: document.getElementById('hoursOnes'),
+        minutesTens: document.getElementById('minutesTens'),
+        minutesOnes: document.getElementById('minutesOnes'),
+        secondsTens: document.getElementById('secondsTens'),
+        secondsOnes: document.getElementById('secondsOnes'),
+        millisTens: document.getElementById('millisTens'),
+        millisOnes: document.getElementById('millisOnes')
+    };
+    const allDigitEls = Object.values(digitEls);
+
+    const hoursCard = document.getElementById('hoursCard');
+    const sep1 = document.getElementById('sep1');
+    const millisecondsCard = document.getElementById('millisecondsCard');
+    const modeIndicatorText = document.getElementById('modeIndicatorText');
+    const sessionBadge = document.getElementById('sessionBadge');
+    const clockModeBtn = document.getElementById('clockModeBtn');
+    const stopwatchModeBtn = document.getElementById('stopwatchModeBtn');
+    const pomodoroModeBtn = document.getElementById('pomodoroModeBtn');
+    const stopwatchPanel = document.getElementById('stopwatchPanel');
+    const stopwatchElapsed = document.getElementById('stopwatchElapsed');
+    const startStopBtn = document.getElementById('startStopBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const lapBtn = document.getElementById('lapBtn');
+    const lapsContainer = document.getElementById('lapsContainer');
+    const body = document.body;
+    const fontSelector = document.getElementById('fontSelector');
+    const fontPreview = document.getElementById('fontPreview');
+    const resetCustomBtn = document.getElementById('resetCustomBtn');
+    const timeFormatBtn = document.getElementById('timeFormatBtn');
+    const amPmDisplay = document.getElementById('amPmDisplay');
+    const pomodoroStartBtn = document.getElementById('pomodoroStartBtn');
+    const pomodoroPanel = document.getElementById('pomodoroPanel');
+    const greetingBanner = document.getElementById('greetingBanner');
+    const dailyGoalProgress = document.getElementById('dailyGoalProgress');
+    const goalFill = document.getElementById('goalFill');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const exitFullscreenBtn = document.getElementById('exitFullscreenBtn');
+    const fullscreenPomoPause = document.getElementById('fullscreenPomoPause');
+    const clock = document.getElementById('clock');
+    const presetBtns = document.querySelectorAll('.preset-btn');
+    const bgColor = document.getElementById('bgColor');
+    const clockFaceColor = document.getElementById('clockFaceColor');
+    const numberColor = document.getElementById('numberColor');
+    const greetingMessage = document.getElementById('greetingMessage');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const userNameInput = document.getElementById('userNameInput');
+    const quoteDisplay = document.getElementById('quoteDisplay');
+    const quotesEnabled = document.getElementById('quotesEnabled');
+    const quotesIntervalSelect = document.getElementById('quotesInterval');
+    const randomThemeBtn = document.getElementById('randomThemeBtn');
+    const bgNoiseType = document.getElementById('bgNoiseType');
+    const bgNoiseVolume = document.getElementById('bgNoiseVolume');
+    const bgNoiseVolumeVal = document.getElementById('bgNoiseVolumeVal');
+    const bgNoiseEnabled = document.getElementById('bgNoiseEnabled');
+    const quoteEmojisEnabled = document.getElementById('quoteEmojisEnabled');
+    const inversionModeEnabled = document.getElementById('inversionModeEnabled');
+    const pomoStats = document.getElementById('pomoStats');
+    const confettiCanvas = document.getElementById('confettiCanvas');
+    const settingsDrawer = document.getElementById('settingsDrawer');
+    const settingsOpenBtn = document.getElementById('settingsOpenBtn');
+    const settingsCloseBtn = document.getElementById('settingsCloseBtn');
+    const settingsOverlay = document.getElementById('settingsOverlay');
+    const simpleDigitsModeCheckbox = document.getElementById('simpleDigitsMode');
+
+    allDigitEls.forEach(function(el) {
+        FlipEngine.init(el, playTickSound);
+    });
+
+    const localQuotePool = [
+        "Focus on the present moment.",
+        "You're doing great — keep going!",
+        "Small steps lead to big results.",
+        "Stay calm and stay focused.",
+        "You've got this. Keep pushing!",
+        "One page at a time — you got this!",
+        "Put on your focus playlist and go!",
+        "Every minute counts — make it matter.",
+        "Believe in yourself.",
+        "Success is built on consistency.",
+        "You're capable of amazing things.",
+        "Stay focused on what matters most.",
+        "Your future self will thank you.",
+        "Take a breath, then crush it!",
+        "Progress, not perfection.",
+        "Done is better than perfect.",
+        "Start where you are. Use what you have.",
+        "The secret of getting ahead is getting started.",
+        "It always seems impossible until it's done.",
+        "Don't watch the clock; do what it does — keep going.",
+        "You don't have to be great to start, but you have to start to be great.",
+        "The only way to do great work is to love what you do.",
+        "Dream big. Start small. Act now.",
+        "Your limitation is only your imagination.",
+        "Great things never come from comfort zones.",
+        "Push yourself, because no one else is going to do it for you.",
+        "Wake up with determination. Go to bed with satisfaction.",
+        "Do something today that your future self will thank you for.",
+        "Little things make big days.",
+        "It's going to be hard, but hard does not mean impossible.",
+        "Don't stop when you're tired. Stop when you're done.",
+        "The harder you work, the luckier you get.",
+        "Success doesn't just find you. You have to go out and get it.",
+        "The best time to plant a tree was 20 years ago. The second best time is now.",
+        "Believe you can and you're halfway there.",
+        "Act as if what you do makes a difference. It does.",
+        "What you get by achieving your goals is not as important as what you become.",
+        "Quality is not an act, it is a habit.",
+        "The future depends on what you do today.",
+        "You are never too old to set another goal or to dream a new dream.",
+        "It does not matter how slowly you go as long as you do not stop.",
+        "Everything you've ever wanted is on the other side of fear.",
+        "Hardships often prepare ordinary people for an extraordinary destiny.",
+        "Opportunities don't happen. You create them.",
+        "Try to be a rainbow in someone's cloud.",
+        "Keep your face always toward the sunshine — and shadows will fall behind you.",
+        "You are braver than you believe, stronger than you seem, and smarter than you think.",
+        "Happiness is not something ready made. It comes from your own actions.",
+        "The only impossible journey is the one you never begin.",
+        "What lies behind us and what lies before us are tiny matters compared to what lies within us.",
+        "You miss 100% of the shots you don't take.",
+        "Whether you think you can or you think you can't, you're right.",
+        "The mind is everything. What you think you become.",
+        "Strive not to be a success, but rather to be of value.",
+        "I have not failed. I've just found 10,000 ways that won't work.",
+        "A person who never made a mistake never tried anything new.",
+        "The only person you are destined to become is the person you decide to be."
+    ];
+    const localQuoteEmojis = ['✨','💪','🌱','🧘','🚀','📖','🏆','🌟','😊','⏰','💡','🌈','🎯','🔥','🌿','🦋','🎵','☀️','🌙','💎'];
+    const localQuotes = localQuotePool.map(function(q, i) {
+        return localQuoteEmojis[i % localQuoteEmojis.length] + ' ' + q;
+    });
+
+    let quoteInterval = null;
+    let quotesIntervalMinutes = 10;
+    let currentQuoteText = '';
+    let currentQuoteAuthor = null;
+    let currentQuoteTags = [];
+    let sessionQuoteCache = [];
+    let isFetchingQuote = false;
+    let isStopwatchMode = false;
+    let isRunning = false;
+    let stopwatchTime = 0;
+    let timerInterval = null;
+    let laps = [];
+    let is12Hour = false;
+    let isPomodoroMode = false;
+    let pomodoroRemaining = 25 * 60 * 1000;
+    let pomodoroRunning = false;
+    let pomodoroInterval = null;
+    let isBreak = false;
+    let isLongBreak = false;
+    let clockInterval = null;
+    let isFullscreen = false;
+    let settingsOpen = false;
+    let showQuotes = true;
+    let quoteEmojisOn = true;
+    let inversionMode = false;
+    let themeCustomized = false;
+    let currentSessionInCycle = 0;
+    let sessionsCompletedToday = 0;
+    let lastStatsDate = '';
+    let simpleDigitsMode = false;
+
+    const defaultColors = { bg: '#e8e8ec', face: '#f5f5f7', number: '#2c2c2e' };
+    const SCRIPT_FONTS = ["'Caveat', cursive", "'Pacifico', cursive", "'Comic Neue', cursive"];
+    const presets = {
+        blush: { bg: '#fce8ef', face: '#ffffff', number: '#7a2d4a' },
+        babyblue: { bg: '#dceefb', face: '#ffffff', number: '#1a4a6e' },
+        lavender: { bg: '#ebe4f8', face: '#ffffff', number: '#4a3568' },
+        peach: { bg: '#fde8d8', face: '#ffffff', number: '#8a3d1a' },
+        mint: { bg: '#d8f0e6', face: '#ffffff', number: '#1a5c42' },
+        sunset: { bg: '#fde0cc', face: '#ffffff', number: '#7a3018' },
+        charcoal: { bg: '#2a2a2e', face: '#3a3a40', number: '#e8e8ec' },
+        midnight: { bg: '#0e1220', face: '#1a2238', number: '#d8e4f8' },
+        forest: { bg: '#142018', face: '#1e3028', number: '#c8e8d0' },
+        plum: { bg: '#1a1424', face: '#2a2038', number: '#e8d8f8' }
+    };
+
+    function isScriptFont(font) {
+        return SCRIPT_FONTS.indexOf(font) !== -1;
+    }
+
+    function parseHex(hex) {
+        const h = String(hex || '#000000').replace('#', '');
+        return {
+            r: parseInt(h.slice(0, 2), 16),
+            g: parseInt(h.slice(2, 4), 16),
+            b: parseInt(h.slice(4, 6), 16)
+        };
+    }
+
+    function rgbToHsl(r, g, b) {
+        r /= 255; g /= 255; b /= 255;
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h = 0;
+        let s = 0;
+        const l = (max + min) / 2;
+        if (max !== min) {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                case g: h = ((b - r) / d + 2) / 6; break;
+                default: h = ((r - g) / d + 4) / 6; break;
+            }
+        }
+        return { h: h * 360, s: s * 100, l: l * 100 };
+    }
+
+    function relativeLuminance(r, g, b) {
+        const lin = [r, g, b].map(function(c) {
+            c /= 255;
+            return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+        });
+        return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
+    }
+
+    function invertThemeColor(hex, role) {
+        const rgb = parseHex(hex);
+        const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+        let h = hsl.h;
+        let s = hsl.s;
+        let l = hsl.l;
+        const isLight = l > 52;
+        if (role === 'bg') {
+            if (isLight) {
+                l = Math.max(8, Math.min(20, 18 - (l - 50) * 0.05));
+                s = Math.min(s * 0.75, 40);
+            } else {
+                l = Math.min(90, 100 - l + 12);
+                s = Math.min(s * 0.85, 30);
+            }
+        } else if (role === 'face') {
+            if (isLight) {
+                l = Math.max(18, Math.min(32, 28 - (l - 50) * 0.06));
+                s = Math.min(s * 0.65, 35);
+            } else {
+                l = Math.min(86, 100 - l + 8);
+                s = Math.min(s * 0.75, 28);
+            }
+        } else {
+            if (isLight) {
+                l = Math.max(80, Math.min(96, 92 - (l - 50) * 0.05));
+                s = Math.min(s * 0.55, 22);
+            } else {
+                l = Math.max(14, Math.min(38, l * 0.55 + 8));
+                s = Math.min(s * 1.05, 48);
+            }
+        }
+        return hslToHex(h, s, l);
+    }
+
+    function computeInvertedPalette(base) {
+        return {
+            bg: invertThemeColor(base.bg, 'bg'),
+            face: invertThemeColor(base.face, 'face'),
+            number: invertThemeColor(base.number, 'number')
+        };
+    }
+
+    function getBaseTheme() {
+        return { bg: bgColor.value, face: clockFaceColor.value, number: numberColor.value };
+    }
+
+    function getEffectivePalette() {
+        const base = getBaseTheme();
+        return inversionMode ? computeInvertedPalette(base) : base;
+    }
+
+    function isEffectivelyDark() {
+        const pal = getEffectivePalette();
+        const rgb = parseHex(pal.bg);
+        return relativeLuminance(rgb.r, rgb.g, rgb.b) < 0.35;
+    }
+
+    function applyTypographyRoles() {
+        const font = fontSelector.value;
+        const script = isScriptFont(font);
+        body.classList.toggle('font-script', script);
+        const uiFont = script ? "'Inter', system-ui, -apple-system, sans-serif" : font;
+        document.documentElement.style.setProperty('--font-display', font);
+        document.documentElement.style.setProperty('--font-ui', uiFont);
+        document.documentElement.style.setProperty('--font-body', font);
+        document.documentElement.style.setProperty('--font-caption', uiFont);
+    }
+
+    function applyChromeTextTokens() {
+        if (isEffectivelyDark()) {
+            document.documentElement.style.setProperty('--text-primary', '#f0f0f5');
+            document.documentElement.style.setProperty('--text-secondary', '#a8a8b8');
+            document.documentElement.style.setProperty('--text-muted', '#8a8a9a');
+            document.documentElement.style.setProperty('--panel-bg', 'rgba(30,30,40,0.88)');
+            document.documentElement.style.setProperty('--panel-border', 'rgba(255,255,255,0.08)');
+            document.documentElement.style.setProperty('--chrome-bg', 'rgba(42,42,56,0.92)');
+            document.documentElement.style.setProperty('--chrome-border', 'rgba(255,255,255,0.1)');
+        } else {
+            document.documentElement.style.setProperty('--text-primary', numberColor.value);
+            document.documentElement.style.setProperty('--text-secondary', '#5a5a64');
+            document.documentElement.style.setProperty('--text-muted', '#7a7a88');
+            document.documentElement.style.setProperty('--panel-bg', 'rgba(255,255,255,0.5)');
+            document.documentElement.style.setProperty('--panel-border', 'rgba(255,255,255,0.55)');
+            document.documentElement.style.setProperty('--chrome-bg', 'rgba(255,255,255,0.6)');
+            document.documentElement.style.setProperty('--chrome-border', 'rgba(0,0,0,0.12)');
+        }
+    }
+
+    const AMBIENT_LOOPS = {
+        rain: 'https://assets.mixkit.co/active_storage/sfx/2394/2394-preview.mp3',
+        ocean: 'https://assets.mixkit.co/active_storage/sfx/1196/1196-preview.mp3',
+        forest: 'https://assets.mixkit.co/active_storage/sfx/1213/1213-preview.mp3',
+        cafe: 'https://assets.mixkit.co/active_storage/sfx/444/444-preview.mp3',
+        fireplace: 'https://assets.mixkit.co/active_storage/sfx/1330/1330-preview.mp3',
+        beautifulDream: 'https://assets.mixkit.co/music/493/493.mp3',
+        weddingHarp: 'https://assets.mixkit.co/music/672/672.mp3'
+    };
+
+    const bgNoiseSettings = {
+        type: 'none',
+        volume: 30,
+        enabled: false
+    };
+
+    const pomoSettings = {
+        focusMin: 25,
+        shortBreakMin: 5,
+        longBreakMin: 15,
+        sessionsBeforeLong: 4,
+        dailyGoal: 4,
+        autoStartBreaks: false,
+        autoStartFocus: false,
+        soundOnComplete: true,
+        flipTickSound: false
+    };
+
+    // ─── Audio ───
+    let audioCtx = null;
+    function getAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        return audioCtx;
+    }
+    function playTickSound() {
+        if (!pomoSettings.flipTickSound) return;
+        try {
+            const ctx = getAudio();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 800;
+            gain.gain.value = 0.04;
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+            osc.stop(ctx.currentTime + 0.05);
+        } catch (e) {}
+    }
+    function playChime() {
+        if (!pomoSettings.soundOnComplete) return;
+        try {
+            const ctx = getAudio();
+            [523, 659, 784].forEach(function(freq, i) {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = freq;
+                gain.gain.value = 0.08;
+                const t = ctx.currentTime + i * 0.15;
+                osc.start(t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+                osc.stop(t + 0.4);
+            });
+        } catch (e) {}
+    }
+
+    // ─── Background noise (HTML5 Audio + Web Audio fallback) ───
+    let bgAudioEl = null;
+    let bgNoiseNodes = null;
+    let chimesInterval = null;
+    let bgAudioGainNode = null;
+
+    function getNoiseVolume() {
+        return bgNoiseSettings.volume / 100;
+    }
+
+    function createNoiseBuffer(ctx, brown) {
+        const bufferSize = ctx.sampleRate * 2;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        let last = 0;
+        for (let i = 0; i < bufferSize; i++) {
+            const white = Math.random() * 2 - 1;
+            if (brown) {
+                last = (last + 0.02 * white) / 1.02;
+                data[i] = last * 3.5;
+            } else {
+                data[i] = white;
+            }
+        }
+        return buffer;
+    }
+
+    function stopBgNoise() {
+        if (chimesInterval) { clearInterval(chimesInterval); chimesInterval = null; }
+        if (bgAudioEl) {
+            try {
+                bgAudioEl.pause();
+                bgAudioEl.removeAttribute('src');
+                bgAudioEl.load();
+            } catch (e) {}
+            bgAudioEl = null;
+        }
+        bgAudioGainNode = null;
+        if (bgNoiseNodes) {
+            try {
+                bgNoiseNodes.sources.forEach(function(s) {
+                    try { s.stop(); } catch (e) {}
+                    try { s.disconnect(); } catch (e) {}
+                });
+                bgNoiseNodes.nodes.forEach(function(n) {
+                    try { n.disconnect(); } catch (e) {}
+                });
+            } catch (e) {}
+            bgNoiseNodes = null;
+        }
+    }
+
+    function startHtmlAmbient(url) {
+        const audio = new Audio(url);
+        audio.loop = true;
+        audio.crossOrigin = 'anonymous';
+        audio.volume = getNoiseVolume();
+        audio.play().catch(function() {});
+        bgAudioEl = audio;
+    }
+
+    function startProceduralNoise(type) {
+        try {
+            const ctx = getAudio();
+            if (ctx.state === 'suspended') ctx.resume();
+            const vol = getNoiseVolume() * 0.35;
+            const masterGain = ctx.createGain();
+            masterGain.gain.value = vol;
+            masterGain.connect(ctx.destination);
+            const sources = [];
+            const nodes = [masterGain];
+            bgAudioGainNode = masterGain;
+
+            if (type === 'white' || type === 'brown') {
+                const src = ctx.createBufferSource();
+                src.buffer = createNoiseBuffer(ctx, type === 'brown');
+                src.loop = true;
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = type === 'brown' ? 500 : 12000;
+                src.connect(filter);
+                filter.connect(masterGain);
+                src.start();
+                sources.push(src);
+                nodes.push(filter, src);
+            } else if (type === 'piano') {
+                function playPianoNote() {
+                    const freqs = [262, 294, 330, 349, 392, 440, 494, 523];
+                    const freq = freqs[Math.floor(Math.random() * freqs.length)];
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    gain.gain.value = vol * 0.25;
+                    osc.connect(gain);
+                    gain.connect(masterGain);
+                    const t = ctx.currentTime;
+                    osc.start(t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 3);
+                    osc.stop(t + 3);
+                }
+                playPianoNote();
+                chimesInterval = setInterval(playPianoNote, 3500 + Math.random() * 2500);
+            } else if (type === 'rain' || type === 'ocean') {
+                const src = ctx.createBufferSource();
+                src.buffer = createNoiseBuffer(ctx, true);
+                src.loop = true;
+                const filter = ctx.createBiquadFilter();
+                if (type === 'rain') {
+                    filter.type = 'bandpass';
+                    filter.frequency.value = 800;
+                    filter.Q.value = 0.4;
+                    masterGain.gain.value = vol * 0.8;
+                } else {
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 400;
+                    masterGain.gain.value = vol * 0.7;
+                    const lfo = ctx.createOscillator();
+                    const lfoGain = ctx.createGain();
+                    lfo.frequency.value = 0.15;
+                    lfoGain.gain.value = 200;
+                    lfo.connect(lfoGain);
+                    lfoGain.connect(filter.frequency);
+                    lfo.start();
+                    sources.push(lfo);
+                    nodes.push(lfo, lfoGain);
+                }
+                src.connect(filter);
+                filter.connect(masterGain);
+                src.start();
+                sources.push(src);
+                nodes.push(filter, src);
+            }
+
+            bgNoiseNodes = { sources: sources, nodes: nodes };
+        } catch (e) {}
+    }
+
+    function startBgNoise() {
+        stopBgNoise();
+        const type = bgNoiseSettings.type;
+        if (type === 'none' || !bgNoiseSettings.enabled) return;
+
+        if (AMBIENT_LOOPS[type]) {
+            startHtmlAmbient(AMBIENT_LOOPS[type]);
+            return;
+        }
+        startProceduralNoise(type);
+    }
+
+    function syncBgNoise() {
+        if (bgNoiseSettings.enabled && bgNoiseSettings.type !== 'none') {
+            startBgNoise();
+        } else {
+            stopBgNoise();
+        }
+    }
+
+    function updateBgNoiseVolume() {
+        const vol = getNoiseVolume();
+        if (bgAudioEl) bgAudioEl.volume = vol;
+        if (bgAudioGainNode) bgAudioGainNode.gain.value = vol * 0.35;
+        if (bgNoiseNodes && bgNoiseNodes.nodes[0] && !bgAudioGainNode) {
+            bgNoiseNodes.nodes[0].gain.value = vol * 0.35;
+        }
+    }
+
+    function syncBgNoiseUI() {
+        bgNoiseType.value = bgNoiseSettings.type;
+        bgNoiseVolume.value = bgNoiseSettings.volume;
+        bgNoiseVolumeVal.textContent = bgNoiseSettings.volume;
+        bgNoiseEnabled.checked = bgNoiseSettings.enabled;
+    }
+
+    // ─── Random theme generator ───
+    function hslToHex(h, s, l) {
+        s /= 100; l /= 100;
+        const a = s * Math.min(l, 1 - l);
+        const f = function(n) {
+            const k = (n + h / 30) % 12;
+            return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+        };
+        const r = Math.round(f(0) * 255);
+        const g = Math.round(f(8) * 255);
+        const b = Math.round(f(4) * 255);
+        return '#' + [r,g,b].map(function(x) { return x.toString(16).padStart(2,'0'); }).join('');
+    }
+
+    function generateRandomTheme() {
+        themeCustomized = true;
+        const hue = Math.floor(Math.random() * 360);
+        const bg = hslToHex(hue, 35 + Math.random() * 25, 82 + Math.random() * 10);
+        const face = hslToHex(hue, 15 + Math.random() * 15, 95 + Math.random() * 3);
+        const number = hslToHex((hue + 180) % 360, 45 + Math.random() * 30, 22 + Math.random() * 12);
+        bgColor.value = bg;
+        clockFaceColor.value = face;
+        numberColor.value = number;
+        applyCustomizations();
+    }
+
+    // ─── Confetti & celebration ───
+    let confettiAnimId = null;
+    let celebrationHideTimer = null;
+    let celebrationRemoveTimer = null;
+
+    function launchConfetti(durationMs) {
+        durationMs = durationMs || 11000;
+        if (confettiAnimId) cancelAnimationFrame(confettiAnimId);
+        const ctx = confettiCanvas.getContext('2d');
+        confettiCanvas.width = window.innerWidth;
+        confettiCanvas.height = window.innerHeight;
+        const colors = ['#f5a8c8', '#c8a8f5', '#a8f5d0', '#f5d6a8', '#a8d4f5', '#f5a8e8', '#ffd700', '#ff9ecd'];
+        const particles = [];
+        const startTime = performance.now();
+        const spawnEnd = startTime + 3500;
+
+        function spawnParticle() {
+            return {
+                x: Math.random() * confettiCanvas.width,
+                y: -12 - Math.random() * 80,
+                w: 5 + Math.random() * 7,
+                h: 3 + Math.random() * 5,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                vx: (Math.random() - 0.5) * 1.8,
+                vy: 0.6 + Math.random() * 1.4,
+                rot: Math.random() * 360,
+                vr: (Math.random() - 0.5) * 3.5,
+                opacity: 0.75 + Math.random() * 0.25,
+                wobble: Math.random() * Math.PI * 2
+            };
+        }
+
+        for (let i = 0; i < 140; i++) particles.push(spawnParticle());
+
+        function draw(now) {
+            const elapsed = now - startTime;
+            if (elapsed < spawnEnd && Math.random() < 0.55) {
+                const batch = elapsed < 1200 ? 4 : 2;
+                for (let i = 0; i < batch; i++) particles.push(spawnParticle());
+            }
+            ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.wobble += 0.04;
+                p.x += p.vx + Math.sin(p.wobble) * 0.3;
+                p.y += p.vy;
+                p.vy += 0.022;
+                p.vx *= 0.999;
+                p.rot += p.vr;
+                if (p.y > confettiCanvas.height + 30) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+                const fadeZone = confettiCanvas.height * 0.85;
+                let alpha = p.opacity;
+                if (p.y > fadeZone) alpha *= 1 - (p.y - fadeZone) / (confettiCanvas.height - fadeZone + 1);
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rot * Math.PI / 180);
+                ctx.globalAlpha = Math.max(0, alpha);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                ctx.restore();
+            }
+            ctx.globalAlpha = 1;
+            if (elapsed < durationMs) {
+                confettiAnimId = requestAnimationFrame(draw);
+            } else {
+                confettiAnimId = null;
+                ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            }
+        }
+        confettiAnimId = requestAnimationFrame(draw);
+    }
+
+    function dismissCelebrationBanner() {
+        const existing = document.getElementById('celebrationBanner');
+        if (existing) existing.remove();
+        if (celebrationHideTimer) { clearTimeout(celebrationHideTimer); celebrationHideTimer = null; }
+        if (celebrationRemoveTimer) { clearTimeout(celebrationRemoveTimer); celebrationRemoveTimer = null; }
+    }
+
+    function showCelebrationBanner(lines, durationMs) {
+        durationMs = durationMs || 10000;
+        dismissCelebrationBanner();
+        const el = document.createElement('div');
+        el.id = 'celebrationBanner';
+        el.className = 'celebration-banner';
+        const messageLines = Array.isArray(lines) ? lines : [lines];
+        el.innerHTML = messageLines.map(function(line) {
+            return '<div>' + line + '</div>';
+        }).join('');
+        document.body.appendChild(el);
+        celebrationHideTimer = setTimeout(function() {
+            el.classList.add('fade-out');
+            celebrationRemoveTimer = setTimeout(function() {
+                el.remove();
+                celebrationHideTimer = null;
+                celebrationRemoveTimer = null;
+            }, 2000);
+        }, durationMs - 2000);
+    }
+
+    function showSticker(text) {
+        const el = document.createElement('div');
+        el.className = 'sticker-burst';
+        el.textContent = text;
+        const rect = clock.getBoundingClientRect();
+        el.style.left = (rect.left + rect.width / 2 - 60) + 'px';
+        el.style.top = (rect.top + rect.height / 2) + 'px';
+        document.body.appendChild(el);
+        setTimeout(function() { el.remove(); }, 1300);
+    }
+
+    // ─── Settings drawer ───
+    function openSettings() {
+        settingsOpen = true;
+        settingsDrawer.classList.add('open');
+        settingsDrawer.setAttribute('aria-hidden', 'false');
+        settingsOpenBtn.setAttribute('aria-expanded', 'true');
+    }
+    function closeSettings() {
+        settingsOpen = false;
+        settingsDrawer.classList.remove('open');
+        settingsDrawer.setAttribute('aria-hidden', 'true');
+        settingsOpenBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    // ─── Storage (1p cookie primary, localStorage fallback) ───
+    const COOKIE_NAME = 'lunaclock_settings';
+    const STORAGE_VERSION = 1;
+    const COOKIE_MAX_CHARS = 3800;
+    const SETTINGS_CODE_PREFIX = 'LUNA7:';
+
+    function getCookiePath() {
+        return location.pathname.replace(/\/[^/]*$/, '/') || '/';
+    }
+
+    function setCookie(name, value, days) {
+        if (days === undefined) days = 365;
+        let cookie = name + '=' + encodeURIComponent(value);
+        cookie += ';path=' + getCookiePath();
+        cookie += ';max-age=' + (days * 86400);
+        cookie += ';SameSite=Lax';
+        if (location.protocol === 'https:') cookie += ';Secure';
+        document.cookie = cookie;
+        return getCookie(name) === value;
+    }
+    function getCookie(name) {
+        const prefix = name + '=';
+        const parts = document.cookie.split(';');
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i].trim();
+            if (part.indexOf(prefix) === 0) {
+                return decodeURIComponent(part.substring(prefix.length));
+            }
+        }
+        return null;
+    }
+    function deleteCookie(name) {
+        let cookie = name + '=;path=' + getCookiePath() + ';max-age=0;SameSite=Lax';
+        if (location.protocol === 'https:') cookie += ';Secure';
+        document.cookie = cookie;
+    }
+    function clearPersistedSettings() {
+        deleteCookie(COOKIE_NAME);
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    }
+
+    function compactPomo(ps) {
+        return {
+            fm: ps.focusMin, sb: ps.shortBreakMin, lb: ps.longBreakMin,
+            sbl: ps.sessionsBeforeLong, dg: ps.dailyGoal,
+            asb: ps.autoStartBreaks ? 1 : 0, asf: ps.autoStartFocus ? 1 : 0,
+            soc: ps.soundOnComplete ? 1 : 0, fts: ps.flipTickSound ? 1 : 0
+        };
+    }
+    function expandPomo(cp) {
+        if (!cp) return {};
+        return {
+            focusMin: cp.fm, shortBreakMin: cp.sb, longBreakMin: cp.lb,
+            sessionsBeforeLong: cp.sbl, dailyGoal: cp.dg,
+            autoStartBreaks: !!cp.asb, autoStartFocus: !!cp.asf,
+            soundOnComplete: cp.soc !== 0, flipTickSound: !!cp.fts
+        };
+    }
+    function buildSettingsObject() {
+        return {
+            pomoSettings: pomoSettings,
+            sessionsCompletedToday: sessionsCompletedToday,
+            lastStatsDate: lastStatsDate,
+            currentSessionInCycle: currentSessionInCycle,
+            is12Hour: is12Hour,
+            quotesEnabled: showQuotes,
+            quotesIntervalMinutes: quotesIntervalMinutes,
+            userName: userNameInput.value,
+            bgNoiseType: bgNoiseSettings.type,
+            bgNoiseVolume: bgNoiseSettings.volume,
+            bgNoiseEnabled: bgNoiseSettings.enabled,
+            simpleDigitsMode: simpleDigitsMode,
+            quoteEmojisEnabled: quoteEmojisOn,
+            inversionMode: inversionMode,
+            themeCustomized: themeCustomized,
+            theme: { bg: bgColor.value, face: clockFaceColor.value, number: numberColor.value, font: fontSelector.value }
+        };
+    }
+    function toCompact(data) {
+        return {
+            v: STORAGE_VERSION,
+            ps: compactPomo(data.pomoSettings),
+            sc: data.sessionsCompletedToday,
+            ld: data.lastStatsDate,
+            cc: data.currentSessionInCycle,
+            h12: data.is12Hour ? 1 : 0,
+            qe: data.quotesEnabled ? 1 : 0,
+            qi: data.quotesIntervalMinutes,
+            nm: data.userName || '',
+            bnt: data.bgNoiseType,
+            bnv: data.bgNoiseVolume,
+            bne: data.bgNoiseEnabled ? 1 : 0,
+            sd: data.simpleDigitsMode ? 1 : 0,
+            qem: data.quoteEmojisEnabled ? 1 : 0,
+            im: data.inversionMode ? 1 : 0,
+            tc: data.themeCustomized ? 1 : 0,
+            th: data.theme ? { bg: data.theme.bg, f: data.theme.face, n: data.theme.number, fn: data.theme.font } : undefined
+        };
+    }
+    function fromStored(raw) {
+        if (!raw) return null;
+        try {
+            const c = JSON.parse(raw);
+            if (!c) return null;
+            if (c.pomoSettings) return c;
+            return {
+                pomoSettings: expandPomo(c.ps),
+                sessionsCompletedToday: c.sc || 0,
+                lastStatsDate: c.ld || '',
+                currentSessionInCycle: c.cc || 0,
+                is12Hour: !!c.h12,
+                quotesEnabled: c.qe !== 0,
+                quotesIntervalMinutes: c.qi || 10,
+                userName: c.nm || '',
+                bgNoiseType: c.bnt,
+                bgNoiseVolume: c.bnv,
+                bgNoiseEnabled: !!c.bne,
+                simpleDigitsMode: !!c.sd,
+                quoteEmojisEnabled: c.qem !== 0,
+                inversionMode: c.im !== undefined ? !!c.im : !!c.dm,
+                themeCustomized: !!c.tc,
+                ext: c.ext,
+                theme: c.th ? { bg: c.th.bg, face: c.th.f, number: c.th.n, font: c.th.fn } : undefined
+            };
+        } catch (e) {
+            return null;
+        }
+    }
+    function toEssentialCompact(compact) {
+        const essential = Object.assign({}, compact);
+        delete essential.sc;
+        delete essential.ld;
+        delete essential.cc;
+        essential.ext = 1;
+        return essential;
+    }
+    function applySettingsData(data) {
+        Object.assign(pomoSettings, data.pomoSettings || {});
+        sessionsCompletedToday = data.sessionsCompletedToday || 0;
+        lastStatsDate = data.lastStatsDate || '';
+        currentSessionInCycle = data.currentSessionInCycle || 0;
+        is12Hour = data.is12Hour || false;
+        showQuotes = data.quotesEnabled !== false;
+        quotesIntervalMinutes = data.quotesIntervalMinutes || 10;
+        if (data.userName) userNameInput.value = data.userName;
+        if (data.bgNoiseType) {
+            let noiseType = data.bgNoiseType === 'chimes' ? 'piano' : data.bgNoiseType;
+            if (noiseType === 'lofi') noiseType = 'beautifulDream';
+            bgNoiseSettings.type = noiseType;
+        }
+        if (typeof data.bgNoiseVolume === 'number') bgNoiseSettings.volume = data.bgNoiseVolume;
+        if (typeof data.bgNoiseEnabled === 'boolean') bgNoiseSettings.enabled = data.bgNoiseEnabled;
+        if (typeof data.simpleDigitsMode === 'boolean') simpleDigitsMode = data.simpleDigitsMode;
+        if (typeof data.quoteEmojisEnabled === 'boolean') quoteEmojisOn = data.quoteEmojisEnabled;
+        if (typeof data.inversionMode === 'boolean') inversionMode = data.inversionMode;
+        else if (typeof data.darkMode === 'boolean') inversionMode = data.darkMode;
+        if (typeof data.themeCustomized === 'boolean') themeCustomized = data.themeCustomized;
+        if (data.theme) {
+            bgColor.value = data.theme.bg;
+            clockFaceColor.value = data.theme.face;
+            numberColor.value = data.theme.number;
+            fontSelector.value = data.theme.font;
+        }
+    }
+    function saveAll() {
+        const compact = toCompact(buildSettingsObject());
+        const json = JSON.stringify(compact);
+        try { localStorage.setItem(STORAGE_KEY, json); } catch (e) {}
+        if (json.length <= COOKIE_MAX_CHARS) {
+            if (!setCookie(COOKIE_NAME, json)) {
+                // cookie write failed (e.g. file://) — localStorage backup already saved
+            }
+        } else {
+            const essentialJson = JSON.stringify(toEssentialCompact(compact));
+            if (essentialJson.length <= COOKIE_MAX_CHARS) {
+                setCookie(COOKIE_NAME, essentialJson);
+            }
+        }
+    }
+    function loadAll() {
+        try {
+            const cookieData = fromStored(getCookie(COOKIE_NAME));
+            const lsData = fromStored(localStorage.getItem(STORAGE_KEY));
+            let data = null;
+            if (cookieData && lsData) {
+                data = Object.assign({}, lsData, cookieData);
+            } else {
+                data = cookieData || lsData;
+            }
+            if (!data) return;
+            applySettingsData(data);
+        } catch (e) {}
+        syncUIFromSettings();
+    }
+
+    function syncUIFromSettings() {
+        checkDailyReset();
+        syncPomoUI();
+        syncQuotesUI();
+        syncBgNoiseUI();
+        syncSimpleDigitsUI();
+        syncInversionModeUI();
+        quotesIntervalSelect.value = String(quotesIntervalMinutes);
+        update12hrButtons();
+        updateGreeting();
+    }
+
+    // ─── Settings sync (copy / paste / QR) ───
+    const settingsToast = document.getElementById('settingsToast');
+    const qrModalOverlay = document.getElementById('qrModalOverlay');
+    const qrModalCanvas = document.getElementById('qrModalCanvas');
+    const qrModalTitle = document.getElementById('qrModalTitle');
+    const qrModalHint = document.getElementById('qrModalHint');
+    const scanModalReader = document.getElementById('scanModalReader');
+    const importSettingsInput = document.getElementById('importSettingsInput');
+    let toastTimer = null;
+    let qrCodeInstance = null;
+    let html5QrScanner = null;
+
+    function showToast(message) {
+        settingsToast.textContent = message;
+        settingsToast.classList.add('show');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function() {
+            settingsToast.classList.remove('show');
+        }, 2800);
+    }
+
+    function utf8ToBase64(str) {
+        return btoa(unescape(encodeURIComponent(str)));
+    }
+
+    function base64ToUtf8(b64) {
+        return decodeURIComponent(escape(atob(b64)));
+    }
+
+    function getSettingsJson() {
+        return JSON.stringify(toCompact(buildSettingsObject()));
+    }
+
+    function compressSettingsPayload(json) {
+        if (typeof LZString !== 'undefined') {
+            return LZString.compressToEncodedURIComponent(json);
+        }
+        return utf8ToBase64(json);
+    }
+
+    function decompressSettingsPayload(payload) {
+        if (typeof LZString !== 'undefined') {
+            const fromLz = LZString.decompressFromEncodedURIComponent(payload);
+            if (fromLz) return fromLz;
+        }
+        return base64ToUtf8(payload);
+    }
+
+    function parseSettingsPayload(payload) {
+        try {
+            const json = decompressSettingsPayload(payload);
+            const parsed = JSON.parse(json);
+            if (!parsed || parsed.v !== STORAGE_VERSION) return null;
+            return fromStored(json);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function getSettingsShareBase() {
+        const host = location.hostname;
+        if (host === 'clock.petralian.com' || host.endsWith('.petralian.com')) {
+            return 'https://clock.petralian.com/';
+        }
+        return location.origin + location.pathname;
+    }
+
+    function getSettingsBase64Payload() {
+        return utf8ToBase64(getSettingsJson());
+    }
+
+    function encodeSettingsCode() {
+        return SETTINGS_CODE_PREFIX + compressSettingsPayload(getSettingsJson());
+    }
+
+    function buildShortImportUrl() {
+        return getSettingsShareBase() + '#i=' + compressSettingsPayload(getSettingsJson());
+    }
+
+    function buildImportUrl() {
+        return getSettingsShareBase() + '#import=' + encodeURIComponent(getSettingsBase64Payload());
+    }
+
+    function decodeSettingsCode(raw) {
+        let s = String(raw || '').trim();
+        if (!s) return null;
+        if (s.indexOf('#i=') !== -1) {
+            const hashIdx = s.indexOf('#i=');
+            s = decodeURIComponent(s.slice(hashIdx + 3).split('&')[0]);
+            return parseSettingsPayload(s);
+        }
+        if (s.indexOf('#import=') !== -1) {
+            const hashIdx = s.indexOf('#import=');
+            s = decodeURIComponent(s.slice(hashIdx + 8).split('&')[0]);
+            return parseSettingsPayload(s);
+        }
+        if (s.indexOf(SETTINGS_CODE_PREFIX) === 0) {
+            s = s.slice(SETTINGS_CODE_PREFIX.length);
+        }
+        return parseSettingsPayload(s);
+    }
+
+    function applyImportedSettings(input) {
+        const data = decodeSettingsCode(input);
+        if (!data) {
+            showToast('That code didn\'t work — try copying again');
+            return false;
+        }
+        applySettingsData(data);
+        syncUIFromSettings();
+        applyCustomizations();
+        saveAll();
+        showToast('Settings applied! 🎉');
+        return true;
+    }
+
+    function tryImportFromHash() {
+        const hash = location.hash;
+        if (!hash) return;
+        if (hash.indexOf('#i=') === 0) {
+            applyImportedSettings(decodeURIComponent(hash.slice(3)));
+            history.replaceState(null, '', location.pathname + location.search);
+            return;
+        }
+        if (hash.indexOf('#import=') === 0) {
+            applyImportedSettings(decodeURIComponent(hash.slice(8)));
+            history.replaceState(null, '', location.pathname + location.search);
+        }
+    }
+
+    function stopQrScanner() {
+        if (!html5QrScanner) return;
+        html5QrScanner.stop().catch(function() {}).finally(function() {
+            html5QrScanner.clear();
+            html5QrScanner = null;
+        });
+    }
+
+    function closeQrModal() {
+        stopQrScanner();
+        qrModalOverlay.classList.remove('open');
+        qrModalOverlay.setAttribute('aria-hidden', 'true');
+        qrModalCanvas.innerHTML = '';
+        qrModalCanvas.classList.remove('hidden');
+        scanModalReader.classList.add('hidden');
+        scanModalReader.innerHTML = '';
+        qrModalTitle.textContent = 'Scan with your other device';
+        qrModalHint.textContent = 'Open your camera and scan to sync settings';
+        qrCodeInstance = null;
+    }
+
+    function showQrCodeModal() {
+        if (typeof QRCode === 'undefined') {
+            showToast('That code didn\'t work — try copying again');
+            return;
+        }
+        stopQrScanner();
+        qrModalTitle.textContent = 'Scan with your other device';
+        qrModalHint.textContent = 'Open your camera and scan to sync settings';
+        qrModalCanvas.classList.remove('hidden');
+        scanModalReader.classList.add('hidden');
+        scanModalReader.innerHTML = '';
+        qrModalCanvas.innerHTML = '';
+        const url = buildShortImportUrl();
+        qrCodeInstance = new QRCode(qrModalCanvas, {
+            text: url,
+            width: 220,
+            height: 220,
+            colorDark: '#2c2c2e',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+        });
+        qrModalOverlay.classList.add('open');
+        qrModalOverlay.setAttribute('aria-hidden', 'false');
+    }
+
+    function loadHtml5QrcodeScript() {
+        return new Promise(function(resolve, reject) {
+            if (window.Html5Qrcode) {
+                resolve();
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+            script.onload = function() { resolve(); };
+            script.onerror = function() { reject(new Error('load failed')); };
+            document.head.appendChild(script);
+        });
+    }
+
+    function showScanQrModal() {
+        loadHtml5QrcodeScript().then(function() {
+            stopQrScanner();
+            qrModalTitle.textContent = 'Scan QR code';
+            qrModalHint.textContent = 'Point your camera at a LunaClock settings QR code';
+            qrModalCanvas.classList.add('hidden');
+            qrModalCanvas.innerHTML = '';
+            scanModalReader.classList.remove('hidden');
+            scanModalReader.innerHTML = '';
+            qrModalOverlay.classList.add('open');
+            qrModalOverlay.setAttribute('aria-hidden', 'false');
+            html5QrScanner = new Html5Qrcode('scanModalReader');
+            html5QrScanner.start(
+                { facingMode: 'environment' },
+                { fps: 8, qrbox: { width: 220, height: 220 } },
+                function(decodedText) {
+                    stopQrScanner();
+                    closeQrModal();
+                    importSettingsInput.value = decodedText;
+                    applyImportedSettings(decodedText);
+                },
+                function() {}
+            ).catch(function() {
+                showToast('That code didn\'t work — try copying again');
+                closeQrModal();
+            });
+        }).catch(function() {
+            showToast('That code didn\'t work — try copying again');
+        });
+    }
+
+    function copyTextToClipboard(text, successMsg) {
+        const msg = successMsg || 'Copied!';
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function() {
+                showToast(msg);
+            }).catch(function() {
+                importSettingsInput.value = text;
+                showToast(msg);
+            });
+        } else {
+            importSettingsInput.value = text;
+            importSettingsInput.select();
+            try {
+                document.execCommand('copy');
+                showToast(msg);
+            } catch (e) {
+                showToast('Copy from the box below');
+            }
+        }
+    }
+
+    document.getElementById('copySettingsBtn').addEventListener('click', function() {
+        copyTextToClipboard(encodeSettingsCode(), 'Code copied!');
+    });
+    document.getElementById('copyShortLinkBtn').addEventListener('click', function() {
+        copyTextToClipboard(buildShortImportUrl(), 'Short link copied!');
+    });
+    document.getElementById('showQrBtn').addEventListener('click', showQrCodeModal);
+    document.getElementById('applySettingsBtn').addEventListener('click', function() {
+        applyImportedSettings(importSettingsInput.value);
+    });
+    document.getElementById('scanQrBtn').addEventListener('click', showScanQrModal);
+    document.getElementById('qrModalCloseBtn').addEventListener('click', closeQrModal);
+    qrModalOverlay.addEventListener('click', function(e) {
+        if (e.target === qrModalOverlay) closeQrModal();
+    });
+
+    function applyThemePalette(palette) {
+        bgColor.value = palette.bg;
+        clockFaceColor.value = palette.face;
+        numberColor.value = palette.number;
+    }
+
+    function syncInversionModeUI() {
+        if (inversionModeEnabled) inversionModeEnabled.checked = inversionMode;
+        body.classList.toggle('inversion-mode', inversionMode);
+    }
+
+    function toggleInversionMode(on) {
+        inversionMode = on;
+        syncInversionModeUI();
+        applyCustomizations();
+        saveAll();
+    }
+
+    function syncSimpleDigitsUI() {
+        simpleDigitsModeCheckbox.checked = simpleDigitsMode;
+        clock.classList.toggle('simple-digits', simpleDigitsMode);
+    }
+
+    function refreshCurrentQuote() {
+        if (!showQuotes) {
+            quoteDisplay.classList.add('hidden');
+            return;
+        }
+        if (!currentQuoteText) return;
+        let html = formatQuoteText(currentQuoteText, currentQuoteTags);
+        if (currentQuoteAuthor) html += '<span class="quote-attribution">— ' + currentQuoteAuthor + '</span>';
+        quoteDisplay.innerHTML = html;
+        quoteDisplay.classList.remove('hidden');
+    }
+
+    function syncQuotesUI() {
+        quotesEnabled.checked = showQuotes;
+        quoteEmojisEnabled.checked = quoteEmojisOn;
+        if (!showQuotes) {
+            quoteDisplay.classList.add('hidden');
+            stopQuoteRotation();
+            return;
+        }
+        if (isPomodoroMode) startQuoteRotation();
+        else refreshCurrentQuote();
+    }
+
+    function stripLeadingEmoji(text) {
+        return String(text).replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]+\s*/u, '');
+    }
+
+    function emojiForQuote(text, tags) {
+        const t = String(text).toLowerCase();
+        const tagStr = (tags || []).join(' ').toLowerCase();
+        if (tagStr.includes('success') || t.includes('success') || t.includes('great work')) return '🏆';
+        if (tagStr.includes('motivat') || t.includes('believe') || t.includes('you can')) return '✨';
+        if (t.includes('focus') || t.includes('present') || t.includes('calm')) return '🎯';
+        if (t.includes('dream') || t.includes('future')) return '🌟';
+        if (t.includes('start') || t.includes('begin') || t.includes('step')) return '🚀';
+        if (t.includes('breath') || t.includes('peace') || t.includes('calm')) return '🌿';
+        if (t.includes('happy') || t.includes('joy') || t.includes('smile')) return '😊';
+        if (t.includes('strong') || t.includes('brave') || t.includes('push')) return '💪';
+        if (t.includes('learn') || t.includes('mistake') || t.includes('grow')) return '📚';
+        if (t.includes('time') || t.includes('clock') || t.includes('minute')) return '⏰';
+        return '✨';
+    }
+
+    function formatQuoteText(text, tags) {
+        let out = String(text).trim();
+        if (!quoteEmojisOn) return stripLeadingEmoji(out);
+        if (/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(out)) return out;
+        return emojiForQuote(out, tags) + ' ' + out;
+    }
+
+    function checkDailyReset() {
+        const today = new Date().toDateString();
+        if (lastStatsDate !== today) {
+            sessionsCompletedToday = 0;
+            lastStatsDate = today;
+            saveAll();
+        }
+    }
+
+    function syncPomoUI() {
+        document.getElementById('focusTime').value = pomoSettings.focusMin;
+        document.getElementById('shortBreak').value = pomoSettings.shortBreakMin;
+        document.getElementById('longBreak').value = pomoSettings.longBreakMin;
+        document.getElementById('sessionsBeforeLong').value = pomoSettings.sessionsBeforeLong;
+        document.getElementById('dailyGoal').value = pomoSettings.dailyGoal;
+        document.getElementById('autoStartBreaks').checked = pomoSettings.autoStartBreaks;
+        document.getElementById('autoStartFocus').checked = pomoSettings.autoStartFocus;
+        document.getElementById('soundOnComplete').checked = pomoSettings.soundOnComplete;
+        document.getElementById('flipTickSound').checked = pomoSettings.flipTickSound;
+        ['focusTime','shortBreak','longBreak','sessionsBeforeLong','dailyGoal'].forEach(function(id) {
+            document.getElementById(id + 'Val').textContent = document.getElementById(id).value;
+        });
+        updatePomoStats();
+    }
+
+    function updatePomoStats() {
+        pomoStats.textContent = 'Today: ' + sessionsCompletedToday + ' / ' + pomoSettings.dailyGoal + ' sessions';
+        dailyGoalProgress.textContent = sessionsCompletedToday + ' / ' + pomoSettings.dailyGoal;
+        const pct = Math.min(100, (sessionsCompletedToday / pomoSettings.dailyGoal) * 100);
+        goalFill.style.width = pct + '%';
+        if (isPomodoroMode && !isBreak) {
+            sessionBadge.style.display = 'block';
+            sessionBadge.textContent = 'Session ' + (currentSessionInCycle + 1) + ' of ' + pomoSettings.sessionsBeforeLong;
+        } else {
+            sessionBadge.style.display = 'none';
+        }
+    }
+
+    function getCurrentMode() {
+        if (isPomodoroMode) return 'pomodoro';
+        if (isStopwatchMode) return 'stopwatch';
+        return 'clock';
+    }
+
+    function updateStopwatchElapsed(ms) {
+        const t = formatTime(ms);
+        if (t.hours > 0) {
+            stopwatchElapsed.textContent = 'Elapsed: ' + pad(t.hours) + ':' + pad(t.minutes) + ':' + pad(t.seconds);
+        } else {
+            stopwatchElapsed.textContent = 'Elapsed: ' + pad(t.minutes) + ':' + pad(t.seconds);
+        }
+    }
+
+    function updateControlsForMode() {
+        const mode = getCurrentMode();
+
+        clockModeBtn.classList.toggle('active', mode === 'clock');
+        stopwatchModeBtn.classList.toggle('active', mode === 'stopwatch');
+        pomodoroModeBtn.classList.toggle('active', mode === 'pomodoro');
+
+        stopwatchPanel.classList.toggle('show', mode === 'stopwatch');
+        pomodoroPanel.classList.toggle('show', mode === 'pomodoro');
+
+        greetingBanner.classList.toggle('compact', mode === 'pomodoro');
+        clock.classList.toggle('stopwatch-mode', mode === 'stopwatch');
+        millisecondsCard.classList.add('hidden');
+        setPomodoroLayout(mode === 'pomodoro');
+        if (mode === 'stopwatch') {
+            const t = formatTime(stopwatchTime);
+            setStopwatchHoursVisibility(t.hours > 0);
+        } else if (mode !== 'pomodoro') {
+            setStopwatchHoursVisibility(true);
+        }
+
+        if (mode === 'clock') {
+            document.getElementById('hoursLabel').textContent = 'Hours';
+            document.getElementById('minutesLabel').textContent = 'Minutes';
+            document.getElementById('secondsLabel').textContent = 'Seconds';
+        } else if (mode === 'pomodoro') {
+            document.getElementById('hoursLabel').textContent = '';
+            document.getElementById('minutesLabel').textContent = 'Minutes';
+            document.getElementById('secondsLabel').textContent = 'Seconds';
+        } else if (mode === 'stopwatch') {
+            document.getElementById('hoursLabel').textContent = 'Hours';
+            document.getElementById('minutesLabel').textContent = 'Minutes';
+            document.getElementById('secondsLabel').textContent = 'Seconds';
+            updateStopwatchElapsed(stopwatchTime);
+        }
+
+        amPmDisplay.style.display = (mode === 'clock' && is12Hour) ? 'flex' : 'none';
+        fullscreenPomoPause.classList.toggle('show', isFullscreen && mode === 'pomodoro' && pomodoroRunning);
+        fullscreenPomoPause.textContent = pomodoroRunning ? '⏸️ Pause' : '▶️ Resume';
+        syncPomodoroStartLabel();
+        update12hrButtons();
+    }
+
+    function syncPomodoroStartLabel() {
+        if (!isPomodoroMode) return;
+        if (pomodoroRunning) {
+            pomodoroStartBtn.textContent = '⏸️ Pause';
+        } else {
+            pomodoroStartBtn.textContent = isBreak ? '▶️ Start Break' : '▶️ Start Focus';
+        }
+    }
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function adjustColor(hex, percent) {
+        try {
+            let r = parseInt(hex.slice(1,3), 16);
+            let g = parseInt(hex.slice(3,5), 16);
+            let b = parseInt(hex.slice(5,7), 16);
+            r = Math.min(255, Math.max(0, r + percent));
+            g = Math.min(255, Math.max(0, g + percent));
+            b = Math.min(255, Math.max(0, b + percent));
+            return '#' + r.toString(16).padStart(2,'0') + g.toString(16).padStart(2,'0') + b.toString(16).padStart(2,'0');
+        } catch(e) { return hex; }
+    }
+    function formatTime(ms) {
+        const totalSeconds = Math.floor(ms / 1000);
+        return {
+            hours: Math.floor(totalSeconds / 3600),
+            minutes: Math.floor((totalSeconds % 3600) / 60),
+            seconds: totalSeconds % 60,
+            millis: Math.floor((ms % 1000) / 10)
+        };
+    }
+
+    function formatCountdown(ms) {
+        const totalSeconds = Math.floor(ms / 1000);
+        return {
+            minutes: Math.floor(totalSeconds / 60),
+            seconds: totalSeconds % 60
+        };
+    }
+
+    function setSimpleDigit(el, val) {
+        const span = el.querySelector('.simple-digit');
+        if (span) span.textContent = String(val).slice(-1);
+    }
+
+    function flipDigit(el, val, animate) {
+        const playTick = pomoSettings.flipTickSound;
+        if (simpleDigitsMode) {
+            setSimpleDigit(el, val);
+            return;
+        }
+        if (animate) FlipEngine.flip(el, val, playTick);
+        else FlipEngine.setInstant(el, val);
+    }
+
+    function flipPair(tensEl, onesEl, numStr, animate) {
+        flipDigit(tensEl, numStr[0], animate);
+        flipDigit(onesEl, numStr[1], animate);
+    }
+
+    function setPomodoroLayout(on) {
+        hoursCard.classList.toggle('hidden', on);
+        sep1.classList.toggle('hidden', on);
+    }
+
+    function setStopwatchHoursVisibility(showHours) {
+        if (!isStopwatchMode || isPomodoroMode) return;
+        hoursCard.classList.toggle('hidden', !showHours);
+        sep1.classList.toggle('hidden', !showHours);
+    }
+
+    function updateDisplay(ms, animate) {
+        if (isPomodoroMode) {
+            const t = formatCountdown(ms);
+            flipPair(digitEls.minutesTens, digitEls.minutesOnes, pad(t.minutes), animate);
+            flipPair(digitEls.secondsTens, digitEls.secondsOnes, pad(t.seconds), animate);
+        } else {
+            const t = formatTime(ms);
+            if (isStopwatchMode) {
+                setStopwatchHoursVisibility(t.hours > 0);
+            }
+            flipPair(digitEls.hoursTens, digitEls.hoursOnes, pad(t.hours), animate);
+            flipPair(digitEls.minutesTens, digitEls.minutesOnes, pad(t.minutes), animate);
+            flipPair(digitEls.secondsTens, digitEls.secondsOnes, pad(t.seconds), animate);
+        }
+    }
+
+    function updateFontPreview() {
+        if (!fontPreview) return;
+        const font = fontSelector.value;
+        fontPreview.style.fontFamily = font;
+        fontPreview.style.fontWeight = isScriptFont(font) ? '400' : '600';
+    }
+
+    function applyCustomizations() {
+        const palette = getEffectivePalette();
+        const bg = palette.bg;
+        const bg2 = adjustColor(bg, isEffectivelyDark() ? -6 : -18);
+        const face = palette.face;
+        const faceDim = adjustColor(face, -28);
+        const num = palette.number;
+        document.documentElement.style.setProperty('--bg', bg);
+        document.documentElement.style.setProperty('--bg2', bg2);
+        document.documentElement.style.setProperty('--face', face);
+        document.documentElement.style.setProperty('--face-dim', faceDim);
+        document.documentElement.style.setProperty('--number', num);
+        applyChromeTextTokens();
+        body.style.background = 'linear-gradient(145deg, ' + bg + ', ' + bg2 + ')';
+        document.querySelectorAll('.digit-top, .digit-top2, .digit-bottom, .flipper-digit .digit-next, .simple-digit').forEach(function(el) {
+            el.style.background = '';
+            el.style.color = num;
+        });
+        document.querySelectorAll('.simple-digit').forEach(function(el) {
+            el.style.background = 'transparent';
+        });
+        document.querySelectorAll('.digit-top.r, .digit-bottom.r').forEach(function(el) {
+            el.style.background = faceDim;
+        });
+        document.querySelectorAll('.digit-top2:not(.r)').forEach(function(el) {
+            el.style.background = faceDim;
+        });
+        const font = fontSelector.value;
+        document.documentElement.style.setProperty('--font', font);
+        document.body.style.fontFamily = font;
+        applyTypographyRoles();
+        updateFontPreview();
+        saveAll();
+    }
+
+    function updateTimeDisplay() {
+        timeDisplay.textContent = '🕐 ' + new Date().toLocaleTimeString();
+    }
+
+    function updateGreeting() {
+        const hour = new Date().getHours();
+        let greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Good night';
+        const name = userNameInput.value.trim();
+        greetingMessage.textContent = name ? greet + ', ' + name + '!' : greet;
+    }
+
+    function displayQuote(text, author, fromApi, tags) {
+        if (!showQuotes) return;
+        currentQuoteText = text;
+        currentQuoteAuthor = author || null;
+        currentQuoteTags = tags || [];
+        let html = formatQuoteText(text, currentQuoteTags);
+        if (currentQuoteAuthor) html += '<span class="quote-attribution">— ' + currentQuoteAuthor + '</span>';
+        quoteDisplay.innerHTML = html;
+        quoteDisplay.classList.add('pomodoro-quote');
+        quoteDisplay.classList.remove('hidden');
+    }
+
+    function getLocalQuote() {
+        const available = localQuotes.filter(function(q) {
+            return sessionQuoteCache.indexOf(q) === -1;
+        });
+        const pool = available.length ? available : localQuotes;
+        const quote = pool[Math.floor(Math.random() * pool.length)];
+        sessionQuoteCache.push(quote);
+        if (sessionQuoteCache.length > 30) sessionQuoteCache.shift();
+        return { text: quote, author: null, fromApi: false, tags: [] };
+    }
+
+    function fetchQuoteFromApi() {
+        if (isFetchingQuote) return Promise.resolve(getLocalQuote());
+        isFetchingQuote = true;
+        return fetch('https://api.quotable.io/random?maxLength=120')
+            .then(function(res) {
+                if (!res.ok) throw new Error('API error');
+                return res.json();
+            })
+            .then(function(data) {
+                const text = data.content;
+                if (sessionQuoteCache.indexOf(text) !== -1) return getLocalQuote();
+                sessionQuoteCache.push(text);
+                if (sessionQuoteCache.length > 30) sessionQuoteCache.shift();
+                return { text: text, author: data.author, fromApi: true, tags: data.tags || [] };
+            })
+            .catch(function() {
+                return getLocalQuote();
+            })
+            .finally(function() { isFetchingQuote = false; });
+    }
+
+    function showNextQuote() {
+        if (!showQuotes) return;
+        fetchQuoteFromApi().then(function(q) {
+            displayQuote(q.text, q.author, q.fromApi, q.tags);
+        });
+    }
+
+    function startQuoteRotation() {
+        if (!showQuotes) return;
+        if (quoteInterval) clearInterval(quoteInterval);
+        fetchQuoteFromApi().then(function(q) {
+            displayQuote(q.text, q.author, q.fromApi, q.tags);
+        });
+        const ms = quotesIntervalMinutes * 60 * 1000;
+        quoteInterval = setInterval(showNextQuote, ms);
+    }
+    function stopQuoteRotation() {
+        if (quoteInterval) { clearInterval(quoteInterval); quoteInterval = null; }
+        if (!showQuotes) {
+            quoteDisplay.classList.add('hidden');
+        } else {
+            quoteDisplay.textContent = formatQuoteText('Focus on the present moment.');
+            quoteDisplay.classList.remove('pomodoro-quote');
+        }
+    }
+
+    function update12hrButtons() {
+        timeFormatBtn.textContent = is12Hour ? '12-hour' : '24-hour';
+    }
+    function stopAllTimers() {
+        if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
+        if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+        if (pomodoroInterval) { clearInterval(pomodoroInterval); pomodoroInterval = null; }
+    }
+
+    // ─── Clock mode ───
+    function startClock() {
+        isStopwatchMode = false;
+        isPomodoroMode = false;
+        isRunning = false;
+        pomodoroRunning = false;
+        stopQuoteRotation();
+        stopAllTimers();
+        modeIndicatorText.textContent = '⏰ Clock';
+        sessionBadge.style.display = 'none';
+
+        const tick = function() {
+            const now = new Date();
+            let hours = now.getHours();
+            if (is12Hour) {
+                amPmDisplay.textContent = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12 || 12;
+            }
+            flipPair(digitEls.hoursTens, digitEls.hoursOnes, pad(hours), true);
+            flipPair(digitEls.minutesTens, digitEls.minutesOnes, pad(now.getMinutes()), true);
+            flipPair(digitEls.secondsTens, digitEls.secondsOnes, pad(now.getSeconds()), true);
+        };
+
+        tick();
+        clockInterval = setInterval(tick, 1000);
+        updateControlsForMode();
+        saveAll();
+    }
+
+    // ─── Stopwatch ───
+    function enterStopwatchMode() {
+        isStopwatchMode = true;
+        isPomodoroMode = false;
+        pomodoroRunning = false;
+        stopQuoteRotation();
+        stopAllTimers();
+        modeIndicatorText.textContent = '⏱️ Stopwatch';
+        updateDisplay(stopwatchTime, false);
+        updateControlsForMode();
+    }
+
+    function startStopwatch() {
+        if (isRunning) {
+            isRunning = false;
+            clearInterval(timerInterval);
+            startStopBtn.textContent = '▶️ Start';
+            return;
+        }
+        isRunning = true;
+        const startTime = Date.now() - stopwatchTime;
+        startStopBtn.textContent = '⏸️ Stop';
+        timerInterval = setInterval(function() {
+            stopwatchTime = Date.now() - startTime;
+            updateDisplay(stopwatchTime, true);
+            updateStopwatchElapsed(stopwatchTime);
+        }, 1000);
+    }
+
+    function resetStopwatch() {
+        isRunning = false;
+        stopwatchTime = 0;
+        laps = [];
+        clearInterval(timerInterval);
+        startStopBtn.textContent = '▶️ Start';
+        allDigitEls.forEach(function(el) { flipDigit(el, '0', false); });
+        lapsContainer.innerHTML = '<div class="no-laps">No laps recorded</div>';
+        updateStopwatchElapsed(0);
+    }
+
+    function recordLap() {
+        if (!isRunning) return;
+        laps.unshift(stopwatchTime);
+        const bestLap = laps.length > 1 ? Math.min.apply(null, laps) : stopwatchTime;
+        if (laps.length === 1) lapsContainer.innerHTML = '';
+        lapsContainer.innerHTML = laps.map(function(lap, i) {
+            const lt = formatTime(lap);
+            let timeStr;
+            if (lt.hours > 0) {
+                timeStr = pad(lt.hours) + ':' + pad(lt.minutes) + ':' + pad(lt.seconds);
+            } else {
+                timeStr = pad(lt.minutes) + ':' + pad(lt.seconds);
+            }
+            const isBest = lap === bestLap && laps.length > 1;
+            return '<div class="lap-item' + (isBest ? ' best-lap' : '') + '"><span class="lap-num">Lap ' + (laps.length - i) + '</span><span class="lap-time">' + timeStr + '</span></div>';
+        }).join('');
+    }
+
+    // ─── Pomodoro ───
+    function getFocusMs() { return pomoSettings.focusMin * 60 * 1000; }
+    function getShortBreakMs() { return pomoSettings.shortBreakMin * 60 * 1000; }
+    function getLongBreakMs() { return pomoSettings.longBreakMin * 60 * 1000; }
+
+    function enterPomodoroMode() {
+        isStopwatchMode = false;
+        isPomodoroMode = true;
+        isRunning = false;
+        pomodoroRunning = false;
+        isBreak = false;
+        isLongBreak = false;
+        pomodoroRemaining = getFocusMs();
+        stopAllTimers();
+        modeIndicatorText.textContent = '🍅 Pomodoro — Focus';
+        updatePomoStats();
+        updateDisplay(pomodoroRemaining, false);
+        if (showQuotes) startQuoteRotation();
+        else stopQuoteRotation();
+        updateControlsForMode();
+    }
+
+    function onPomodoroComplete() {
+        playChime();
+        try {
+            if (Notification.permission === 'granted') {
+                new Notification('LunaClock', { body: isBreak ? 'Break is over! Time to focus.' : 'Great job! Take a break.' });
+            }
+        } catch (e) {}
+
+        if (!isBreak) {
+            sessionsCompletedToday++;
+            currentSessionInCycle++;
+            saveAll();
+            updatePomoStats();
+            const celebrationLines = ['Great job! Session complete 🌟'];
+            if (sessionsCompletedToday >= pomoSettings.dailyGoal) {
+                celebrationLines.push('🏆 Daily goal reached!');
+            }
+            launchConfetti(11000);
+            showCelebrationBanner(celebrationLines, 10000);
+            const useLongBreak = currentSessionInCycle >= pomoSettings.sessionsBeforeLong;
+            isBreak = true;
+            isLongBreak = useLongBreak;
+            if (useLongBreak) {
+                currentSessionInCycle = 0;
+                pomodoroRemaining = getLongBreakMs();
+                modeIndicatorText.textContent = '☕ Long Break';
+                sessionBadge.style.display = 'none';
+            } else {
+                pomodoroRemaining = getShortBreakMs();
+                modeIndicatorText.textContent = '☕ Short Break';
+                sessionBadge.style.display = 'none';
+            }
+        } else {
+            isBreak = false;
+            isLongBreak = false;
+            pomodoroRemaining = getFocusMs();
+            modeIndicatorText.textContent = '🍅 Pomodoro — Focus';
+            updatePomoStats();
+            showSticker('💪 Let\'s go!');
+        }
+        updateDisplay(pomodoroRemaining, false);
+        if ((isBreak && pomoSettings.autoStartBreaks) || (!isBreak && pomoSettings.autoStartFocus)) {
+            setTimeout(startPomodoro, 800);
+        } else {
+            updateControlsForMode();
+        }
+    }
+
+    function startPomodoro() {
+        if (pomodoroRunning) {
+            pomodoroRunning = false;
+            clearInterval(pomodoroInterval);
+            pomodoroStartBtn.textContent = isBreak ? '▶️ Start Break' : '▶️ Start Focus';
+            updateControlsForMode();
+            return;
+        }
+        pomodoroRunning = true;
+        const endTime = Date.now() + pomodoroRemaining;
+        pomodoroStartBtn.textContent = '⏸️ Pause';
+        pomodoroInterval = setInterval(function() {
+            pomodoroRemaining = Math.max(0, endTime - Date.now());
+            updateDisplay(pomodoroRemaining, true);
+            if (pomodoroRemaining <= 0) {
+                clearInterval(pomodoroInterval);
+                pomodoroInterval = null;
+                pomodoroRunning = false;
+                pomodoroStartBtn.textContent = isBreak ? '▶️ Start Break' : '▶️ Start Focus';
+                onPomodoroComplete();
+            }
+        }, 200);
+        updateControlsForMode();
+    }
+
+    // ─── Fullscreen ───
+    function enterFullscreen() {
+        isFullscreen = true;
+        body.classList.add('fullscreen-mode');
+        exitFullscreenBtn.classList.add('show');
+        closeSettings();
+        updateControlsForMode();
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(function() {});
+        }
+    }
+    function exitFullscreen() {
+        isFullscreen = false;
+        body.classList.remove('fullscreen-mode');
+        exitFullscreenBtn.classList.remove('show');
+        fullscreenPomoPause.classList.remove('show');
+        if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen().catch(function() {});
+        }
+    }
+
+    // ─── Events ───
+    settingsOpenBtn.addEventListener('click', function() {
+        if (settingsOpen) closeSettings();
+        else openSettings();
+    });
+    settingsCloseBtn.addEventListener('click', closeSettings);
+    settingsOverlay.addEventListener('click', closeSettings);
+
+    clockModeBtn.addEventListener('click', function() {
+        if (!isStopwatchMode && !isPomodoroMode) return;
+        stopQuoteRotation();
+        startClock();
+    });
+    stopwatchModeBtn.addEventListener('click', function() {
+        if (isStopwatchMode) return;
+        enterStopwatchMode();
+    });
+    pomodoroModeBtn.addEventListener('click', function() {
+        if (isPomodoroMode) return;
+        enterPomodoroMode();
+    });
+    timeFormatBtn.addEventListener('click', function() {
+        if (isStopwatchMode || isPomodoroMode) return;
+        is12Hour = !is12Hour;
+        startClock();
+    });
+    quotesEnabled.addEventListener('change', function(e) {
+        showQuotes = e.target.checked;
+        syncQuotesUI();
+        saveAll();
+    });
+    quoteEmojisEnabled.addEventListener('change', function(e) {
+        quoteEmojisOn = e.target.checked;
+        refreshCurrentQuote();
+        saveAll();
+    });
+    inversionModeEnabled.addEventListener('change', function(e) {
+        toggleInversionMode(e.target.checked);
+    });
+    simpleDigitsModeCheckbox.addEventListener('change', function(e) {
+        simpleDigitsMode = e.target.checked;
+        syncSimpleDigitsUI();
+        saveAll();
+        if (isPomodoroMode) {
+            updateDisplay(pomodoroRemaining, false);
+        } else if (isStopwatchMode) {
+            updateDisplay(stopwatchTime, false);
+        } else {
+            const now = new Date();
+            let hours = now.getHours();
+            if (is12Hour) hours = hours % 12 || 12;
+            flipPair(digitEls.hoursTens, digitEls.hoursOnes, pad(hours), false);
+            flipPair(digitEls.minutesTens, digitEls.minutesOnes, pad(now.getMinutes()), false);
+            flipPair(digitEls.secondsTens, digitEls.secondsOnes, pad(now.getSeconds()), false);
+        }
+    });
+    startStopBtn.addEventListener('click', startStopwatch);
+    resetBtn.addEventListener('click', resetStopwatch);
+    lapBtn.addEventListener('click', recordLap);
+    pomodoroStartBtn.addEventListener('click', startPomodoro);
+    fullscreenPomoPause.addEventListener('click', startPomodoro);
+    fullscreenBtn.addEventListener('click', enterFullscreen);
+    exitFullscreenBtn.addEventListener('click', exitFullscreen);
+    document.addEventListener('fullscreenchange', function() {
+        if (!document.fullscreenElement && isFullscreen) exitFullscreen();
+    });
+    userNameInput.addEventListener('input', function() { updateGreeting(); saveAll(); });
+    quotesIntervalSelect.addEventListener('change', function() {
+        quotesIntervalMinutes = parseInt(quotesIntervalSelect.value, 10);
+        saveAll();
+        if (isPomodoroMode && showQuotes) startQuoteRotation();
+    });
+    randomThemeBtn.addEventListener('click', generateRandomTheme);
+    bgNoiseType.addEventListener('change', function() {
+        bgNoiseSettings.type = bgNoiseType.value;
+        if (bgNoiseSettings.type !== 'none' && !bgNoiseSettings.enabled) {
+            bgNoiseSettings.enabled = true;
+            bgNoiseEnabled.checked = true;
+        }
+        saveAll();
+        syncBgNoise();
+    });
+    bgNoiseVolume.addEventListener('input', function() {
+        bgNoiseSettings.volume = parseInt(bgNoiseVolume.value, 10);
+        bgNoiseVolumeVal.textContent = bgNoiseSettings.volume;
+        saveAll();
+        updateBgNoiseVolume();
+    });
+    bgNoiseEnabled.addEventListener('change', function() {
+        bgNoiseSettings.enabled = bgNoiseEnabled.checked;
+        saveAll();
+        syncBgNoise();
+    });
+
+    ['focusTime','shortBreak','longBreak','sessionsBeforeLong','dailyGoal'].forEach(function(id) {
+        const el = document.getElementById(id);
+        el.addEventListener('input', function() {
+            document.getElementById(id + 'Val').textContent = el.value;
+            const keyMap = { focusTime:'focusMin', shortBreak:'shortBreakMin', longBreak:'longBreakMin', sessionsBeforeLong:'sessionsBeforeLong', dailyGoal:'dailyGoal' };
+            pomoSettings[keyMap[id]] = parseInt(el.value, 10);
+            if (!pomodoroRunning && isPomodoroMode && !isBreak) {
+                pomodoroRemaining = getFocusMs();
+                updateDisplay(pomodoroRemaining, false);
+            }
+            updatePomoStats();
+            saveAll();
+        });
+    });
+    ['autoStartBreaks','autoStartFocus','soundOnComplete','flipTickSound'].forEach(function(id) {
+        document.getElementById(id).addEventListener('change', function(e) {
+            const keyMap = { autoStartBreaks:'autoStartBreaks', autoStartFocus:'autoStartFocus', soundOnComplete:'soundOnComplete', flipTickSound:'flipTickSound' };
+            pomoSettings[keyMap[id]] = e.target.checked;
+            saveAll();
+        });
+    });
+
+    bgColor.addEventListener('input', function() { themeCustomized = true; applyCustomizations(); });
+    clockFaceColor.addEventListener('input', function() { themeCustomized = true; applyCustomizations(); });
+    numberColor.addEventListener('input', function() { themeCustomized = true; applyCustomizations(); });
+    fontSelector.addEventListener('change', applyCustomizations);
+    presetBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            themeCustomized = true;
+            const p = presets[btn.dataset.preset] || defaultColors;
+            bgColor.value = p.bg;
+            clockFaceColor.value = p.face;
+            numberColor.value = p.number;
+            applyCustomizations();
+        });
+    });
+    resetCustomBtn.addEventListener('click', function() {
+        themeCustomized = false;
+        applyThemePalette(defaultColors);
+        fontSelector.value = "'Nunito', sans-serif";
+        applyCustomizations();
+    });
+
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+
+    // ─── Init ───
+    loadAll();
+    syncInversionModeUI();
+    applyCustomizations();
+    update12hrButtons();
+    updateGreeting();
+    updateTimeDisplay();
+    tryImportFromHash();
+    setInterval(updateGreeting, 30000);
+    setInterval(updateTimeDisplay, 1000);
+    syncBgNoise();
+    startClock();
+});
+</script>
+</body>
+</html>

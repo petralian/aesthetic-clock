@@ -1,0 +1,49 @@
+---
+description: Mandatory Start/End of Session protocol — copy from 00_Brain/Templates/cursor/
+globs:
+alwaysApply: true
+---
+
+# LunaClock session protocol
+
+> Universal prompts: `D:\Obsidian\Obsidian\00_Brain\_Manual Prompts\`
+> Session continuity: `D:\Obsidian\Obsidian\00_Brain\Conventions\Session Continuity System.md`
+> Footer template: `D:\Obsidian\Obsidian\00_Brain\Conventions\Response Footer Contract.md`
+
+Before non-trivial work on this repo, follow the vault protocol:
+
+## Start of Session (required)
+
+Read and execute: `D:\Obsidian\Obsidian\00_Brain\_Manual Prompts\Start of Session.md`
+
+Minimum outputs before coding:
+
+1. Read Start of Session prompt and execute it
+2. Read vault `_Home.md`, `Operations/AI Session Bridge.md`, `Operations/Session Summaries.md`, relevant `Features/*`, latest `Operations/Design Notes/` IDN if resuming planned work
+3. Read `00_Brain/Conventions/Implementation Design Notes.md` when planning or 3+ file changes
+4. Read repo `memories/repo/index.md`, `open-loops.md`, `known-gotchas.md`, `design-notes.md` if present
+5. Create or update `Operations/Sessions/YYYY-MM-DD <topic>.md` with goal, git status, pre-scan table, roadmap (✅/⚠️/🔲)
+6. Create `Operations/Design Notes/YYYY-MM-DD <topic>.md` before first edit when plan mode or 3+ files (mermaid required)
+7. Confirm `.cursor/rules/response-footer.mdc` exists (`alwaysApply: true`)
+8. Update `Operations/AI Session Bridge.md` if priority changed
+
+## During work
+
+- Append to today's session note after major changes
+- Update Feature notes when touching a feature area
+- Every work reply: Session context (top) + **v3.1 mode footer** (bottom) per Response Footer Contract — modes A–G (A=2 lines … G=9 lines)
+
+## End of Session (when user closes or asks)
+
+Read: `D:\Obsidian\Obsidian\00_Brain\_Manual Prompts\End of Session.md`
+
+Minimum outputs:
+
+1. Finalize IDN under `Operations/Design Notes/` (status shipped/deployed); link from Feature note
+2. Append one entry to `Operations/Session Summaries.md` (include IDN wikilink when applicable)
+3. Update `Operations/Open Loops.md` (and `Operations/Copilot Shared Memory.md` if it exists)
+4. Sync `memories/repo/open-loops.md` with vault open loops
+5. Session footer per Response Footer Contract (v3.1 mode)
+6. Update `.claude/NOTES.md` and Feature notes with durable lessons
+
+Do not skip Obsidian updates because the user asked for code only — protocol and code ship together.

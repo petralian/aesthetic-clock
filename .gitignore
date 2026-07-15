@@ -1,0 +1,16 @@
+# Local / IDE (not committed)
+.vscode/mcp.json
+.cursor/mcp.json
+
+# Dependencies / dev scratch
+node_modules/
+_test_lz.js
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editor
+*.swp
+*~

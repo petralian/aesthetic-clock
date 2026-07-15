@@ -1,0 +1,14 @@
+{
+  "_comment": "Copy to .vscode/mcp.json (gitignored locally). Dual-path: project vault + Brain. After save: Command Palette → MCP: Reset Cached Tools.",
+  "servers": {
+    "obsidian-lunaclock": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "D:\\Obsidian\\Obsidian\\40_VSCode\\LunaClock",
+        "D:\\Obsidian\\Obsidian\\00_Brain"
+      ]
+    }
+  }
+}

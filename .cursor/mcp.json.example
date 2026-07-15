@@ -1,0 +1,14 @@
+{
+  "_comment": "Copy to ~/.cursor/mcp.json or merge into Cursor Settings → MCP. Cursor uses mcpServers (not servers). Replace vault paths if yours differ.",
+  "mcpServers": {
+    "obsidian-lunaclock": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "D:\\Obsidian\\Obsidian\\40_VSCode\\LunaClock",
+        "D:\\Obsidian\\Obsidian\\00_Brain"
+      ]
+    }
+  }
+}
