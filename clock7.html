@@ -1387,6 +1387,16 @@
             position: relative;
             overflow: hidden;
             touch-action: none;
+            box-sizing: border-box;
+            min-width: 9.5rem;
+            min-height: 50px;
+            transform: none !important;
+        }
+        .hold-reset-btn:hover,
+        .hold-reset-btn:active,
+        .hold-reset-btn.holding {
+            transform: none !important;
+            box-shadow: none;
         }
         .hold-reset-btn .hold-reset-fill {
             position: absolute;
@@ -1399,10 +1409,13 @@
         .hold-reset-btn .hold-reset-label {
             position: relative;
             z-index: 1;
+            display: inline-block;
+            min-width: 7.5rem;
+            text-align: center;
         }
         .hold-reset-btn.holding {
-            transform: none;
-            box-shadow: inset 0 0 0 2px rgba(255,255,255,0.45);
+            outline: 2px solid rgba(255,255,255,0.45);
+            outline-offset: -2px;
         }
         .hold-reset-btn.holding .hold-reset-label {
             opacity: 0.95;
@@ -1548,6 +1561,24 @@
         .clock.stopwatch-mode,
         .clock.pomodoro-mode { --flip-size: clamp(44px, 12vw, 72px); }
 
+        /* Stopwatch MM | SS — fixed pair layout, no flex squeeze */
+        .clock.stopwatch-mode .flip-card {
+            flex: 0 0 auto;
+            max-width: none;
+        }
+        .clock.stopwatch-mode .flip-digit-group {
+            width: auto;
+            flex: 0 0 auto;
+        }
+        .clock.stopwatch-mode .flipper-digit .digit-top2:not(.r) {
+            visibility: hidden !important;
+            -webkit-transform: rotateX(90deg);
+            transform: rotateX(90deg);
+        }
+        .clock.stopwatch-mode .flipper-digit:not(.r) .digit-top {
+            visibility: visible;
+        }
+
         .exit-fullscreen-btn {
             display: none;
             position: fixed;
@@ -1616,6 +1647,15 @@
             --flip-size: clamp(56px, 16vmin, 180px);
             overflow: visible;
             flex-wrap: nowrap;
+        }
+        .fullscreen-mode .clock.stopwatch-mode {
+            width: fit-content;
+            max-width: min(96vw, 100%);
+            gap: clamp(6px, 2vmin, 16px);
+        }
+        .fullscreen-mode .clock.stopwatch-mode .flip-card {
+            flex: 0 0 auto;
+            max-width: none;
         }
         .fullscreen-mode .mode-indicator {
             margin-bottom: clamp(6px, 1.5vmin, 12px);
@@ -1707,10 +1747,13 @@
                 max-width: 30%;
                 overflow: visible;
             }
-            .clock.stopwatch-mode .flip-card { max-width: 24%; }
             .clock.stopwatch-mode,
             .clock.pomodoro-mode {
                 --flip-size: clamp(32px, 9.5vw, 50px);
+            }
+            .clock.stopwatch-mode .flip-card {
+                flex: 0 0 auto;
+                max-width: none;
             }
             .flip-digit-group { gap: clamp(1px, 0.3vw, 3px); }
             .flipper-digit {
@@ -1771,6 +1814,15 @@
                 --flip-size: clamp(40px, 13vmin, 110px);
                 width: min(98vw, 100%);
                 max-width: 98vw;
+            }
+            .fullscreen-mode .clock.stopwatch-mode {
+                width: fit-content;
+                max-width: min(98vw, 100%);
+                gap: clamp(4px, 1.5vw, 12px);
+            }
+            .fullscreen-mode .clock.stopwatch-mode .flip-card {
+                flex: 0 0 auto;
+                max-width: none;
             }
             .fullscreen-mode #fullscreenStage {
                 padding: 10px;
@@ -1926,6 +1978,21 @@
                 padding: clamp(8px, 2vw, 18px) clamp(10px, 2.5vw, 24px);
             }
             .flip-card { flex: 0 0 auto; max-width: none; }
+            .clock.stopwatch-mode {
+                gap: clamp(2px, 1.2vw, 8px);
+                padding: clamp(6px, 1.5vw, 14px) clamp(8px, 2vw, 20px);
+            }
+            .clock.stopwatch-mode .flip-card {
+                flex: 0 0 auto;
+                max-width: none;
+            }
+            .clock.stopwatch-mode .flip-digit-group {
+                gap: clamp(1px, 0.25vw, 3px);
+            }
+            .fullscreen-mode .clock.stopwatch-mode {
+                width: fit-content;
+                gap: clamp(6px, 2vmin, 14px);
+            }
             .separator {
                 margin-bottom: clamp(6px, 1.5vw, 12px);
                 padding: 0 clamp(1px, 0.3vw, 3px);
@@ -2253,11 +2320,11 @@
             <button class="btn btn-primary" id="startStopBtn">▶️ Start</button>
             <button class="btn btn-danger hold-reset-btn" id="resetBtn" type="button">
                 <span class="hold-reset-fill" aria-hidden="true"></span>
-                <span class="hold-reset-label">Hold 3s to reset</span>
+                <span class="hold-reset-label">Hold 2s to reset</span>
             </button>
             <button class="btn" id="lapBtn">⏱️ Lap</button>
         </div>
-        <p class="hold-reset-hint">Hold reset for 3 seconds</p>
+        <p class="hold-reset-hint">Hold reset for 2 seconds</p>
         <div class="laps-container" id="lapsContainer"><div class="no-laps">No laps recorded</div></div>
     </div>
 
@@ -2267,10 +2334,10 @@
             <button class="btn btn-primary" id="pomodoroStartBtn">▶️ Start Focus</button>
             <button class="btn btn-danger hold-reset-btn" id="pomodoroResetBtn" type="button">
                 <span class="hold-reset-fill" aria-hidden="true"></span>
-                <span class="hold-reset-label">Hold 3s to reset</span>
+                <span class="hold-reset-label">Hold 2s to reset</span>
             </button>
         </div>
-        <p class="hold-reset-hint">Hold reset for 3 seconds</p>
+        <p class="hold-reset-hint">Hold reset for 2 seconds</p>
         <div class="daily-goal-bar" id="dailyGoalBar">
             <div class="goal-label">
                 <span>📊 Daily goal</span>
@@ -2586,7 +2653,7 @@ document.addEventListener('DOMContentLoaded', function() {
             bottom.classList.remove('r');
             top.style.display = '';
             top.style.visibility = '';
-            top2.style.visibility = '';
+            top2.style.visibility = 'hidden';
         }
 
         function setInstant(container, value) {
@@ -4802,6 +4869,10 @@ document.addEventListener('DOMContentLoaded', function() {
             setSimpleDigit(el, val);
             return;
         }
+        if (isStopwatchMode) {
+            FlipEngine.setInstant(el, val);
+            return;
+        }
         if (animate) FlipEngine.flip(el, val, playTick);
         else FlipEngine.setInstant(el, val);
     }
@@ -5062,13 +5133,13 @@ document.addEventListener('DOMContentLoaded', function() {
         updateControlsForMode();
     }
 
-    const HOLD_RESET_MS = 3000;
+    const HOLD_RESET_MS = 2000;
 
     function bindHoldToReset(btn, onReset) {
         if (!btn) return;
         const fill = btn.querySelector('.hold-reset-fill');
         const label = btn.querySelector('.hold-reset-label');
-        const idleLabel = 'Hold 3s to reset';
+        const idleLabel = 'Hold 2s to reset';
         let holdTimer = null;
         let holdStart = 0;
         let rafId = null;
