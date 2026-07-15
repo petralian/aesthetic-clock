@@ -3,7 +3,7 @@
 Teen-focused flip clock — made by Luna & Nathan. Single-file static HTML app (no build step).
 
 **Live:** https://clock.petralian.com  
-**GitHub (planned):** repository name `aesthetic-clock`  
+**GitHub:** https://github.com/petralian/aesthetic-clock  
 **Main file:** `clock7.html` (current production build)
 
 ## Stack
