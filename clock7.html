@@ -36,6 +36,14 @@
             --text-muted: #7a7a88;
             --chrome-bg: rgba(255,255,255,0.6);
             --chrome-border: rgba(0,0,0,0.12);
+            --btn-surface-bg: rgba(255,255,255,0.88);
+            --btn-surface-color: var(--number);
+            --btn-surface-border: rgba(0,0,0,0.12);
+            --laps-bg: rgba(255,255,255,0.42);
+            --laps-border: rgba(255,255,255,0.4);
+            --laps-text: var(--number);
+            --laps-muted: var(--text-secondary);
+            --laps-stripe: rgba(255,255,255,0.25);
             --flip-size: clamp(40px, 11vw, 56px);
             --page-pad: clamp(12px, 4vw, 20px);
         }
@@ -162,6 +170,20 @@
             color: inherit;
             text-decoration: underline;
             text-underline-offset: 2px;
+        }
+        .settings-footer-feedback {
+            display: inline-block;
+            margin-top: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            opacity: 0.72;
+            text-decoration: none;
+            letter-spacing: 0.02em;
+            text-transform: none;
+        }
+        .settings-footer-feedback:hover {
+            opacity: 1;
+            text-decoration: underline;
         }
         .font-preview {
             padding: 10px 14px;
@@ -696,6 +718,65 @@
             padding: 8px 16px;
             font-size: 12px;
         }
+        .custom-themes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 4px 16px 10px;
+        }
+        .custom-theme-slot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 9999px;
+            background: rgba(255,255,255,0.45);
+            border: 1px solid rgba(0,0,0,0.06);
+            min-height: 50px;
+        }
+        .custom-theme-label {
+            flex: 1 1 auto;
+            min-width: 0;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--settings-ui-text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .custom-theme-slot.filled .custom-theme-label::after {
+            content: ' •';
+            opacity: 0.45;
+            font-weight: 600;
+        }
+        .custom-theme-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .custom-theme-btn {
+            min-height: 36px;
+            min-width: 56px;
+            padding: 6px 14px;
+            border: none;
+            border-radius: 9999px;
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.15s, opacity 0.15s;
+        }
+        .custom-theme-btn:active { transform: scale(0.97); }
+        .custom-theme-save {
+            background: rgba(107,74,122,0.12);
+            color: var(--settings-ui-text);
+            border: 1px solid rgba(107,74,122,0.15);
+        }
+        .custom-theme-apply {
+            background: linear-gradient(135deg, #8e8e93, #636366);
+            color: #fff;
+        }
         .appearance-section .settings-section-title {
             padding: 0 0 8px;
         }
@@ -1157,15 +1238,15 @@
             font-weight: 700;
             cursor: pointer;
             transition: all 0.25s ease;
-            background: rgba(255,255,255,0.88);
-            color: var(--number);
-            border: 1px solid rgba(0,0,0,0.12);
+            background: var(--btn-bg, rgba(255,255,255,0.88));
+            color: var(--btn-text, var(--number));
+            border: 1px solid var(--btn-border, rgba(0,0,0,0.12));
             user-select: none;
         }
         .btn:hover, .btn:active { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(107,74,122,0.1); }
         .btn.active { background: rgba(110,110,115,0.25); border-color: rgba(110,110,115,0.4); }
         .btn-mode { background: var(--chrome-bg); color: var(--text-primary); }
-        .btn-mode:not(.active) { border: 1px solid var(--chrome-border); color: var(--text-secondary); }
+        .btn-mode:not(.active) { border: 1px solid var(--chrome-border); color: var(--btn-mode-inactive-text, var(--text-secondary)); }
         .btn-mode.active {
             background: color-mix(in srgb, var(--accent) 22%, var(--chrome-bg));
             border-color: color-mix(in srgb, var(--accent) 50%, var(--chrome-border));
@@ -1208,7 +1289,7 @@
 
         .panel-header {
             font-size: 15px;
-            color: var(--text-primary);
+            color: var(--panel-header-text, var(--text-primary));
             font-weight: 700;
             margin: 0;
             padding-bottom: 6px;
@@ -1218,7 +1299,7 @@
             text-align: center;
             font-size: 14px;
             font-weight: 600;
-            color: var(--text-secondary);
+            color: var(--stopwatch-elapsed-text, var(--text-secondary));
             opacity: 1;
             letter-spacing: 1px;
             padding: 4px 0;
@@ -1237,10 +1318,10 @@
             overflow-x: hidden;
             width: 100%;
             max-width: 100%;
-            background: rgba(255,255,255,0.42);
+            background: var(--laps-bg, rgba(255,255,255,0.42));
             border-radius: 16px;
             padding: 6px 0;
-            border: 1px solid rgba(255,255,255,0.4);
+            border: 1px solid var(--laps-border, rgba(255,255,255,0.4));
         }
         .lap-item {
             display: flex;
@@ -1248,19 +1329,19 @@
             align-items: center;
             gap: 8px;
             padding: 12px clamp(12px, 3vw, 18px);
-            color: var(--number);
+            color: var(--laps-text, var(--number));
             font-size: clamp(12px, 3vw, 14px);
             font-weight: 600;
             font-variant-numeric: tabular-nums;
             min-height: 44px;
             min-width: 0;
         }
-        .lap-item:nth-child(odd) { background: rgba(255,255,255,0.25); }
-        .lap-item .lap-num { font-size: 12px; opacity: 0.6; font-weight: 700; min-width: 50px; }
-        .lap-item .lap-time { font-size: 16px; font-weight: 800; }
-        .lap-item.best-lap { background: rgba(120,200,150,0.25); }
-        .lap-item.best-lap .lap-time { color: rgba(60,140,90,1); }
-        .no-laps { color: var(--text-secondary); opacity: 1; text-align: center; padding: 16px; font-style: italic; font-size: 13px; }
+        .lap-item:nth-child(odd) { background: var(--laps-row-alt, rgba(255,255,255,0.25)); }
+        .lap-item .lap-num { font-size: 12px; opacity: 0.75; font-weight: 700; min-width: 50px; color: var(--laps-text-muted, var(--text-muted)); }
+        .lap-item .lap-time { font-size: 16px; font-weight: 800; color: var(--laps-text, var(--number)); }
+        .lap-item.best-lap { background: var(--laps-best-bg, rgba(120,200,150,0.25)); }
+        .lap-item.best-lap .lap-time { color: var(--laps-best-text, rgba(60,140,90,1)); }
+        .no-laps { color: var(--laps-text-muted, var(--text-secondary)); opacity: 1; text-align: center; padding: 16px; font-style: italic; font-size: 13px; }
 
         .daily-goal-bar {
             width: 100%;
@@ -1392,7 +1473,7 @@
 
         @media (max-width: 767px) {
             :root {
-                --flip-size: clamp(48px, 14vw, 76px);
+                --flip-size: clamp(34px, 10.5vw, 58px);
                 --page-pad: 10px;
             }
             body { gap: 6px; }
@@ -1417,16 +1498,29 @@
                 margin-top: 0;
             }
             .clock {
-                padding: 10px 8px 8px;
+                padding: 8px 4px 6px;
+                gap: clamp(1px, 0.5vw, 4px);
             }
             .clock.stopwatch-mode,
             .clock.pomodoro-mode {
-                --flip-size: clamp(52px, 15vw, 80px);
+                --flip-size: clamp(38px, 11.5vw, 64px);
             }
-            .flip-digit-group { gap: 2px; }
+            .flip-digit-group { gap: 1px; }
+            .flipper-digit {
+                width: 0.56em;
+                min-width: clamp(16px, 5vw, 26px);
+                max-width: clamp(26px, 8.5vw, 40px);
+            }
             .separator {
-                font-size: clamp(22px, 5.5vw, 30px);
-                margin-bottom: clamp(8px, 2vw, 14px);
+                font-size: clamp(16px, 4.2vw, 24px);
+                margin-bottom: clamp(6px, 1.5vw, 10px);
+                padding: 0;
+            }
+            .mode-indicator {
+                font-size: clamp(8px, 2vw, 10px);
+                padding: 4px 10px;
+                max-width: calc(100% - 8px);
+                margin-bottom: 4px;
             }
             .quote-display {
                 font-size: 12px;
@@ -1444,8 +1538,45 @@
             .panel-header { display: none; }
             .stopwatch-elapsed { padding: 0; font-size: 13px; }
             .laps-container { max-height: 88px; }
+            .settings-body {
+                padding: 10px 12px calc(16px + env(safe-area-inset-bottom, 0px));
+            }
+            .settings-footer {
+                padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+                line-height: 1.55;
+            }
+            .settings-row {
+                padding: 8px 0;
+                gap: 8px;
+            }
+            .settings-row:has(input[type="range"]) {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                grid-template-rows: auto auto;
+                align-items: center;
+                column-gap: 10px;
+            }
+            .settings-row:has(input[type="range"]) > label:not(.toggle-switch) {
+                grid-column: 1;
+                grid-row: 1;
+                flex: none;
+            }
+            .settings-row:has(input[type="range"]) .val {
+                grid-column: 2;
+                grid-row: 1;
+            }
+            .settings-row:has(input[type="range"]) input[type="range"] {
+                grid-column: 1 / -1;
+                grid-row: 2;
+                width: 100%;
+                max-width: none;
+                flex: none;
+            }
+            .settings-row select {
+                max-width: min(160px, 52vw);
+            }
             .fullscreen-mode .clock {
-                --flip-size: clamp(56px, 16vmin, 130px);
+                --flip-size: clamp(48px, 14vmin, 120px);
             }
         }
 
@@ -1686,14 +1817,14 @@
             color: var(--text-primary);
         }
         body.inversion-mode .btn-mode:not(.active) {
-            color: var(--text-secondary);
+            color: var(--btn-mode-inactive-text, var(--text-secondary));
         }
         body.inversion-mode .goal-track {
             background: rgba(255,255,255,0.12);
             border-color: rgba(255,255,255,0.08);
         }
-        body.inversion-mode .lap-item { color: var(--text-primary); }
-        body.inversion-mode .no-laps { color: var(--text-muted); }
+        body.inversion-mode .lap-item { color: var(--laps-text, var(--text-primary)); }
+        body.inversion-mode .no-laps { color: var(--laps-text-muted, var(--text-muted)); }
         body.inversion-mode .mode-indicator {
             background: var(--panel-bg);
             border-color: var(--panel-border);
@@ -1931,6 +2062,30 @@
                     <button class="preset-btn preset-plum" data-preset="plum">Plum</button>
                 </div>
                 <button class="random-theme-btn" id="randomThemeBtn">🎲 Random Theme</button>
+                <div class="settings-section-title" style="padding-top:6px;">My themes</div>
+                <div class="custom-themes-list" id="customThemesList">
+                    <div class="custom-theme-slot" data-slot="0">
+                        <span class="custom-theme-label">My theme 1</span>
+                        <div class="custom-theme-actions">
+                            <button type="button" class="custom-theme-btn custom-theme-save" data-slot="0">Save</button>
+                            <button type="button" class="custom-theme-btn custom-theme-apply" data-slot="0">Apply</button>
+                        </div>
+                    </div>
+                    <div class="custom-theme-slot" data-slot="1">
+                        <span class="custom-theme-label">My theme 2</span>
+                        <div class="custom-theme-actions">
+                            <button type="button" class="custom-theme-btn custom-theme-save" data-slot="1">Save</button>
+                            <button type="button" class="custom-theme-btn custom-theme-apply" data-slot="1">Apply</button>
+                        </div>
+                    </div>
+                    <div class="custom-theme-slot" data-slot="2">
+                        <span class="custom-theme-label">My theme 3</span>
+                        <div class="custom-theme-actions">
+                            <button type="button" class="custom-theme-btn custom-theme-save" data-slot="2">Save</button>
+                            <button type="button" class="custom-theme-btn custom-theme-apply" data-slot="2">Apply</button>
+                        </div>
+                    </div>
+                </div>
                 <button class="reset-custom-btn" id="resetCustomBtn">↺ Reset theme</button>
             </div>
 
@@ -2040,6 +2195,11 @@
                     </label>
                 </div>
                 <div class="settings-row">
+                    <label for="soundsVolume">Sounds volume</label>
+                    <input type="range" id="soundsVolume" min="0" max="100" value="80">
+                    <span class="val" id="soundsVolumeVal">80</span>
+                </div>
+                <div class="settings-row">
                     <label for="bgNoiseType">Background noise</label>
                     <select id="bgNoiseType">
                         <option value="none">None</option>
@@ -2056,7 +2216,7 @@
                     </select>
                 </div>
                 <div class="settings-row">
-                    <label for="bgNoiseVolume">Noise volume</label>
+                    <label for="bgNoiseVolume">Music volume</label>
                     <input type="range" id="bgNoiseVolume" min="0" max="100" value="30">
                     <span class="val" id="bgNoiseVolumeVal">30</span>
                 </div>
@@ -2089,7 +2249,7 @@
                 </div>
             </div>
         </div>
-        <div class="settings-footer">Made with ❤️ by Luna &amp; Nathan Petralia</div>
+        <div class="settings-footer">Made with ❤️ by Luna &amp; Nathan Petralia<br><a href="#" id="feedbackMailLink" class="settings-footer-feedback" rel="noopener">Feedback / bug report</a></div>
     </div>
 </div>
 
@@ -2246,7 +2406,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const bgNoiseType = document.getElementById('bgNoiseType');
     const bgNoiseVolume = document.getElementById('bgNoiseVolume');
     const bgNoiseVolumeVal = document.getElementById('bgNoiseVolumeVal');
+    const soundsVolume = document.getElementById('soundsVolume');
+    const soundsVolumeVal = document.getElementById('soundsVolumeVal');
     const bgNoiseEnabled = document.getElementById('bgNoiseEnabled');
+    const feedbackMailLink = document.getElementById('feedbackMailLink');
     const quoteEmojisEnabled = document.getElementById('quoteEmojisEnabled');
     const inversionModeEnabled = document.getElementById('inversionModeEnabled');
     const pomoStats = document.getElementById('pomoStats');
@@ -2352,6 +2515,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let quoteEmojisOn = true;
     let inversionMode = false;
     let themeCustomized = false;
+    let customThemes = [null, null, null];
     let currentSessionInCycle = 0;
     let sessionsCompletedToday = 0;
     let lastStatsDate = '';
@@ -2410,6 +2574,82 @@ document.addEventListener('DOMContentLoaded', function() {
             return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
         });
         return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
+    }
+
+    function parseCssColor(str) {
+        str = String(str || '#000000').trim();
+        if (str.charAt(0) === '#') {
+            const rgb = parseHex(str);
+            return { r: rgb.r, g: rgb.g, b: rgb.b, a: 1 };
+        }
+        const m = str.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)/);
+        if (m) {
+            return {
+                r: parseInt(m[1], 10),
+                g: parseInt(m[2], 10),
+                b: parseInt(m[3], 10),
+                a: m[4] !== undefined ? parseFloat(m[4]) : 1
+            };
+        }
+        const fallback = parseHex('#000000');
+        return { r: fallback.r, g: fallback.g, b: fallback.b, a: 1 };
+    }
+
+    function rgbToHex(r, g, b) {
+        return '#' + [r, g, b].map(function(c) {
+            return Math.min(255, Math.max(0, Math.round(c))).toString(16).padStart(2, '0');
+        }).join('');
+    }
+
+    function compositeOver(underRgb, fgRgba) {
+        const a = fgRgba.a;
+        return {
+            r: fgRgba.r * a + underRgb.r * (1 - a),
+            g: fgRgba.g * a + underRgb.g * (1 - a),
+            b: fgRgba.b * a + underRgb.b * (1 - a)
+        };
+    }
+
+    function effectiveSolidBg(colorStr, underlayHex) {
+        const parsed = parseCssColor(colorStr);
+        const under = parseHex(underlayHex);
+        if (parsed.a >= 0.999) return { r: parsed.r, g: parsed.g, b: parsed.b };
+        return compositeOver(under, parsed);
+    }
+
+    function contrastRatio(fg, bg) {
+        const fgRgb = typeof fg === 'string' ? parseHex(fg) : fg;
+        const bgRgb = typeof bg === 'string' ? parseHex(bg) : bg;
+        const l1 = relativeLuminance(fgRgb.r, fgRgb.g, fgRgb.b);
+        const l2 = relativeLuminance(bgRgb.r, bgRgb.g, bgRgb.b);
+        const lighter = Math.max(l1, l2);
+        const darker = Math.min(l1, l2);
+        return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    const WCAG_BODY = 4.5;
+    const WCAG_UI = 3;
+
+    function ensureContrast(fgHex, bg, minRatio) {
+        const bgRgb = typeof bg === 'string' ? parseHex(bg) : bg;
+        let hsl = rgbToHsl(parseHex(fgHex).r, parseHex(fgHex).g, parseHex(fgHex).b);
+        const bgLum = relativeLuminance(bgRgb.r, bgRgb.g, bgRgb.b);
+        const lighten = bgLum < 0.45;
+        for (let i = 0; i < 50; i++) {
+            const candidate = hslToHex(hsl.h, hsl.s, hsl.l);
+            if (contrastRatio(candidate, bgRgb) >= minRatio) return candidate;
+            if (lighten) hsl.l = Math.min(99, hsl.l + 2.5);
+            else hsl.l = Math.max(1, hsl.l - 2.5);
+        }
+        return hslToHex(hsl.h, hsl.s, hsl.l);
+    }
+
+    function ensureContrastOnAll(fgHex, bgList, minRatio) {
+        let result = fgHex;
+        bgList.forEach(function(bg) {
+            result = ensureContrast(result, bg, minRatio);
+        });
+        return result;
     }
 
     function invertThemeColor(hex, role) {
@@ -2481,24 +2721,126 @@ document.addEventListener('DOMContentLoaded', function() {
         document.documentElement.style.setProperty('--font-caption', uiFont);
     }
 
-    function applyChromeTextTokens() {
-        if (isEffectivelyDark()) {
-            document.documentElement.style.setProperty('--text-primary', '#f0f0f5');
-            document.documentElement.style.setProperty('--text-secondary', '#a8a8b8');
-            document.documentElement.style.setProperty('--text-muted', '#8a8a9a');
-            document.documentElement.style.setProperty('--panel-bg', 'rgba(30,30,40,0.88)');
-            document.documentElement.style.setProperty('--panel-border', 'rgba(255,255,255,0.08)');
-            document.documentElement.style.setProperty('--chrome-bg', 'rgba(42,42,56,0.92)');
-            document.documentElement.style.setProperty('--chrome-border', 'rgba(255,255,255,0.1)');
+    function contrastRatio(fg, bg) {
+        const f = parseHex(fg);
+        const b = parseHex(bg);
+        const l1 = relativeLuminance(f.r, f.g, f.b);
+        const l2 = relativeLuminance(b.r, b.g, b.b);
+        return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+    }
+
+    function blendOnBg(r, g, b, alpha, bgHex) {
+        const base = parseHex(bgHex);
+        const a = alpha;
+        const rr = Math.round(r * a + base.r * (1 - a));
+        const gg = Math.round(g * a + base.g * (1 - a));
+        const bb = Math.round(b * a + base.b * (1 - a));
+        return '#' + [rr, gg, bb].map(function(x) { return x.toString(16).padStart(2, '0'); }).join('');
+    }
+
+    function softenTextColor(hex, dark, delta) {
+        const rgb = parseHex(hex);
+        const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+        const step = delta || 10;
+        if (dark) {
+            hsl.l = Math.min(88, hsl.l + step);
+            hsl.s = Math.max(0, hsl.s * 0.55);
         } else {
-            document.documentElement.style.setProperty('--text-primary', numberColor.value);
-            document.documentElement.style.setProperty('--text-secondary', '#5a5a64');
-            document.documentElement.style.setProperty('--text-muted', '#7a7a88');
-            document.documentElement.style.setProperty('--panel-bg', 'rgba(255,255,255,0.5)');
-            document.documentElement.style.setProperty('--panel-border', 'rgba(255,255,255,0.55)');
-            document.documentElement.style.setProperty('--chrome-bg', 'rgba(255,255,255,0.6)');
-            document.documentElement.style.setProperty('--chrome-border', 'rgba(0,0,0,0.12)');
+            hsl.l = Math.max(12, hsl.l - step);
+            hsl.s = Math.max(0, hsl.s * 0.7);
         }
+        return hslToHex(hsl.h, hsl.s, hsl.l);
+    }
+
+    function ensureContrast(fg, bg, minRatio) {
+        if (!fg || !bg) return fg || '#1a1a22';
+        if (contrastRatio(fg, bg) >= minRatio) return fg;
+        const bgRgb = parseHex(bg);
+        const bgLum = relativeLuminance(bgRgb.r, bgRgb.g, bgRgb.b);
+        const lighten = bgLum < 0.45;
+        const rgb = parseHex(fg);
+        const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+        for (let i = 0; i < 60; i++) {
+            hsl.l = lighten ? Math.min(98, hsl.l + 3) : Math.max(2, hsl.l - 3);
+            if (lighten) hsl.s = Math.max(0, hsl.s * 0.92);
+            const candidate = hslToHex(hsl.h, hsl.s, hsl.l);
+            if (contrastRatio(candidate, bg) >= minRatio) return candidate;
+        }
+        return lighten ? '#f5f5f7' : '#1a1a22';
+    }
+
+    const WCAG_AA_NORMAL = 4.5;
+    const WCAG_AA_LARGE = 3;
+
+    function applyChromeTextTokens() {
+        const pal = getEffectivePalette();
+        const pageBg = pal.bg;
+        const number = pal.number;
+        const dark = isEffectivelyDark();
+
+        let panelRgba, chromeRgba, panelSolid, chromeSolid, btnSolid, lapsSolid;
+        let btnBgRgba, lapsBgRgba, lapsRowAltRgba, lapsBestBgRgba;
+
+        if (dark) {
+            panelRgba = 'rgba(30,30,40,0.88)';
+            chromeRgba = 'rgba(42,42,56,0.92)';
+            panelSolid = blendOnBg(30, 30, 40, 0.88, pageBg);
+            chromeSolid = blendOnBg(42, 42, 56, 0.92, pageBg);
+            btnBgRgba = 'rgba(58,58,72,0.95)';
+            btnSolid = blendOnBg(58, 58, 72, 0.95, chromeSolid);
+            lapsBgRgba = 'rgba(38,38,50,0.75)';
+            lapsSolid = blendOnBg(38, 38, 50, 0.75, panelSolid);
+            lapsRowAltRgba = 'rgba(255,255,255,0.06)';
+            lapsBestBgRgba = 'rgba(80,160,110,0.28)';
+        } else {
+            panelRgba = 'rgba(255,255,255,0.5)';
+            chromeRgba = 'rgba(255,255,255,0.6)';
+            panelSolid = blendOnBg(255, 255, 255, 0.5, pageBg);
+            chromeSolid = blendOnBg(255, 255, 255, 0.6, pageBg);
+            btnBgRgba = 'rgba(255,255,255,0.88)';
+            btnSolid = blendOnBg(255, 255, 255, 0.88, chromeSolid);
+            lapsBgRgba = 'rgba(255,255,255,0.42)';
+            lapsSolid = blendOnBg(255, 255, 255, 0.42, panelSolid);
+            lapsRowAltRgba = 'rgba(255,255,255,0.25)';
+            lapsBestBgRgba = 'rgba(120,200,150,0.25)';
+        }
+
+        const lapsBestSolid = blendOnBg(120, 200, 150, 0.25, lapsSolid);
+
+        const textPrimary = ensureContrast(number, panelSolid, WCAG_AA_NORMAL);
+        const textSecondary = ensureContrast(softenTextColor(textPrimary, dark, 10), chromeSolid, WCAG_AA_NORMAL);
+        const textMuted = ensureContrast(softenTextColor(textSecondary, dark, 8), lapsSolid, WCAG_AA_NORMAL);
+        const btnText = ensureContrast(textPrimary, btnSolid, WCAG_AA_LARGE);
+        const modeInactiveText = ensureContrast(textSecondary, chromeSolid, WCAG_AA_LARGE);
+        const elapsedText = ensureContrast(textSecondary, panelSolid, WCAG_AA_LARGE);
+        const panelHeaderText = ensureContrast(textPrimary, panelSolid, WCAG_AA_NORMAL);
+        const lapsText = ensureContrast(textPrimary, lapsSolid, WCAG_AA_NORMAL);
+        const lapsMuted = ensureContrast(textMuted, lapsSolid, WCAG_AA_NORMAL);
+        const lapsBestText = ensureContrast(dark ? '#9fd4b0' : '#3c8c5a', lapsBestSolid, WCAG_AA_NORMAL);
+        const btnBorder = dark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)';
+        const lapsBorder = dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+
+        document.documentElement.style.setProperty('--text-primary', textPrimary);
+        document.documentElement.style.setProperty('--text-secondary', textSecondary);
+        document.documentElement.style.setProperty('--text-muted', textMuted);
+        document.documentElement.style.setProperty('--panel-bg', panelRgba);
+        document.documentElement.style.setProperty('--panel-border', dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.55)');
+        document.documentElement.style.setProperty('--chrome-bg', chromeRgba);
+        document.documentElement.style.setProperty('--chrome-border', dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.12)');
+        document.documentElement.style.setProperty('--btn-bg', btnBgRgba);
+        document.documentElement.style.setProperty('--btn-text', btnText);
+        document.documentElement.style.setProperty('--btn-border', btnBorder);
+        document.documentElement.style.setProperty('--btn-mode-inactive-text', modeInactiveText);
+        document.documentElement.style.setProperty('--laps-bg', lapsBgRgba);
+        document.documentElement.style.setProperty('--laps-border', lapsBorder);
+        document.documentElement.style.setProperty('--laps-text', lapsText);
+        document.documentElement.style.setProperty('--laps-text-muted', lapsMuted);
+        document.documentElement.style.setProperty('--laps-row-alt', lapsRowAltRgba);
+        document.documentElement.style.setProperty('--laps-best-bg', lapsBestBgRgba);
+        document.documentElement.style.setProperty('--laps-best-text', lapsBestText);
+        document.documentElement.style.setProperty('--stopwatch-elapsed-text', elapsedText);
+        document.documentElement.style.setProperty('--panel-header-text', panelHeaderText);
+        document.documentElement.style.setProperty('--accent', ensureContrast(textPrimary, chromeSolid, WCAG_AA_LARGE));
     }
 
     const AMBIENT_LOOPS = {
@@ -2534,6 +2876,7 @@ document.addEventListener('DOMContentLoaded', function() {
         volume: 30,
         enabled: false
     };
+    let soundsVolumeSetting = 80;
 
     const pomoSettings = {
         focusMin: 25,
@@ -2551,6 +2894,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let audioCtx = null;
     let audioUnlocked = false;
     let qrModalThemeSnapshot = null;
+    let bgPlayToastShown = false;
+    let bgMediaSource = null;
+    let urlSyncTimer = null;
+    let nameUrlSyncTimer = null;
 
     function unlockAudio() {
         try {
@@ -2564,24 +2911,42 @@ document.addEventListener('DOMContentLoaded', function() {
                 src.start(0);
                 audioUnlocked = true;
             }
+            if (bgAudioEl && bgAudioEl.paused && bgNoiseSettings.enabled && bgNoiseSettings.type !== 'none') {
+                attemptBgPlay(bgAudioEl);
+            }
         } catch (e) {}
     }
 
     function installAudioUnlock() {
         function once() {
             unlockAudio();
-            if (bgNoiseSettings.enabled && bgNoiseSettings.type !== 'none') syncBgNoise();
+            if (bgNoiseSettings.enabled && bgNoiseSettings.type !== 'none') {
+                if (bgAudioEl && bgAudioEl.paused) {
+                    attemptBgPlay(bgAudioEl);
+                } else if (!bgAudioEl && !bgNoiseNodes) {
+                    syncBgNoise();
+                }
+            }
             document.removeEventListener('touchstart', once, true);
             document.removeEventListener('click', once, true);
+            document.removeEventListener('pointerdown', once, true);
+            document.removeEventListener('keydown', once, true);
         }
         document.addEventListener('touchstart', once, true);
         document.addEventListener('click', once, true);
+        document.addEventListener('pointerdown', once, true);
+        document.addEventListener('keydown', once, true);
     }
 
     function getAudio() {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         return audioCtx;
     }
+
+    function getSoundsVolume() {
+        return soundsVolumeSetting / 100;
+    }
+
     function playTickSound() {
         if (!pomoSettings.flipTickSound) return;
         unlockAudio();
@@ -2592,7 +2957,7 @@ document.addEventListener('DOMContentLoaded', function() {
             osc.connect(gain);
             gain.connect(ctx.destination);
             osc.frequency.value = 800;
-            gain.gain.value = 0.04;
+            gain.gain.value = 0.04 * getSoundsVolume();
             osc.start();
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
             osc.stop(ctx.currentTime + 0.05);
@@ -2603,13 +2968,14 @@ document.addEventListener('DOMContentLoaded', function() {
         unlockAudio();
         try {
             const ctx = getAudio();
+            const vol = getSoundsVolume();
             [523, 659, 784].forEach(function(freq, i) {
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.connect(gain);
                 gain.connect(ctx.destination);
                 osc.frequency.value = freq;
-                gain.gain.value = 0.08;
+                gain.gain.value = 0.08 * vol;
                 const t = ctx.currentTime + i * 0.15;
                 osc.start(t);
                 gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
@@ -2626,6 +2992,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getNoiseVolume() {
         return bgNoiseSettings.volume / 100;
+    }
+
+    function attemptBgPlay(audio) {
+        if (!audio) return;
+        unlockAudio();
+        try {
+            const ctx = getAudio();
+            if (ctx.state === 'suspended') ctx.resume();
+        } catch (e) {}
+        const playPromise = audio.play();
+        if (playPromise && typeof playPromise.then === 'function') {
+            playPromise.then(function() {
+                bgPlayToastShown = false;
+            }).catch(function() {
+                if (!bgPlayToastShown) {
+                    bgPlayToastShown = true;
+                    showToast('Tap anywhere to start background audio');
+                }
+            });
+        }
+    }
+
+    function resyncBgNoiseIfNeeded() {
+        if (!bgNoiseSettings.enabled || bgNoiseSettings.type === 'none') return;
+        if (bgAudioEl) {
+            if (bgAudioEl.paused) attemptBgPlay(bgAudioEl);
+            return;
+        }
+        if (!bgNoiseNodes) syncBgNoise();
     }
 
     function createNoiseBuffer(ctx, brown) {
@@ -2655,6 +3050,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch (e) {}
             bgAudioEl = null;
         }
+        bgMediaSource = null;
         bgAudioGainNode = null;
         if (bgNoiseNodes) {
             try {
@@ -2678,10 +3074,24 @@ document.addEventListener('DOMContentLoaded', function() {
         audio.playsInline = true;
         audio.setAttribute('playsinline', '');
         const mult = getAmbientGain(type);
-        audio.volume = Math.min(1, getNoiseVolume() * mult);
-        audio.play().catch(function() {});
+        const targetVol = getNoiseVolume() * mult;
         bgAudioEl = audio;
         bgAudioEl._ambientType = type;
+        try {
+            const ctx = getAudio();
+            if (ctx.state === 'suspended') ctx.resume();
+            bgMediaSource = ctx.createMediaElementSource(audio);
+            bgAudioGainNode = ctx.createGain();
+            bgAudioGainNode.gain.value = targetVol;
+            bgMediaSource.connect(bgAudioGainNode);
+            bgAudioGainNode.connect(ctx.destination);
+            audio.volume = 1;
+        } catch (e) {
+            bgMediaSource = null;
+            bgAudioGainNode = null;
+            audio.volume = Math.min(1, targetVol);
+        }
+        attemptBgPlay(audio);
     }
 
     function startProceduralNoise(type) {
@@ -2787,14 +3197,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const vol = getNoiseVolume();
         const type = bgNoiseSettings.type;
         const mult = getAmbientGain(type);
-        if (bgAudioEl) {
-            bgAudioEl.volume = Math.min(1, vol * mult);
-        }
+        const targetVol = vol * mult;
         if (bgAudioGainNode) {
-            bgAudioGainNode.gain.value = vol * mult;
+            bgAudioGainNode.gain.value = targetVol;
+        } else if (bgAudioEl) {
+            bgAudioEl.volume = Math.min(1, targetVol);
         }
         if (bgNoiseNodes && bgNoiseNodes.nodes[0] && !bgAudioGainNode) {
-            bgNoiseNodes.nodes[0].gain.value = vol * mult;
+            bgNoiseNodes.nodes[0].gain.value = targetVol;
         }
     }
 
@@ -2802,6 +3212,8 @@ document.addEventListener('DOMContentLoaded', function() {
         bgNoiseType.value = bgNoiseSettings.type;
         bgNoiseVolume.value = bgNoiseSettings.volume;
         bgNoiseVolumeVal.textContent = bgNoiseSettings.volume;
+        soundsVolume.value = soundsVolumeSetting;
+        soundsVolumeVal.textContent = soundsVolumeSetting;
         bgNoiseEnabled.checked = bgNoiseSettings.enabled;
     }
 
@@ -3018,6 +3430,67 @@ document.addEventListener('DOMContentLoaded', function() {
             soundOnComplete: cp.soc !== 0, flipTickSound: !!cp.fts
         };
     }
+    function compactThemeSlot(theme) {
+        if (!theme || !theme.bg) return undefined;
+        return {
+            bg: theme.bg,
+            f: theme.face,
+            n: theme.number,
+            fn: theme.font,
+            im: theme.inversionMode ? 1 : 0
+        };
+    }
+    function expandThemeSlot(ct) {
+        if (!ct || !ct.bg) return null;
+        return {
+            bg: ct.bg,
+            face: ct.f,
+            number: ct.n,
+            font: ct.fn || "'Nunito', sans-serif",
+            inversionMode: !!ct.im
+        };
+    }
+    function captureCurrentTheme() {
+        return {
+            bg: bgColor.value,
+            face: clockFaceColor.value,
+            number: numberColor.value,
+            font: fontSelector.value,
+            inversionMode: inversionMode
+        };
+    }
+    function syncCustomThemesUI() {
+        const slots = document.querySelectorAll('.custom-theme-slot');
+        slots.forEach(function(slot) {
+            const idx = parseInt(slot.getAttribute('data-slot'), 10);
+            const filled = !!(customThemes[idx] && customThemes[idx].bg);
+            slot.classList.toggle('filled', filled);
+        });
+    }
+    function saveCustomTheme(index) {
+        customThemes[index] = captureCurrentTheme();
+        syncCustomThemesUI();
+        saveAll();
+        showToast('Theme ' + (index + 1) + ' saved');
+    }
+    function applyCustomTheme(index) {
+        const theme = customThemes[index];
+        if (!theme || !theme.bg) {
+            showToast('No theme saved in this slot yet');
+            return;
+        }
+        bgColor.value = theme.bg;
+        clockFaceColor.value = theme.face;
+        numberColor.value = theme.number;
+        fontSelector.value = theme.font;
+        inversionMode = !!theme.inversionMode;
+        themeCustomized = true;
+        syncInversionModeUI();
+        applyCustomizations();
+        saveAll();
+        showToast('Theme ' + (index + 1) + ' applied');
+    }
+
     function buildSettingsObject() {
         return {
             pomoSettings: pomoSettings,
@@ -3031,10 +3504,12 @@ document.addEventListener('DOMContentLoaded', function() {
             bgNoiseType: bgNoiseSettings.type,
             bgNoiseVolume: bgNoiseSettings.volume,
             bgNoiseEnabled: bgNoiseSettings.enabled,
+            soundsVolume: soundsVolumeSetting,
             simpleDigitsMode: simpleDigitsMode,
             quoteEmojisEnabled: quoteEmojisOn,
             inversionMode: inversionMode,
             themeCustomized: themeCustomized,
+            customThemes: customThemes,
             theme: { bg: bgColor.value, face: clockFaceColor.value, number: numberColor.value, font: fontSelector.value }
         };
     }
@@ -3052,11 +3527,15 @@ document.addEventListener('DOMContentLoaded', function() {
             bnt: data.bgNoiseType,
             bnv: data.bgNoiseVolume,
             bne: data.bgNoiseEnabled ? 1 : 0,
+            sv: data.soundsVolume,
             sd: data.simpleDigitsMode ? 1 : 0,
             qem: data.quoteEmojisEnabled ? 1 : 0,
             im: data.inversionMode ? 1 : 0,
             tc: data.themeCustomized ? 1 : 0,
-            th: data.theme ? { bg: data.theme.bg, f: data.theme.face, n: data.theme.number, fn: data.theme.font } : undefined
+            th: data.theme ? { bg: data.theme.bg, f: data.theme.face, n: data.theme.number, fn: data.theme.font } : undefined,
+            ct1: compactThemeSlot(data.customThemes && data.customThemes[0]),
+            ct2: compactThemeSlot(data.customThemes && data.customThemes[1]),
+            ct3: compactThemeSlot(data.customThemes && data.customThemes[2])
         };
     }
     function fromStored(raw) {
@@ -3077,12 +3556,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 bgNoiseType: c.bnt,
                 bgNoiseVolume: c.bnv,
                 bgNoiseEnabled: !!c.bne,
+                soundsVolume: c.sv,
                 simpleDigitsMode: !!c.sd,
                 quoteEmojisEnabled: c.qem !== 0,
                 inversionMode: c.im !== undefined ? !!c.im : !!c.dm,
                 themeCustomized: !!c.tc,
                 ext: c.ext,
-                theme: c.th ? { bg: c.th.bg, face: c.th.f, number: c.th.n, font: c.th.fn } : undefined
+                theme: c.th ? { bg: c.th.bg, face: c.th.f, number: c.th.n, font: c.th.fn } : undefined,
+                customThemes: [expandThemeSlot(c.ct1), expandThemeSlot(c.ct2), expandThemeSlot(c.ct3)]
             };
         } catch (e) {
             return null;
@@ -3112,11 +3593,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (typeof data.bgNoiseVolume === 'number') bgNoiseSettings.volume = data.bgNoiseVolume;
         if (typeof data.bgNoiseEnabled === 'boolean') bgNoiseSettings.enabled = data.bgNoiseEnabled;
+        if (typeof data.soundsVolume === 'number') soundsVolumeSetting = data.soundsVolume;
         if (typeof data.simpleDigitsMode === 'boolean') simpleDigitsMode = data.simpleDigitsMode;
         if (typeof data.quoteEmojisEnabled === 'boolean') quoteEmojisOn = data.quoteEmojisEnabled;
         if (typeof data.inversionMode === 'boolean') inversionMode = data.inversionMode;
         else if (typeof data.darkMode === 'boolean') inversionMode = data.darkMode;
         if (typeof data.themeCustomized === 'boolean') themeCustomized = data.themeCustomized;
+        if (data.customThemes && Array.isArray(data.customThemes)) {
+            customThemes = data.customThemes.slice(0, 3);
+            while (customThemes.length < 3) customThemes.push(null);
+        }
         if (data.theme) {
             bgColor.value = data.theme.bg;
             clockFaceColor.value = data.theme.face;
@@ -3124,7 +3610,21 @@ document.addEventListener('DOMContentLoaded', function() {
             fontSelector.value = data.theme.font;
         }
     }
-    function saveAll() {
+    function syncUrlFromSettings() {
+        if (urlSyncTimer) clearTimeout(urlSyncTimer);
+        urlSyncTimer = setTimeout(function() {
+            try {
+                const payload = compressSettingsPayload(getSettingsJson());
+                const newHash = '#i=' + payload;
+                const base = location.pathname + location.search;
+                if (location.hash !== newHash) {
+                    history.replaceState(null, '', base + newHash);
+                }
+            } catch (e) {}
+        }, 300);
+    }
+
+    function saveAll(skipUrlSync) {
         const compact = toCompact(buildSettingsObject());
         const json = JSON.stringify(compact);
         try { localStorage.setItem(STORAGE_KEY, json); } catch (e) {}
@@ -3138,6 +3638,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 setCookie(COOKIE_NAME, essentialJson);
             }
         }
+        if (!skipUrlSync) syncUrlFromSettings();
     }
     function loadAll() {
         try {
@@ -3162,6 +3663,7 @@ document.addEventListener('DOMContentLoaded', function() {
         syncBgNoiseUI();
         syncSimpleDigitsUI();
         syncInversionModeUI();
+        syncCustomThemesUI();
         quotesIntervalSelect.value = String(quotesIntervalMinutes);
         update12hrButtons();
         updateGreeting();
@@ -3288,13 +3790,23 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!hash) return;
         if (hash.indexOf('#i=') === 0) {
             applyImportedSettings(decodeURIComponent(hash.slice(3)));
-            history.replaceState(null, '', location.pathname + location.search);
             return;
         }
         if (hash.indexOf('#import=') === 0) {
             applyImportedSettings(decodeURIComponent(hash.slice(8)));
-            history.replaceState(null, '', location.pathname + location.search);
         }
+    }
+
+    function initFeedbackMailLink() {
+        if (!feedbackMailLink) return;
+        var p = ['n','a','t','h','a','n'];
+        var d = ['p','e','t','r','a','l','i','a','n'];
+        var t = ['c','o','m'];
+        feedbackMailLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            var addr = p.join('') + '@' + d.join('') + '.' + t.join('');
+            location.href = 'mai' + 'lto:' + addr + '?subject=' + encodeURIComponent('LunaClock feedback');
+        });
     }
 
     function clearQrScannerInstance(scanner) {
@@ -4159,13 +4671,28 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('fullscreenchange', function() {
         if (!document.fullscreenElement && isFullscreen) exitFullscreen();
     });
-    userNameInput.addEventListener('input', function() { updateGreeting(); saveAll(); });
+    userNameInput.addEventListener('input', function() {
+        updateGreeting();
+        saveAll(true);
+        if (nameUrlSyncTimer) clearTimeout(nameUrlSyncTimer);
+        nameUrlSyncTimer = setTimeout(function() { syncUrlFromSettings(); }, 800);
+    });
     quotesIntervalSelect.addEventListener('change', function() {
         quotesIntervalMinutes = parseInt(quotesIntervalSelect.value, 10);
         saveAll();
         if (isPomodoroMode && showQuotes) startQuoteRotation();
     });
     randomThemeBtn.addEventListener('click', generateRandomTheme);
+    document.querySelectorAll('.custom-theme-save').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            saveCustomTheme(parseInt(btn.getAttribute('data-slot'), 10));
+        });
+    });
+    document.querySelectorAll('.custom-theme-apply').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            applyCustomTheme(parseInt(btn.getAttribute('data-slot'), 10));
+        });
+    });
     bgNoiseType.addEventListener('change', function() {
         unlockAudio();
         bgNoiseSettings.type = bgNoiseType.value;
@@ -4181,6 +4708,11 @@ document.addEventListener('DOMContentLoaded', function() {
         bgNoiseVolumeVal.textContent = bgNoiseSettings.volume;
         saveAll();
         updateBgNoiseVolume();
+    });
+    soundsVolume.addEventListener('input', function() {
+        soundsVolumeSetting = parseInt(soundsVolume.value, 10);
+        soundsVolumeVal.textContent = soundsVolumeSetting;
+        saveAll();
     });
     bgNoiseEnabled.addEventListener('change', function() {
         unlockAudio();
@@ -4237,9 +4769,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.addEventListener('visibilitychange', function() {
-        if (!document.hidden && !isStopwatchMode && !isPomodoroMode) {
-            stopAllTimers();
-            startClock();
+        if (!document.hidden) {
+            if (bgNoiseSettings.enabled && bgNoiseSettings.type !== 'none') {
+                resyncBgNoiseIfNeeded();
+            }
+            if (!isStopwatchMode && !isPomodoroMode) {
+                stopAllTimers();
+                startClock();
+            }
         }
     });
     window.addEventListener('resize', function() {
@@ -4248,6 +4785,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ─── Init ───
     installAudioUnlock();
+    initFeedbackMailLink();
     loadAll();
     syncInversionModeUI();
     applyCustomizations();
@@ -4255,6 +4793,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateGreeting();
     updateTimeDisplay();
     tryImportFromHash();
+    syncUrlFromSettings();
     setInterval(updateGreeting, 30000);
     setInterval(updateTimeDisplay, 1000);
     syncBgNoise();
