@@ -14,10 +14,9 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html {
             overflow-x: hidden;
-            overflow-y: hidden;
+            overflow-y: auto;
             max-width: 100vw;
             height: 100%;
-            max-height: 100dvh;
         }
         :root {
             --bg: #e8e8ec;
@@ -88,11 +87,10 @@
         body {
             min-height: 100vh;
             min-height: 100dvh;
-            max-height: 100dvh;
             width: 100%;
             max-width: 100vw;
             overflow-x: hidden;
-            overflow-y: hidden;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -275,7 +273,6 @@
             z-index: 10050;
             pointer-events: none;
             visibility: hidden;
-            contain: strict;
         }
         .settings-drawer.open {
             pointer-events: auto;
@@ -1001,6 +998,8 @@
             max-width: 100%;
             min-width: 0;
             overflow: visible;
+            perspective: 1200px;
+            -webkit-perspective: 1200px;
         }
 
         .flip-card {
@@ -1023,28 +1022,35 @@
             font-variant: small-caps;
         }
 
-        /* ─── ResponsiveFlipper digit structure (Arthur Shlain) ─── */
+        /* ─── Flip digit structure (ResponsiveFlipper / flipclock-style 3D) ─── */
         .flip-digit-group {
             display: flex;
-            gap: clamp(1px, 0.6vw, 6px);
+            gap: clamp(2px, 0.5vw, 6px);
             font-size: var(--flip-size);
             line-height: 1;
             min-width: 0;
             width: 100%;
             justify-content: center;
+            perspective: 600px;
+            -webkit-perspective: 600px;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
         }
         .flipper-digit {
             position: relative;
             display: block;
+            flex: 0 0 auto;
             height: 1.2em;
-            width: 0.62em;
-            min-width: 0;
-            max-width: 0.68em;
-            flex: 1 1 0;
+            width: 0.65em;
+            min-width: 0.65em;
+            max-width: 0.65em;
             overflow: hidden;
             color: var(--number);
             white-space: nowrap;
-            isolation: isolate;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            -webkit-font-smoothing: antialiased;
+            font-variant-numeric: tabular-nums;
         }
         .flipper-digit::after {
             content: '';
@@ -1092,15 +1098,17 @@
             -webkit-backface-visibility: hidden;
             transform-style: preserve-3d;
             -webkit-transform-style: preserve-3d;
-            transform-origin: 0 0.6em 0 !important;
-            -webkit-transform-origin: 0 0.6em 0 !important;
-            z-index: 20;
+            transform-origin: 50% 100% !important;
+            -webkit-transform-origin: 50% 100% !important;
+            z-index: 10;
             pointer-events: none;
+            will-change: transform;
             transition: transform 0s linear, background 0s linear;
         }
         .digit-top.r {
             transition: transform 0.2s linear, background 0.2s linear;
-            transform: rotateX(90deg);
+            -webkit-transform: rotateX(-90deg);
+            transform: rotateX(-90deg);
             background: var(--face-dim);
         }
         .digit-top2 {
@@ -1123,17 +1131,20 @@
             font-weight: 800;
             transform-style: preserve-3d;
             -webkit-transform-style: preserve-3d;
-            transform-origin: 0 0 0 !important;
-            -webkit-transform-origin: 0 0 0 !important;
-            transform: rotateX(-90deg);
+            transform-origin: 50% 0% !important;
+            -webkit-transform-origin: 50% 0% !important;
+            -webkit-transform: rotateX(90deg);
+            transform: rotateX(90deg);
             z-index: 20;
             pointer-events: none;
             line-height: 0em !important;
+            will-change: transform, visibility;
             transition: transform 0s linear, background 0s linear, visibility 0s;
         }
         .digit-top2.r {
             visibility: visible;
-            transition: transform 0.2s linear 0.2s, background 0.2s linear 0.2s, visibility 0s;
+            transition: transform 0.2s linear 0.2s, background 0.2s linear 0.2s, visibility 0s linear 0.2s;
+            -webkit-transform: rotateX(0deg);
             transform: rotateX(0deg);
             background: var(--face);
         }
@@ -1592,12 +1603,16 @@
                 --flip-size: clamp(34px, 10.5vw, 52px);
                 --page-pad: 8px;
             }
+            html,
             body,
             body.panel-open {
                 overflow-x: hidden;
                 overflow-y: hidden;
             }
-            body { gap: 6px; }
+            body {
+                max-height: 100dvh;
+                gap: 6px;
+            }
             .page-shell {
                 gap: 6px;
                 flex: 0 1 auto;
@@ -1650,12 +1665,11 @@
             .clock.pomodoro-mode {
                 --flip-size: clamp(32px, 9.5vw, 50px);
             }
-            .flip-digit-group { gap: 0; }
+            .flip-digit-group { gap: clamp(1px, 0.3vw, 3px); }
             .flipper-digit {
-                width: auto;
-                min-width: 0;
-                max-width: 0.58em;
-                flex: 1 1 0;
+                width: 0.62em;
+                min-width: 0.62em;
+                max-width: 0.62em;
             }
             .separator {
                 font-size: clamp(12px, 3.2vw, 18px);
@@ -1730,8 +1744,9 @@
 
         @media (min-width: 480px) {
             .settings-panel {
-                width: min(360px, 92vw);
-                min-width: 360px;
+                width: min(360px, calc(100vw - 24px));
+                max-width: calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+                min-width: min(360px, calc(100vw - 24px));
             }
         }
 
@@ -1741,11 +1756,25 @@
                 --flip-size: clamp(52px, 7.5vw, 88px);
                 --page-pad: clamp(16px, 3vw, 24px);
             }
+            html, body {
+                overflow-y: auto;
+                max-height: none;
+            }
+            body.panel-open,
+            body.panel-open .page-shell {
+                overflow-y: visible;
+                max-height: none;
+            }
             .page-shell { max-width: min(780px, 100%); }
             .settings-panel {
-                width: min(420px, 92vw);
-                max-width: 420px;
-                min-width: 360px;
+                width: min(400px, calc(100vw - max(32px, env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))));
+                max-width: calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+                min-width: min(360px, calc(100vw - 32px));
+                box-sizing: border-box;
+            }
+            .settings-body {
+                overflow-x: hidden;
+                padding-right: max(16px, env(safe-area-inset-right, 0px));
             }
             .settings-text-input {
                 flex: 2 1 auto;
@@ -1790,9 +1819,9 @@
             .clock { gap: clamp(8px, 1.5vw, 20px); padding: clamp(24px, 4vw, 44px) clamp(16px, 3.5vw, 50px); }
             .flip-digit-group { gap: clamp(3px, 0.8vw, 6px); }
             .flipper-digit {
-                width: auto;
-                min-width: 0;
-                max-width: none;
+                width: 0.65em;
+                min-width: 0.65em;
+                max-width: 0.65em;
             }
             .separator { font-size: clamp(22px, 4vw, 34px); padding: 0 2px; }
             .mode-indicator { font-size: clamp(9px, 2.2vw, 11px); padding: 5px 14px; letter-spacing: 0.5px; }
@@ -2418,12 +2447,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const FLIP_MS = 400;
     const HALF = FLIP_MS / 2;
 
-    // ─── FlipEngine (ResponsiveFlipper / Arthur Shlain pattern) ───
+    // ─── FlipEngine (ResponsiveFlipper — flipclock.online-style 3D flip) ───
     const FlipEngine = (function() {
         const units = new Map();
 
         function init(container, onComplete) {
-            units.set(container, { flipping: false, queue: null, onComplete: onComplete });
+            units.set(container, { flipping: false, pending: null, onComplete: onComplete });
+        }
+
+        function resetLayers(top, top2, bottom, next, val) {
+            top.textContent = val;
+            top2.textContent = val;
+            bottom.textContent = val;
+            next.textContent = val;
+            top.classList.remove('r');
+            top2.classList.remove('r');
+            bottom.classList.remove('r');
+            top.style.display = '';
+            top.style.visibility = '';
+            top2.style.visibility = '';
         }
 
         function setInstant(container, value) {
@@ -2433,18 +2475,24 @@ document.addEventListener('DOMContentLoaded', function() {
             const next = container.querySelector('.digit-next');
             if (!top) return;
             const v = String(value).slice(-1);
-            top.textContent = v;
-            top2.textContent = v;
-            bottom.textContent = v;
-            next.textContent = v;
-            top.classList.remove('r');
-            top2.classList.remove('r');
-            bottom.classList.remove('r');
-            top.style.display = '';
-            top2.style.visibility = '';
+            resetLayers(top, top2, bottom, next, v);
             container.classList.remove('r');
             const state = units.get(container);
-            if (state) { state.flipping = false; state.queue = null; }
+            if (state) { state.flipping = false; state.pending = null; }
+        }
+
+        function afterMs(ms, fn) {
+            var done = false;
+            var timer = setTimeout(function() {
+                if (done) return;
+                done = true;
+                fn();
+            }, ms);
+            return function cancel() {
+                if (done) return;
+                done = true;
+                clearTimeout(timer);
+            };
         }
 
         function flip(container, newValue, playTick) {
@@ -2459,7 +2507,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (current === nextVal) return;
 
             if (state.flipping) {
-                state.queue = nextVal;
+                state.pending = nextVal;
                 return;
             }
 
@@ -2472,27 +2520,27 @@ document.addEventListener('DOMContentLoaded', function() {
             top2.classList.add('r');
             bottom.classList.add('r');
 
-            setTimeout(function() {
+            afterMs(HALF, function() {
                 top.textContent = nextVal;
-                top.style.display = 'none';
+                top.style.visibility = 'hidden';
                 top2.textContent = nextVal;
-                setTimeout(function() {
+                afterMs(HALF, function() {
                     bottom.textContent = nextVal;
                     bottom.classList.remove('r');
                     top.classList.remove('r');
-                    top.style.display = '';
+                    top.style.visibility = '';
                     top2.textContent = nextVal;
                     top2.classList.remove('r');
                     container.classList.remove('r');
                     state.flipping = false;
                     if (playTick && state.onComplete) state.onComplete();
-                    if (state.queue !== null) {
-                        const queued = state.queue;
-                        state.queue = null;
+                    if (state.pending !== null) {
+                        const queued = state.pending;
+                        state.pending = null;
                         if (queued !== nextVal) flip(container, queued, playTick);
                     }
-                }, HALF);
-            }, HALF);
+                });
+            });
         }
 
         return { init: init, flip: flip, setInstant: setInstant };
