@@ -697,6 +697,15 @@
             max-width: min(200px, 58vw);
             border-radius: 9999px;
         }
+        .preset-group-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--settings-ui-subtle, var(--text-secondary));
+            padding: 8px 16px 2px;
+            opacity: 0.9;
+        }
         .appearance-section .preset-row {
             padding: 6px 16px 10px;
             gap: 6px;
@@ -1279,7 +1288,7 @@
             backdrop-filter: blur(12px);
             padding: clamp(16px, 4vw, 22px);
             border-radius: 22px;
-            border: 1px solid rgba(255,255,255,0.48);
+            border: 1px solid var(--mode-panel-border, rgba(255,255,255,0.48));
             display: none;
             flex-direction: column;
             gap: 14px;
@@ -1360,10 +1369,10 @@
         }
         .goal-track {
             height: 10px;
-            background: rgba(0,0,0,0.1);
+            background: var(--goal-track-bg, rgba(0,0,0,0.1));
             border-radius: 50px;
             overflow: hidden;
-            border: 1px solid rgba(0,0,0,0.06);
+            border: 1px solid var(--goal-track-border, rgba(0,0,0,0.06));
         }
         .goal-fill {
             height: 100%;
@@ -1674,8 +1683,8 @@
             .fullscreen-mode .clock.stopwatch-mode { --flip-size: clamp(48px, 11vmin, 130px); }
         }
 
-        /* ─── Inversion mode chrome (derived from inverted palette) ─── */
-        body.inversion-mode {
+        /* ─── Dark preset chrome (preset-derived tokens via JS) ─── */
+        body.theme-dark {
             --text-primary: #f0f0f5;
             --text-secondary: #a8a8b8;
             --text-muted: #8a8a9a;
@@ -1684,10 +1693,10 @@
             --chrome-bg: rgba(42,42,56,0.92);
             --chrome-border: rgba(255,255,255,0.1);
         }
-        body.inversion-mode .settings-drawer.open .settings-overlay {
+        body.theme-dark .settings-drawer.open .settings-overlay {
             background: rgba(0,0,0,0.55);
         }
-        body.inversion-mode .settings-panel {
+        body.theme-dark .settings-panel {
             background: #1a1a24;
             color: #e8e8f0;
             box-shadow: -8px 0 40px rgba(0,0,0,0.45);
@@ -1695,146 +1704,146 @@
             --settings-ui-muted: #c8c8d8;
             --settings-ui-subtle: #a8a8b8;
         }
-        body.inversion-mode .settings-header {
+        body.theme-dark .settings-header {
             border-bottom-color: rgba(255,255,255,0.08);
             background: #1a1a24;
         }
-        body.inversion-mode .settings-header h2,
-        body.inversion-mode .settings-row,
-        body.inversion-mode .settings-section-title,
-        body.inversion-mode .settings-footer {
+        body.theme-dark .settings-header h2,
+        body.theme-dark .settings-row,
+        body.theme-dark .settings-section-title,
+        body.theme-dark .settings-footer {
             color: #e8e8f0;
         }
-        body.inversion-mode .settings-section-title {
+        body.theme-dark .settings-section-title {
             opacity: 0.92;
             color: #f0f0f5;
         }
-        body.inversion-mode .settings-row {
+        body.theme-dark .settings-row {
             border-top-color: rgba(255,255,255,0.06);
         }
-        body.inversion-mode .settings-text-input,
-        body.inversion-mode .settings-row select {
+        body.theme-dark .settings-text-input,
+        body.theme-dark .settings-row select {
             background: #252532;
             border-color: rgba(255,255,255,0.12);
             color: #f0f0f5;
         }
-        body.inversion-mode .settings-close {
+        body.theme-dark .settings-close {
             background: rgba(255,255,255,0.08);
             border-color: rgba(255,255,255,0.12);
             color: #e8e8f0;
         }
-        body.inversion-mode .font-preview {
+        body.theme-dark .font-preview {
             background: #252532;
             border-color: rgba(255,255,255,0.12);
             color: #f0f0f5;
         }
-        body.inversion-mode .settings-panel input[type="color"] {
+        body.theme-dark .settings-panel input[type="color"] {
             border-color: rgba(255,255,255,0.28);
             box-shadow: 0 0 0 1px rgba(255,255,255,0.15);
         }
-        body.inversion-mode .settings-row input[type="range"]::-webkit-slider-runnable-track {
+        body.theme-dark .settings-row input[type="range"]::-webkit-slider-runnable-track {
             background: rgba(255,255,255,0.14);
         }
-        body.inversion-mode .settings-row input[type="range"]::-moz-range-track {
+        body.theme-dark .settings-row input[type="range"]::-moz-range-track {
             background: rgba(255,255,255,0.14);
         }
-        body.inversion-mode .settings-row input[type="range"]::-webkit-slider-thumb {
+        body.theme-dark .settings-row input[type="range"]::-webkit-slider-thumb {
             background: #f0f0f5;
             border-color: color-mix(in srgb, var(--accent) 45%, #a8a8b8);
         }
-        body.inversion-mode .settings-row input[type="range"]::-moz-range-thumb {
+        body.theme-dark .settings-row input[type="range"]::-moz-range-thumb {
             background: #f0f0f5;
             border-color: color-mix(in srgb, var(--accent) 45%, #a8a8b8);
         }
-        body.inversion-mode .appearance-color-item label {
+        body.theme-dark .appearance-color-item label {
             color: #a8a8b8;
             opacity: 1;
         }
-        body.inversion-mode .settings-section.profile-section {
+        body.theme-dark .settings-section.profile-section {
             background: rgba(100,150,255,0.12);
             border-color: rgba(100,150,255,0.28);
         }
-        body.inversion-mode .settings-section.appearance-section {
+        body.theme-dark .settings-section.appearance-section {
             background: rgba(160,120,220,0.12);
             border-color: rgba(160,120,220,0.28);
         }
-        body.inversion-mode .settings-section.clock-section {
+        body.theme-dark .settings-section.clock-section {
             background: rgba(230,180,80,0.1);
             border-color: rgba(230,180,80,0.28);
         }
-        body.inversion-mode .settings-section.display-section {
+        body.theme-dark .settings-section.display-section {
             background: rgba(100,190,130,0.1);
             border-color: rgba(100,190,130,0.28);
         }
-        body.inversion-mode .settings-section.pomodoro-section {
+        body.theme-dark .settings-section.pomodoro-section {
             background: rgba(240,130,100,0.1);
             border-color: rgba(240,130,100,0.28);
         }
-        body.inversion-mode .settings-section.sound-section {
+        body.theme-dark .settings-section.sound-section {
             background: rgba(80,190,180,0.1);
             border-color: rgba(80,190,180,0.28);
         }
-        body.inversion-mode .settings-section.sync-section {
+        body.theme-dark .settings-section.sync-section {
             background: rgba(99,102,241,0.14);
             border-color: rgba(99,102,241,0.32);
         }
-        body.inversion-mode .sync-btn {
+        body.theme-dark .sync-btn {
             background: rgba(37,37,50,0.85);
             color: #f0f0f5;
             border-color: rgba(99,102,241,0.35);
         }
-        body.inversion-mode .sync-textarea {
+        body.theme-dark .sync-textarea {
             background: rgba(37,37,50,0.85);
             color: #f0f0f5;
             border-color: rgba(99,102,241,0.35);
         }
-        body.inversion-mode .qr-modal {
+        body.theme-dark .qr-modal {
             background: #1e1e28;
             border-color: rgba(255,255,255,0.1);
         }
-        body.inversion-mode .qr-modal h3 { color: #f0f0f5; }
-        body.inversion-mode .qr-modal-close {
+        body.theme-dark .qr-modal h3 { color: #f0f0f5; }
+        body.theme-dark .qr-modal-close {
             background: rgba(99,102,241,0.25);
             color: #f0f0f5;
         }
-        body.inversion-mode .settings-footer {
+        body.theme-dark .settings-footer {
             border-top-color: rgba(255,255,255,0.08);
             opacity: 0.65;
         }
-        body.inversion-mode .format-toggle {
+        body.theme-dark .format-toggle {
             background: #252532;
             border-color: rgba(255,255,255,0.12);
             color: #f0f0f5;
         }
-        body.inversion-mode .greeting-banner,
-        body.inversion-mode .mode-panel,
-        body.inversion-mode .clock {
+        body.theme-dark .greeting-banner,
+        body.theme-dark .mode-panel,
+        body.theme-dark .clock {
             border-color: rgba(255,255,255,0.08);
         }
-        body.inversion-mode .top-bar-btn {
+        body.theme-dark .top-bar-btn {
             background: var(--chrome-bg);
             border-color: var(--chrome-border);
             color: var(--text-primary);
         }
-        body.inversion-mode .btn-mode:not(.active) {
+        body.theme-dark .btn-mode:not(.active) {
             color: var(--btn-mode-inactive-text, var(--text-secondary));
         }
-        body.inversion-mode .goal-track {
+        body.theme-dark .goal-track {
             background: rgba(255,255,255,0.12);
             border-color: rgba(255,255,255,0.08);
         }
-        body.inversion-mode .lap-item { color: var(--laps-text, var(--text-primary)); }
-        body.inversion-mode .no-laps { color: var(--laps-text-muted, var(--text-muted)); }
-        body.inversion-mode .mode-indicator {
+        body.theme-dark .lap-item { color: var(--laps-text, var(--text-primary)); }
+        body.theme-dark .no-laps { color: var(--laps-text-muted, var(--text-muted)); }
+        body.theme-dark .mode-indicator {
             background: var(--panel-bg);
             border-color: var(--panel-border);
             color: var(--text-primary);
         }
-        body.inversion-mode .toggle-slider {
+        body.theme-dark .toggle-slider {
             background: rgba(255,255,255,0.12);
             border-color: rgba(255,255,255,0.1);
         }
-        body.inversion-mode .toggle-slider::before {
+        body.theme-dark .toggle-slider::before {
             background: #f0f0f5;
         }
     </style>
@@ -2003,13 +2012,6 @@
 
             <div class="settings-section appearance-section">
                 <div class="settings-section-title">Appearance</div>
-                <div class="settings-row">
-                    <label for="inversionModeEnabled">Dark / Light</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="inversionModeEnabled">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
                 <div class="appearance-colors-row">
                     <div class="appearance-color-item">
                         <label for="bgColor" title="Background">BG</label>
@@ -2048,14 +2050,17 @@
                     </select>
                 </div>
                 <div class="font-preview" id="fontPreview">Aa Bb 123 — The quick brown fox</div>
-                <div class="settings-section-title" style="padding-top:4px;">Presets</div>
-                <div class="preset-row">
+                <div class="preset-group-label">Light presets</div>
+                <div class="preset-row preset-row-light">
                     <button class="preset-btn preset-blush" data-preset="blush">Blush</button>
                     <button class="preset-btn preset-babyblue" data-preset="babyblue">Baby Blue</button>
                     <button class="preset-btn preset-lavender" data-preset="lavender">Lavender</button>
                     <button class="preset-btn preset-peach" data-preset="peach">Peach</button>
                     <button class="preset-btn preset-mint" data-preset="mint">Mint</button>
                     <button class="preset-btn preset-sunset" data-preset="sunset">Sunset</button>
+                </div>
+                <div class="preset-group-label">Dark presets</div>
+                <div class="preset-row preset-row-dark">
                     <button class="preset-btn preset-charcoal" data-preset="charcoal">Charcoal</button>
                     <button class="preset-btn preset-midnight" data-preset="midnight">Midnight</button>
                     <button class="preset-btn preset-forest" data-preset="forest">Forest</button>
@@ -2411,7 +2416,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const bgNoiseEnabled = document.getElementById('bgNoiseEnabled');
     const feedbackMailLink = document.getElementById('feedbackMailLink');
     const quoteEmojisEnabled = document.getElementById('quoteEmojisEnabled');
-    const inversionModeEnabled = document.getElementById('inversionModeEnabled');
     const pomoStats = document.getElementById('pomoStats');
     const confettiCanvas = document.getElementById('confettiCanvas');
     const settingsDrawer = document.getElementById('settingsDrawer');
@@ -2513,7 +2517,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let settingsOpen = false;
     let showQuotes = true;
     let quoteEmojisOn = true;
-    let inversionMode = false;
     let themeCustomized = false;
     let customThemes = [null, null, null];
     let currentSessionInCycle = 0;
@@ -2523,6 +2526,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const defaultColors = { bg: '#e8e8ec', face: '#f5f5f7', number: '#2c2c2e' };
     const SCRIPT_FONTS = ["'Caveat', cursive", "'Pacifico', cursive", "'Comic Neue', cursive"];
+    const LIGHT_PRESETS = ['blush', 'babyblue', 'lavender', 'peach', 'mint', 'sunset'];
+    const DARK_PRESETS = ['charcoal', 'midnight', 'forest', 'plum'];
     const presets = {
         blush: { bg: '#fce8ef', face: '#ffffff', number: '#7a2d4a' },
         babyblue: { bg: '#dceefb', face: '#ffffff', number: '#1a4a6e' },
@@ -2538,6 +2543,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function isScriptFont(font) {
         return SCRIPT_FONTS.indexOf(font) !== -1;
+    }
+
+    function isLightBg(hex) {
+        const rgb = parseHex(hex);
+        return relativeLuminance(rgb.r, rgb.g, rgb.b) >= 0.35;
+    }
+
+    function migrateLegacyInversion(theme, hadInversion) {
+        if (!hadInversion || !theme || !theme.bg) return theme;
+        if (!isLightBg(theme.bg)) return theme;
+        return {
+            bg: presets.charcoal.bg,
+            face: presets.charcoal.face,
+            number: presets.charcoal.number,
+            font: theme.font || "'Nunito', sans-serif"
+        };
     }
 
     function parseHex(hex) {
@@ -2622,111 +2643,27 @@ document.addEventListener('DOMContentLoaded', function() {
         const bgRgb = typeof bg === 'string' ? parseHex(bg) : bg;
         const l1 = relativeLuminance(fgRgb.r, fgRgb.g, fgRgb.b);
         const l2 = relativeLuminance(bgRgb.r, bgRgb.g, bgRgb.b);
-        const lighter = Math.max(l1, l2);
-        const darker = Math.min(l1, l2);
-        return (lighter + 0.05) / (darker + 0.05);
+        return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
     }
 
-    const WCAG_BODY = 4.5;
-    const WCAG_UI = 3;
+    const WCAG_AA_NORMAL = 4.5;
+    const WCAG_AA_LARGE = 3;
 
-    function ensureContrast(fgHex, bg, minRatio) {
+    function ensureContrast(fg, bg, minRatio) {
+        if (!fg || !bg) return fg || '#1a1a22';
+        if (contrastRatio(fg, bg) >= minRatio) return fg;
         const bgRgb = typeof bg === 'string' ? parseHex(bg) : bg;
-        let hsl = rgbToHsl(parseHex(fgHex).r, parseHex(fgHex).g, parseHex(fgHex).b);
         const bgLum = relativeLuminance(bgRgb.r, bgRgb.g, bgRgb.b);
         const lighten = bgLum < 0.45;
-        for (let i = 0; i < 50; i++) {
-            const candidate = hslToHex(hsl.h, hsl.s, hsl.l);
-            if (contrastRatio(candidate, bgRgb) >= minRatio) return candidate;
-            if (lighten) hsl.l = Math.min(99, hsl.l + 2.5);
-            else hsl.l = Math.max(1, hsl.l - 2.5);
-        }
-        return hslToHex(hsl.h, hsl.s, hsl.l);
-    }
-
-    function ensureContrastOnAll(fgHex, bgList, minRatio) {
-        let result = fgHex;
-        bgList.forEach(function(bg) {
-            result = ensureContrast(result, bg, minRatio);
-        });
-        return result;
-    }
-
-    function invertThemeColor(hex, role) {
-        const rgb = parseHex(hex);
+        const rgb = parseHex(fg);
         const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
-        let h = hsl.h;
-        let s = hsl.s;
-        let l = hsl.l;
-        const isLight = l > 52;
-        if (role === 'bg') {
-            if (isLight) {
-                l = Math.max(8, Math.min(20, 18 - (l - 50) * 0.05));
-                s = Math.min(s * 0.75, 40);
-            } else {
-                l = Math.min(90, 100 - l + 12);
-                s = Math.min(s * 0.85, 30);
-            }
-        } else if (role === 'face') {
-            if (isLight) {
-                l = Math.max(18, Math.min(32, 28 - (l - 50) * 0.06));
-                s = Math.min(s * 0.65, 35);
-            } else {
-                l = Math.min(86, 100 - l + 8);
-                s = Math.min(s * 0.75, 28);
-            }
-        } else {
-            if (isLight) {
-                l = Math.max(80, Math.min(96, 92 - (l - 50) * 0.05));
-                s = Math.min(s * 0.55, 22);
-            } else {
-                l = Math.max(14, Math.min(38, l * 0.55 + 8));
-                s = Math.min(s * 1.05, 48);
-            }
+        for (let i = 0; i < 60; i++) {
+            hsl.l = lighten ? Math.min(98, hsl.l + 3) : Math.max(2, hsl.l - 3);
+            if (lighten) hsl.s = Math.max(0, hsl.s * 0.92);
+            const candidate = hslToHex(hsl.h, hsl.s, hsl.l);
+            if (contrastRatio(candidate, bg) >= minRatio) return candidate;
         }
-        return hslToHex(h, s, l);
-    }
-
-    function computeInvertedPalette(base) {
-        return {
-            bg: invertThemeColor(base.bg, 'bg'),
-            face: invertThemeColor(base.face, 'face'),
-            number: invertThemeColor(base.number, 'number')
-        };
-    }
-
-    function getBaseTheme() {
-        return { bg: bgColor.value, face: clockFaceColor.value, number: numberColor.value };
-    }
-
-    function getEffectivePalette() {
-        const base = getBaseTheme();
-        return inversionMode ? computeInvertedPalette(base) : base;
-    }
-
-    function isEffectivelyDark() {
-        const pal = getEffectivePalette();
-        const rgb = parseHex(pal.bg);
-        return relativeLuminance(rgb.r, rgb.g, rgb.b) < 0.35;
-    }
-
-    function applyTypographyRoles() {
-        const font = fontSelector.value;
-        const script = isScriptFont(font);
-        body.classList.toggle('font-script', script);
-        const uiFont = script ? "'Inter', system-ui, -apple-system, sans-serif" : font;
-        document.documentElement.style.setProperty('--font-display', font);
-        document.documentElement.style.setProperty('--font-ui', uiFont);
-        document.documentElement.style.setProperty('--font-body', font);
-        document.documentElement.style.setProperty('--font-caption', uiFont);
-    }
-
-    function contrastRatio(fg, bg) {
-        const f = parseHex(fg);
-        const b = parseHex(bg);
-        const l1 = relativeLuminance(f.r, f.g, f.b);
-        const l2 = relativeLuminance(b.r, b.g, b.b);
-        return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+        return lighten ? '#f5f5f7' : '#1a1a22';
     }
 
     function blendOnBg(r, g, b, alpha, bgHex) {
@@ -2752,25 +2689,30 @@ document.addEventListener('DOMContentLoaded', function() {
         return hslToHex(hsl.h, hsl.s, hsl.l);
     }
 
-    function ensureContrast(fg, bg, minRatio) {
-        if (!fg || !bg) return fg || '#1a1a22';
-        if (contrastRatio(fg, bg) >= minRatio) return fg;
-        const bgRgb = parseHex(bg);
-        const bgLum = relativeLuminance(bgRgb.r, bgRgb.g, bgRgb.b);
-        const lighten = bgLum < 0.45;
-        const rgb = parseHex(fg);
-        const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
-        for (let i = 0; i < 60; i++) {
-            hsl.l = lighten ? Math.min(98, hsl.l + 3) : Math.max(2, hsl.l - 3);
-            if (lighten) hsl.s = Math.max(0, hsl.s * 0.92);
-            const candidate = hslToHex(hsl.h, hsl.s, hsl.l);
-            if (contrastRatio(candidate, bg) >= minRatio) return candidate;
-        }
-        return lighten ? '#f5f5f7' : '#1a1a22';
+    function getBaseTheme() {
+        return { bg: bgColor.value, face: clockFaceColor.value, number: numberColor.value };
     }
 
-    const WCAG_AA_NORMAL = 4.5;
-    const WCAG_AA_LARGE = 3;
+    function getEffectivePalette() {
+        return getBaseTheme();
+    }
+
+    function isEffectivelyDark() {
+        const pal = getEffectivePalette();
+        const rgb = parseHex(pal.bg);
+        return relativeLuminance(rgb.r, rgb.g, rgb.b) < 0.35;
+    }
+
+    function applyTypographyRoles() {
+        const font = fontSelector.value;
+        const script = isScriptFont(font);
+        body.classList.toggle('font-script', script);
+        const uiFont = script ? "'Inter', system-ui, -apple-system, sans-serif" : font;
+        document.documentElement.style.setProperty('--font-display', font);
+        document.documentElement.style.setProperty('--font-ui', uiFont);
+        document.documentElement.style.setProperty('--font-body', font);
+        document.documentElement.style.setProperty('--font-caption', uiFont);
+    }
 
     function applyChromeTextTokens() {
         const pal = getEffectivePalette();
@@ -2819,6 +2761,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const lapsBestText = ensureContrast(dark ? '#9fd4b0' : '#3c8c5a', lapsBestSolid, WCAG_AA_NORMAL);
         const btnBorder = dark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)';
         const lapsBorder = dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+        const modePanelBorder = dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.48)';
+        const settingsBgSolid = dark ? blendOnBg(26, 26, 36, 1, pageBg) : blendOnBg(255, 255, 255, 0.97, pageBg);
+        const settingsInputSolid = dark ? blendOnBg(37, 37, 50, 1, settingsBgSolid) : blendOnBg(248, 248, 252, 1, settingsBgSolid);
+        const settingsText = ensureContrast(textPrimary, settingsBgSolid, WCAG_AA_NORMAL);
+        const settingsMuted = ensureContrast(textSecondary, settingsBgSolid, WCAG_AA_NORMAL);
+        const settingsSubtle = ensureContrast(softenTextColor(settingsMuted, dark, 6), settingsBgSolid, WCAG_AA_LARGE);
+        const settingsInputText = ensureContrast(settingsText, settingsInputSolid, WCAG_AA_NORMAL);
 
         document.documentElement.style.setProperty('--text-primary', textPrimary);
         document.documentElement.style.setProperty('--text-secondary', textSecondary);
@@ -2841,6 +2790,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.documentElement.style.setProperty('--stopwatch-elapsed-text', elapsedText);
         document.documentElement.style.setProperty('--panel-header-text', panelHeaderText);
         document.documentElement.style.setProperty('--accent', ensureContrast(textPrimary, chromeSolid, WCAG_AA_LARGE));
+        document.documentElement.style.setProperty('--mode-panel-border', modePanelBorder);
+        document.documentElement.style.setProperty('--goal-track-bg', dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)');
+        document.documentElement.style.setProperty('--goal-track-border', dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)');
+        document.documentElement.style.setProperty('--settings-ui-text', settingsText);
+        document.documentElement.style.setProperty('--settings-ui-muted', settingsMuted);
+        document.documentElement.style.setProperty('--settings-ui-subtle', settingsSubtle);
+        document.documentElement.style.setProperty('--settings-input-text', settingsInputText);
     }
 
     const AMBIENT_LOOPS = {
@@ -3233,10 +3189,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function generateRandomTheme() {
         themeCustomized = true;
+        const dark = Math.random() < 0.5;
         const hue = Math.floor(Math.random() * 360);
-        const bg = hslToHex(hue, 35 + Math.random() * 25, 82 + Math.random() * 10);
-        const face = hslToHex(hue, 15 + Math.random() * 15, 95 + Math.random() * 3);
-        const number = hslToHex((hue + 180) % 360, 45 + Math.random() * 30, 22 + Math.random() * 12);
+        let bg, face, number;
+        if (dark) {
+            bg = hslToHex(hue, 28 + Math.random() * 22, 10 + Math.random() * 10);
+            face = hslToHex(hue, 18 + Math.random() * 18, 18 + Math.random() * 10);
+            number = hslToHex((hue + 40) % 360, 22 + Math.random() * 20, 82 + Math.random() * 10);
+        } else {
+            bg = hslToHex(hue, 35 + Math.random() * 25, 82 + Math.random() * 10);
+            face = hslToHex(hue, 15 + Math.random() * 15, 95 + Math.random() * 3);
+            number = hslToHex((hue + 180) % 360, 45 + Math.random() * 30, 22 + Math.random() * 12);
+        }
         bgColor.value = bg;
         clockFaceColor.value = face;
         numberColor.value = number;
@@ -3436,27 +3400,26 @@ document.addEventListener('DOMContentLoaded', function() {
             bg: theme.bg,
             f: theme.face,
             n: theme.number,
-            fn: theme.font,
-            im: theme.inversionMode ? 1 : 0
+            fn: theme.font
         };
     }
     function expandThemeSlot(ct) {
         if (!ct || !ct.bg) return null;
-        return {
+        let theme = {
             bg: ct.bg,
             face: ct.f,
             number: ct.n,
-            font: ct.fn || "'Nunito', sans-serif",
-            inversionMode: !!ct.im
+            font: ct.fn || "'Nunito', sans-serif"
         };
+        if (ct.im) theme = migrateLegacyInversion(theme, true);
+        return theme;
     }
     function captureCurrentTheme() {
         return {
             bg: bgColor.value,
             face: clockFaceColor.value,
             number: numberColor.value,
-            font: fontSelector.value,
-            inversionMode: inversionMode
+            font: fontSelector.value
         };
     }
     function syncCustomThemesUI() {
@@ -3483,9 +3446,7 @@ document.addEventListener('DOMContentLoaded', function() {
         clockFaceColor.value = theme.face;
         numberColor.value = theme.number;
         fontSelector.value = theme.font;
-        inversionMode = !!theme.inversionMode;
         themeCustomized = true;
-        syncInversionModeUI();
         applyCustomizations();
         saveAll();
         showToast('Theme ' + (index + 1) + ' applied');
@@ -3507,7 +3468,6 @@ document.addEventListener('DOMContentLoaded', function() {
             soundsVolume: soundsVolumeSetting,
             simpleDigitsMode: simpleDigitsMode,
             quoteEmojisEnabled: quoteEmojisOn,
-            inversionMode: inversionMode,
             themeCustomized: themeCustomized,
             customThemes: customThemes,
             theme: { bg: bgColor.value, face: clockFaceColor.value, number: numberColor.value, font: fontSelector.value }
@@ -3530,7 +3490,6 @@ document.addEventListener('DOMContentLoaded', function() {
             sv: data.soundsVolume,
             sd: data.simpleDigitsMode ? 1 : 0,
             qem: data.quoteEmojisEnabled ? 1 : 0,
-            im: data.inversionMode ? 1 : 0,
             tc: data.themeCustomized ? 1 : 0,
             th: data.theme ? { bg: data.theme.bg, f: data.theme.face, n: data.theme.number, fn: data.theme.font } : undefined,
             ct1: compactThemeSlot(data.customThemes && data.customThemes[0]),
@@ -3596,18 +3555,26 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof data.soundsVolume === 'number') soundsVolumeSetting = data.soundsVolume;
         if (typeof data.simpleDigitsMode === 'boolean') simpleDigitsMode = data.simpleDigitsMode;
         if (typeof data.quoteEmojisEnabled === 'boolean') quoteEmojisOn = data.quoteEmojisEnabled;
-        if (typeof data.inversionMode === 'boolean') inversionMode = data.inversionMode;
-        else if (typeof data.darkMode === 'boolean') inversionMode = data.darkMode;
+        const legacyInversion = (typeof data.inversionMode === 'boolean' && data.inversionMode) ||
+            (typeof data.darkMode === 'boolean' && data.darkMode);
         if (typeof data.themeCustomized === 'boolean') themeCustomized = data.themeCustomized;
         if (data.customThemes && Array.isArray(data.customThemes)) {
             customThemes = data.customThemes.slice(0, 3);
             while (customThemes.length < 3) customThemes.push(null);
         }
         if (data.theme) {
-            bgColor.value = data.theme.bg;
-            clockFaceColor.value = data.theme.face;
-            numberColor.value = data.theme.number;
-            fontSelector.value = data.theme.font;
+            const migrated = migrateLegacyInversion(data.theme, legacyInversion);
+            bgColor.value = migrated.bg;
+            clockFaceColor.value = migrated.face;
+            numberColor.value = migrated.number;
+            fontSelector.value = migrated.font || data.theme.font || "'Nunito', sans-serif";
+            if (legacyInversion && isLightBg(data.theme.bg)) themeCustomized = true;
+        } else if (legacyInversion) {
+            const p = presets.charcoal;
+            bgColor.value = p.bg;
+            clockFaceColor.value = p.face;
+            numberColor.value = p.number;
+            themeCustomized = true;
         }
     }
     function syncUrlFromSettings() {
@@ -3662,7 +3629,7 @@ document.addEventListener('DOMContentLoaded', function() {
         syncQuotesUI();
         syncBgNoiseUI();
         syncSimpleDigitsUI();
-        syncInversionModeUI();
+        syncThemeModeUI();
         syncCustomThemesUI();
         quotesIntervalSelect.value = String(quotesIntervalMinutes);
         update12hrButtons();
@@ -3833,7 +3800,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function snapshotThemeForModal() {
         qrModalThemeSnapshot = {
-            inversionMode: inversionMode,
             bg: bgColor.value,
             face: clockFaceColor.value,
             number: numberColor.value
@@ -3842,12 +3808,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function restoreThemeAfterModal() {
         if (!qrModalThemeSnapshot) return;
-        inversionMode = qrModalThemeSnapshot.inversionMode;
         bgColor.value = qrModalThemeSnapshot.bg;
         clockFaceColor.value = qrModalThemeSnapshot.face;
         numberColor.value = qrModalThemeSnapshot.number;
         qrModalThemeSnapshot = null;
-        syncInversionModeUI();
+        syncThemeModeUI();
         applyCustomizations();
     }
 
@@ -4007,16 +3972,8 @@ document.addEventListener('DOMContentLoaded', function() {
         numberColor.value = palette.number;
     }
 
-    function syncInversionModeUI() {
-        if (inversionModeEnabled) inversionModeEnabled.checked = inversionMode;
-        body.classList.toggle('inversion-mode', inversionMode);
-    }
-
-    function toggleInversionMode(on) {
-        inversionMode = on;
-        syncInversionModeUI();
-        applyCustomizations();
-        saveAll();
+    function syncThemeModeUI() {
+        body.classList.toggle('theme-dark', isEffectivelyDark());
     }
 
     function syncSimpleDigitsUI() {
@@ -4283,6 +4240,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.documentElement.style.setProperty('--face-dim', faceDim);
         document.documentElement.style.setProperty('--number', num);
         applyChromeTextTokens();
+        syncThemeModeUI();
         body.style.background = 'linear-gradient(145deg, ' + bg + ', ' + bg2 + ')';
         document.querySelectorAll('.digit-top, .digit-top2, .digit-bottom, .flipper-digit .digit-next, .simple-digit').forEach(function(el) {
             el.style.background = '';
@@ -4641,9 +4599,6 @@ document.addEventListener('DOMContentLoaded', function() {
         refreshCurrentQuote();
         saveAll();
     });
-    inversionModeEnabled.addEventListener('change', function(e) {
-        toggleInversionMode(e.target.checked);
-    });
     simpleDigitsModeCheckbox.addEventListener('change', function(e) {
         simpleDigitsMode = e.target.checked;
         syncSimpleDigitsUI();
@@ -4787,7 +4742,7 @@ document.addEventListener('DOMContentLoaded', function() {
     installAudioUnlock();
     initFeedbackMailLink();
     loadAll();
-    syncInversionModeUI();
+    syncThemeModeUI();
     applyCustomizations();
     update12hrButtons();
     updateGreeting();

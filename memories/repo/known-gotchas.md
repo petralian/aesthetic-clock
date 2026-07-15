@@ -12,6 +12,7 @@
 
 - **Luna hates square corners** — all UI chrome must use pills (`border-radius: 9999px`) or generous radius (12px+); color pickers and swatches especially; audit on every settings/UX pass (grep `border-radius`)
 - **WCAG AA contrast on every theme** — all themed UI text must pass Lighthouse contrast: 4.5:1 body, 3:1 large/UI components; use `contrastRatio()` + `ensureContrast()` in `applyChromeTextTokens()` / `applyCustomizations()` — never ship light-on-light or grey-on-grey (Lap button, no-laps, mode bar, panels)
+- **Light / dark via presets** — no inversion toggle; `body.theme-dark` from bg luminance; legacy `im` import maps to charcoal
 - **Pill buttons only** — no Luna Pink preset theme
 - **Mode bar order:** Stopwatch → Clock → Pomodoro; Clock is default
 - **Mode indicator** must match menu label (not "Flip Clock")
