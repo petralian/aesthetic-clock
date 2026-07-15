@@ -14,7 +14,10 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html {
             overflow-x: hidden;
+            overflow-y: hidden;
             max-width: 100vw;
+            height: 100%;
+            max-height: 100dvh;
         }
         :root {
             --bg: #e8e8ec;
@@ -87,9 +90,11 @@
         body {
             min-height: 100vh;
             min-height: 100dvh;
+            max-height: 100dvh;
             width: 100%;
             max-width: 100vw;
             overflow-x: hidden;
+            overflow-y: hidden;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -131,9 +136,28 @@
             hyphens: auto;
         }
         .greeting-banner span { font-weight: 800; }
-        .greeting-banner .time-display { opacity: 0.65; font-weight: 500; font-size: clamp(12px, 3vw, 14px); display: block; margin-top: 2px; }
+        .greeting-banner .time-display {
+            opacity: 0.65;
+            font-weight: 500;
+            font-size: clamp(12px, 3vw, 14px);
+            display: none;
+            margin-top: 2px;
+        }
+        .greeting-banner.show-small-clock .time-display { display: block; }
         .greeting-banner.compact { padding: 8px 16px; font-size: 13px; }
-        .greeting-banner.compact .time-display { display: none; }
+        .stage-time-display {
+            display: none;
+            opacity: 0.65;
+            font-weight: 500;
+            font-size: clamp(12px, 3vw, 16px);
+            color: var(--text-secondary);
+            text-align: center;
+            font-family: var(--font-body);
+            line-height: 1.2;
+            flex-shrink: 0;
+        }
+        .fullscreen-mode .stage-time-display.show-small-clock { display: block; }
+        .fullscreen-mode .greeting-banner .time-display { display: none !important; }
         .settings-text-input {
             flex: 1 1 120px;
             min-width: 0;
@@ -244,12 +268,17 @@
         .top-bar-btn:hover, .top-bar-btn:active { transform: scale(1.03); filter: brightness(1.05); }
 
         /* ─── Settings drawer ─── */
+        body.settings-open,
+        body.panel-open {
+            overflow-y: auto;
+        }
         .settings-drawer {
             position: fixed;
             inset: 0;
             z-index: 10050;
             pointer-events: none;
             visibility: hidden;
+            contain: strict;
         }
         .settings-drawer.open {
             pointer-events: auto;
@@ -977,8 +1006,9 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            flex: 0 1 auto;
+            flex: 1 1 0;
             min-width: 0;
+            max-width: none;
         }
         .flip-card.hidden { display: none !important; }
         .flip-card .label {
@@ -997,28 +1027,30 @@
             display: flex;
             gap: clamp(1px, 0.6vw, 6px);
             font-size: var(--flip-size);
-            line-height: 100%;
+            line-height: 1;
             min-width: 0;
+            width: 100%;
+            justify-content: center;
         }
         .flipper-digit {
             position: relative;
-            display: inline-block;
+            display: block;
             height: 1.2em;
             width: 0.62em;
-            min-width: clamp(22px, 6.5vw, 34px);
-            max-width: clamp(36px, 11vw, 56px);
+            min-width: 0;
+            max-width: 0.68em;
+            flex: 1 1 0;
             overflow: hidden;
             color: var(--number);
             white-space: nowrap;
-            flex-shrink: 0;
             isolation: isolate;
         }
         .flipper-digit::after {
             content: '';
             position: absolute;
-            height: 2px;
+            height: 1px;
             background: rgba(0,0,0,0.14);
-            top: 50%;
+            top: calc(50% - 0.5px);
             left: 0; right: 0;
             z-index: 30;
             pointer-events: none;
@@ -1556,21 +1588,26 @@
 
         @media (max-width: 767px) {
             :root {
-                --flip-size: clamp(26px, 7.8vw, 46px);
-                --page-pad: 10px;
+                --flip-size: clamp(34px, 10.5vw, 52px);
+                --page-pad: 8px;
             }
             body { gap: 6px; }
             .page-shell {
                 gap: 6px;
-                flex: 1;
-                justify-content: center;
+                flex: 0 1 auto;
+                justify-content: flex-start;
+                max-height: calc(100dvh - 16px - env(safe-area-inset-bottom, 0px));
+                overflow: hidden;
+            }
+            body.panel-open .page-shell {
+                max-height: none;
+                overflow: visible;
             }
             .greeting-banner {
                 padding: 7px 12px;
                 font-size: 13px;
                 flex-shrink: 0;
             }
-            .greeting-banner .time-display { display: none; }
             .top-bar {
                 flex-direction: row;
                 flex-wrap: nowrap;
@@ -1583,33 +1620,35 @@
                 padding: 8px 12px;
             }
             #fullscreenStage {
-                gap: 8px;
+                gap: 6px;
                 margin-top: 0;
-                flex: 1;
+                flex: 0 1 auto;
                 display: flex;
                 flex-direction: column;
-                justify-content: center;
+                justify-content: flex-start;
                 width: 100%;
             }
             .clock {
-                padding: 10px 6px 8px;
-                gap: clamp(1px, 0.35vw, 3px);
+                padding: 8px 3px 6px;
+                gap: clamp(0px, 0.25vw, 2px);
                 flex-wrap: nowrap;
             }
             .clock.stopwatch-mode,
             .clock.pomodoro-mode {
-                --flip-size: clamp(30px, 8.5vw, 52px);
+                --flip-size: clamp(32px, 9.5vw, 50px);
             }
-            .flip-digit-group { gap: 1px; }
+            .flip-digit-group { gap: clamp(0px, 0.35vw, 2px); }
             .flipper-digit {
-                width: 0.56em;
-                min-width: clamp(14px, 4.2vw, 22px);
-                max-width: clamp(22px, 7vw, 34px);
+                width: auto;
+                min-width: 0;
+                max-width: 0.64em;
+                flex: 1 1 0;
             }
             .separator {
-                font-size: clamp(14px, 3.6vw, 20px);
+                font-size: clamp(12px, 3.2vw, 18px);
                 margin-bottom: clamp(6px, 1.5vw, 10px);
                 padding: 0;
+                flex: 0 0 auto;
             }
             .mode-indicator {
                 font-size: clamp(8px, 2vw, 10px);
@@ -1669,8 +1708,11 @@
 
         /* Very narrow phones: stack mode buttons */
         @media (max-width: 359px) {
+            :root { --flip-size: clamp(30px, 9.8vw, 44px); }
             .mode-bar { flex-direction: column; align-items: stretch; }
             .mode-bar .btn-mode { flex: 1 1 auto; width: 100%; }
+            .clock { padding: 6px 2px 5px; }
+            .flip-digit-group { gap: 0; }
         }
 
         @media (min-width: 480px) {
@@ -1954,6 +1996,7 @@
             <span id="modeIndicatorText">⏰ Clock</span>
             <span class="session-badge" id="sessionBadge" style="display:none;"></span>
         </div>
+        <span class="stage-time-display" id="stageTimeDisplay" aria-hidden="true"></span>
 
         <div class="clock" id="clock">
             <div class="flip-card" id="hoursCard">
@@ -2490,6 +2533,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const numberColor = document.getElementById('numberColor');
     const greetingMessage = document.getElementById('greetingMessage');
     const timeDisplay = document.getElementById('timeDisplay');
+    const stageTimeDisplay = document.getElementById('stageTimeDisplay');
     const userNameInput = document.getElementById('userNameInput');
     const quoteDisplay = document.getElementById('quoteDisplay');
     const quotesEnabled = document.getElementById('quotesEnabled');
@@ -3540,12 +3584,14 @@ document.addEventListener('DOMContentLoaded', function() {
         settingsDrawer.classList.add('open');
         settingsDrawer.setAttribute('aria-hidden', 'false');
         settingsOpenBtn.setAttribute('aria-expanded', 'true');
+        body.classList.add('settings-open');
     }
     function closeSettings() {
         settingsOpen = false;
         settingsDrawer.classList.remove('open');
         settingsDrawer.setAttribute('aria-hidden', 'true');
         settingsOpenBtn.setAttribute('aria-expanded', 'false');
+        body.classList.remove('settings-open');
     }
 
     // ─── Storage (1p cookie primary, localStorage fallback) ───
@@ -4495,7 +4541,14 @@ document.addEventListener('DOMContentLoaded', function() {
         stopwatchPanel.classList.toggle('show', mode === 'stopwatch');
         pomodoroPanel.classList.toggle('show', mode === 'pomodoro');
 
+        const showSmallClock = mode === 'stopwatch' || mode === 'pomodoro';
         greetingBanner.classList.toggle('compact', mode === 'pomodoro' || window.innerWidth < 768);
+        greetingBanner.classList.toggle('show-small-clock', showSmallClock);
+        if (stageTimeDisplay) {
+            stageTimeDisplay.classList.toggle('show-small-clock', showSmallClock);
+            stageTimeDisplay.setAttribute('aria-hidden', showSmallClock ? 'false' : 'true');
+        }
+        body.classList.toggle('panel-open', mode === 'stopwatch' || mode === 'pomodoro');
         clock.classList.toggle('stopwatch-mode', mode === 'stopwatch');
         clock.classList.toggle('pomodoro-mode', mode === 'pomodoro');
         millisecondsCard.classList.add('hidden');
@@ -4659,7 +4712,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateTimeDisplay() {
-        timeDisplay.textContent = '🕐 ' + new Date().toLocaleTimeString();
+        const text = '🕐 ' + new Date().toLocaleTimeString();
+        timeDisplay.textContent = text;
+        if (stageTimeDisplay) stageTimeDisplay.textContent = text;
     }
 
     function updateGreeting() {
