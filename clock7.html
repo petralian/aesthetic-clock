@@ -1783,10 +1783,11 @@
             }
             .settings-row > label:not(.toggle-switch) { flex: 1; min-width: 120px; }
             .settings-row--slider {
-                grid-template-columns: minmax(148px, 1fr) minmax(160px, 1fr) 2.75rem;
+                /* label | track | value — value column must not shrink (panel ~368px inner) */
+                grid-template-columns: minmax(0, 1fr) minmax(72px, 1.35fr) min-content;
                 grid-template-rows: auto;
                 align-items: center;
-                gap: 0 14px;
+                gap: 0 10px;
                 min-height: 48px;
                 flex-wrap: nowrap;
             }
@@ -1811,6 +1812,9 @@
                 grid-column: 3;
                 grid-row: 1;
                 justify-self: end;
+                min-width: 2rem;
+                flex-shrink: 0;
+                white-space: nowrap;
             }
             .settings-row input[type="range"] { min-width: 120px; max-width: none; }
             .settings-row select { max-width: min(220px, 50%); }
