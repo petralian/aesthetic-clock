@@ -1007,7 +1007,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            flex: 1 1 0;
+            flex: 0 0 auto;
             min-width: 0;
             max-width: none;
         }
@@ -1382,6 +1382,31 @@
         .btn-primary { background: rgba(120,200,150,0.95); color: white; padding: 12px 28px; box-shadow: 0 2px 8px rgba(120,200,150,0.18); }
         .btn-danger { background: rgba(220,100,120,0.85); color: white; }
         .btn-warning { background: rgba(255,190,100,0.9); color: #5a3a20; }
+
+        .hold-reset-btn {
+            position: relative;
+            overflow: hidden;
+            touch-action: none;
+        }
+        .hold-reset-btn .hold-reset-fill {
+            position: absolute;
+            inset: 0;
+            width: 0%;
+            background: rgba(255,255,255,0.28);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .hold-reset-btn .hold-reset-label {
+            position: relative;
+            z-index: 1;
+        }
+        .hold-reset-btn.holding {
+            transform: none;
+            box-shadow: inset 0 0 0 2px rgba(255,255,255,0.45);
+        }
+        .hold-reset-btn.holding .hold-reset-label {
+            opacity: 0.95;
+        }
 
         .mode-bar {
             display: flex;
@@ -1821,7 +1846,15 @@
             .settings-row select { max-width: min(220px, 50%); }
             .top-bar { justify-content: flex-end; flex-wrap: nowrap; }
             .top-bar-btn { flex: 0 1 auto; min-width: 44px; }
-            .clock { gap: clamp(8px, 1.5vw, 20px); padding: clamp(24px, 4vw, 44px) clamp(16px, 3.5vw, 50px); }
+            .clock {
+                width: fit-content;
+                max-width: 100%;
+                margin-left: auto;
+                margin-right: auto;
+                gap: clamp(6px, 1.2vw, 14px);
+                padding: clamp(24px, 4vw, 44px) clamp(16px, 3.5vw, 50px);
+            }
+            .flip-card { flex: 0 0 auto; max-width: none; }
             .flip-digit-group { gap: clamp(3px, 0.8vw, 6px); }
             .flipper-digit {
                 --flip-digit-w: 1.05em;
@@ -1862,6 +1895,57 @@
             .clock.stopwatch-mode { --flip-size: clamp(48px, 6vw, 76px); }
             .fullscreen-mode .clock { --flip-size: clamp(72px, 14vmin, 180px); }
             .fullscreen-mode .clock.stopwatch-mode { --flip-size: clamp(64px, 12vmin, 160px); }
+        }
+
+        /* Landscape / short viewport: tight clock cluster + compact settings chrome */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .clock {
+                width: fit-content;
+                max-width: 100%;
+                margin-left: auto;
+                margin-right: auto;
+                gap: clamp(2px, 1vw, 10px);
+                padding: clamp(8px, 2vw, 18px) clamp(10px, 2.5vw, 24px);
+            }
+            .flip-card { flex: 0 0 auto; max-width: none; }
+            .separator {
+                margin-bottom: clamp(6px, 1.5vw, 12px);
+                padding: 0 clamp(1px, 0.3vw, 3px);
+            }
+        }
+
+        @media (max-height: 500px), ((orientation: landscape) and (max-width: 900px)) {
+            .settings-header {
+                padding: 8px 14px;
+            }
+            .settings-header h2 {
+                font-size: 14px;
+            }
+            .settings-close {
+                min-width: 36px;
+                min-height: 36px;
+                font-size: 14px;
+            }
+            .settings-body {
+                padding: 6px 12px 12px;
+            }
+            .settings-footer {
+                padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 0px));
+                font-size: 9px;
+                line-height: 1.35;
+            }
+            .settings-footer-feedback {
+                margin-top: 2px;
+                font-size: 9px;
+            }
+            .settings-section {
+                margin-bottom: 10px;
+                padding: 10px;
+            }
+            .settings-section-title {
+                margin-bottom: 4px;
+                font-size: 11px;
+            }
         }
 
         /* ─── Dark preset chrome (preset-derived tokens via JS) ─── */
@@ -2150,7 +2234,10 @@
         <div class="stopwatch-elapsed" id="stopwatchElapsed">Elapsed: 00:00:00</div>
         <div class="stopwatch-controls">
             <button class="btn btn-primary" id="startStopBtn">▶️ Start</button>
-            <button class="btn btn-danger" id="resetBtn">↺ Reset</button>
+            <button class="btn btn-danger hold-reset-btn" id="resetBtn" type="button">
+                <span class="hold-reset-fill" aria-hidden="true"></span>
+                <span class="hold-reset-label">↺ Reset</span>
+            </button>
             <button class="btn" id="lapBtn">⏱️ Lap</button>
         </div>
         <div class="laps-container" id="lapsContainer"><div class="no-laps">No laps recorded</div></div>
@@ -2160,6 +2247,10 @@
         <h3 class="panel-header">🍅 Pomodoro</h3>
         <div class="pomodoro-controls">
             <button class="btn btn-primary" id="pomodoroStartBtn">▶️ Start Focus</button>
+            <button class="btn btn-danger hold-reset-btn" id="pomodoroResetBtn" type="button">
+                <span class="hold-reset-fill" aria-hidden="true"></span>
+                <span class="hold-reset-label">↺ Reset</span>
+            </button>
         </div>
         <div class="daily-goal-bar" id="dailyGoalBar">
             <div class="goal-label">
@@ -2591,6 +2682,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const timeFormatBtn = document.getElementById('timeFormatBtn');
     const amPmDisplay = document.getElementById('amPmDisplay');
     const pomodoroStartBtn = document.getElementById('pomodoroStartBtn');
+    const pomodoroResetBtn = document.getElementById('pomodoroResetBtn');
     const pomodoroPanel = document.getElementById('pomodoroPanel');
     const greetingBanner = document.getElementById('greetingBanner');
     const dailyGoalProgress = document.getElementById('dailyGoalProgress');
@@ -4951,6 +5043,91 @@ document.addEventListener('DOMContentLoaded', function() {
         updateStopwatchElapsed(0);
     }
 
+    function resetPomodoro() {
+        pomodoroRunning = false;
+        if (pomodoroInterval) {
+            clearInterval(pomodoroInterval);
+            pomodoroInterval = null;
+        }
+        isBreak = false;
+        isLongBreak = false;
+        pomodoroRemaining = getFocusMs();
+        modeIndicatorText.textContent = '🍅 Pomodoro — Focus';
+        sessionBadge.style.display = 'none';
+        updateDisplay(pomodoroRemaining, false);
+        updateControlsForMode();
+    }
+
+    const HOLD_RESET_MS = 3000;
+
+    function bindHoldToReset(btn, onReset) {
+        if (!btn) return;
+        const fill = btn.querySelector('.hold-reset-fill');
+        const label = btn.querySelector('.hold-reset-label');
+        const baseLabel = label ? label.textContent : '↺ Reset';
+        let holdTimer = null;
+        let holdStart = 0;
+        let rafId = null;
+        let activePointer = null;
+
+        function cancelHold() {
+            if (holdTimer) {
+                clearTimeout(holdTimer);
+                holdTimer = null;
+            }
+            if (rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
+            }
+            activePointer = null;
+            btn.classList.remove('holding');
+            if (fill) fill.style.width = '0%';
+            if (label) label.textContent = baseLabel;
+        }
+
+        function tick() {
+            if (!holdTimer) return;
+            const elapsed = Date.now() - holdStart;
+            const pct = Math.min(100, (elapsed / HOLD_RESET_MS) * 100);
+            if (fill) fill.style.width = pct + '%';
+            if (label) {
+                const remaining = Math.max(0, Math.ceil((HOLD_RESET_MS - elapsed) / 1000));
+                label.textContent = remaining > 0 ? 'Hold ' + remaining + 's…' : baseLabel;
+            }
+            if (elapsed < HOLD_RESET_MS) {
+                rafId = requestAnimationFrame(tick);
+            }
+        }
+
+        function startHold(e) {
+            if (holdTimer || (e.pointerType === 'mouse' && e.button !== 0)) return;
+            e.preventDefault();
+            activePointer = e.pointerId;
+            btn.setPointerCapture(e.pointerId);
+            holdStart = Date.now();
+            btn.classList.add('holding');
+            tick();
+            holdTimer = setTimeout(function() {
+                cancelHold();
+                onReset();
+            }, HOLD_RESET_MS);
+        }
+
+        function endHold(e) {
+            if (activePointer !== null && e.pointerId !== activePointer) return;
+            if (btn.hasPointerCapture(e.pointerId)) {
+                btn.releasePointerCapture(e.pointerId);
+            }
+            cancelHold();
+        }
+
+        btn.addEventListener('pointerdown', startHold);
+        btn.addEventListener('pointerup', endHold);
+        btn.addEventListener('pointerleave', endHold);
+        btn.addEventListener('pointercancel', endHold);
+        btn.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    }
+
     function recordLap() {
         if (!isRunning) return;
         laps.unshift(stopwatchTime);
@@ -5139,7 +5316,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     startStopBtn.addEventListener('click', startStopwatch);
-    resetBtn.addEventListener('click', resetStopwatch);
+    bindHoldToReset(resetBtn, resetStopwatch);
+    bindHoldToReset(pomodoroResetBtn, resetPomodoro);
     lapBtn.addEventListener('click', recordLap);
     pomodoroStartBtn.addEventListener('click', startPomodoro);
     fullscreenPomoPause.addEventListener('click', startPomodoro);
