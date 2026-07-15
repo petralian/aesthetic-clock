@@ -47,7 +47,7 @@
             --laps-muted: var(--text-secondary);
             --laps-stripe: rgba(255,255,255,0.25);
             --flip-size: clamp(40px, 11vw, 56px);
-            --flip-digit-w: 0.72em;
+            --flip-digit-w: 1.05em;
             --page-pad: clamp(12px, 4vw, 20px);
             --radius-ui: 16px;
             --radius-pill: 9999px;
@@ -1039,12 +1039,11 @@
         }
         .flipper-digit {
             position: relative;
-            display: block;
+            display: inline-block;
             flex: 0 0 auto;
             height: 1.2em;
-            width: var(--flip-digit-w);
+            width: auto;
             min-width: var(--flip-digit-w);
-            max-width: var(--flip-digit-w);
             overflow: hidden;
             color: var(--number);
             white-space: nowrap;
@@ -1065,15 +1064,23 @@
         }
         .flipper-digit.r { pointer-events: none; }
 
+        .flipper-digit .digit-next,
+        .flipper-digit .digit-top,
+        .flipper-digit .digit-top2,
+        .flipper-digit .digit-bottom {
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+        }
         .digit-next {
             display: block;
             position: relative;
             height: 1.2em;
+            min-width: var(--flip-digit-w);
             border-radius: 0.1em;
             z-index: 1;
             background: var(--face);
-            padding: 0.1em 0.14em;
-            box-sizing: border-box;
+            padding: 0.1em 0.12em;
             text-align: center;
             user-select: none;
             font-weight: 800;
@@ -1087,12 +1094,10 @@
             background: var(--face);
             padding-top: 0.1em;
             padding-bottom: 0;
-            padding-left: 0.14em;
-            padding-right: 0.14em;
+            padding-left: 0.12em;
+            padding-right: 0.12em;
             border-top-left-radius: 0.1em;
             border-top-right-radius: 0.1em;
-            box-sizing: border-box;
-            text-align: center;
             user-select: none;
             font-weight: 800;
             backface-visibility: hidden;
@@ -1122,12 +1127,11 @@
             background: var(--face-dim);
             padding-top: 0;
             padding-bottom: 0.1em;
-            padding-left: 0.14em;
-            padding-right: 0.14em;
+            padding-left: 0.12em;
+            padding-right: 0.12em;
             border-bottom-left-radius: 0.1em;
             border-bottom-right-radius: 0.1em;
             overflow: hidden;
-            text-align: center;
             user-select: none;
             font-weight: 800;
             transform-style: preserve-3d;
@@ -1159,12 +1163,10 @@
             z-index: 9;
             padding-top: 0;
             padding-bottom: 0.1em;
-            padding-left: 0.14em;
-            padding-right: 0.14em;
+            padding-left: 0.12em;
+            padding-right: 0.12em;
             border-bottom-left-radius: 0.1em;
             border-bottom-right-radius: 0.1em;
-            box-sizing: border-box;
-            text-align: center;
             user-select: none;
             font-weight: 800;
             backface-visibility: hidden;
@@ -1188,7 +1190,7 @@
             text-align: center;
             color: var(--number);
             user-select: none;
-            min-width: 0.62em;
+            min-width: var(--flip-digit-w);
         }
         .clock.simple-digits .simple-digit { display: block; }
         .clock.simple-digits .flipper-digit .digit-next,
@@ -1659,7 +1661,7 @@
                 flex: 1 1 0;
                 min-width: 0;
                 max-width: 30%;
-                overflow: hidden;
+                overflow: visible;
             }
             .clock.stopwatch-mode .flip-card { max-width: 24%; }
             .clock.stopwatch-mode,
@@ -1668,7 +1670,7 @@
             }
             .flip-digit-group { gap: clamp(1px, 0.3vw, 3px); }
             .flipper-digit {
-                --flip-digit-w: 0.68em;
+                --flip-digit-w: 1em;
             }
             .separator {
                 font-size: clamp(12px, 3.2vw, 18px);
@@ -1822,7 +1824,7 @@
             .clock { gap: clamp(8px, 1.5vw, 20px); padding: clamp(24px, 4vw, 44px) clamp(16px, 3.5vw, 50px); }
             .flip-digit-group { gap: clamp(3px, 0.8vw, 6px); }
             .flipper-digit {
-                --flip-digit-w: 0.74em;
+                --flip-digit-w: 1.05em;
             }
             .separator { font-size: clamp(24px, 4.2vw, 36px); padding: 0 clamp(2px, 0.5vw, 5px); }
             .mode-indicator { font-size: clamp(9px, 2.2vw, 11px); padding: 5px 14px; letter-spacing: 0.5px; }
@@ -1846,7 +1848,7 @@
         @media (min-width: 1024px) {
             :root {
                 --flip-size: clamp(52px, 5.5vw, 88px);
-                --flip-digit-w: 0.76em;
+                --flip-digit-w: 1.08em;
                 --page-pad: clamp(20px, 2.5vw, 28px);
             }
             .page-shell { max-width: min(920px, 100%); }
