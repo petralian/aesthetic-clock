@@ -2630,6 +2630,93 @@ document.addEventListener('DOMContentLoaded', function() {
         plum: { bg: '#1a1424', face: '#2a2038', number: '#e8d8f8' }
     };
 
+    const FONT_INDEX_MAP = [
+        "'Inter', sans-serif",
+        "'DM Sans', sans-serif",
+        "'Work Sans', sans-serif",
+        "'Outfit', sans-serif",
+        "'Rubik', sans-serif",
+        "'IBM Plex Sans', sans-serif",
+        "'Jost', sans-serif",
+        "'Montserrat', sans-serif",
+        "'Nunito', sans-serif",
+        "'Quicksand', sans-serif",
+        "'Comfortaa', sans-serif",
+        "'Fredoka', sans-serif",
+        "'Caveat', cursive",
+        "'Pacifico', cursive",
+        "'Varela Round', sans-serif",
+        "'Comic Neue', cursive",
+        "Georgia, 'Times New Roman', serif",
+        "'Courier New', monospace"
+    ];
+    const DEFAULT_FONT_INDEX = 8;
+
+    function fontToIndex(font) {
+        const i = FONT_INDEX_MAP.indexOf(font);
+        return i >= 0 ? i : DEFAULT_FONT_INDEX;
+    }
+    function indexToFont(idx) {
+        if (typeof idx === 'string' && idx.indexOf(',') !== -1) return idx;
+        const i = parseInt(idx, 10);
+        return FONT_INDEX_MAP[i] || FONT_INDEX_MAP[DEFAULT_FONT_INDEX];
+    }
+    function matchPresetId(theme) {
+        if (!theme || !theme.bg) return null;
+        const keys = LIGHT_PRESETS.concat(DARK_PRESETS);
+        for (let i = 0; i < keys.length; i++) {
+            const id = keys[i];
+            const p = presets[id];
+            if (p.bg === theme.bg && p.face === theme.face && p.number === theme.number) return id;
+        }
+        return null;
+    }
+    function expandThemeCompact(tc) {
+        if (!tc) return null;
+        if (typeof tc === 'string') {
+            const p = presets[tc];
+            if (!p) return null;
+            return {
+                bg: p.bg,
+                face: p.face,
+                number: p.number,
+                font: FONT_INDEX_MAP[DEFAULT_FONT_INDEX]
+            };
+        }
+        if (tc.p) {
+            const p = presets[tc.p];
+            if (!p) return null;
+            return {
+                bg: p.bg,
+                face: p.face,
+                number: p.number,
+                font: tc.fi !== undefined ? indexToFont(tc.fi) :
+                    (tc.fn ? (typeof tc.fn === 'number' ? indexToFont(tc.fn) : tc.fn) : FONT_INDEX_MAP[DEFAULT_FONT_INDEX])
+            };
+        }
+        if (!tc.bg) return null;
+        let theme = {
+            bg: tc.bg,
+            face: tc.f,
+            number: tc.n,
+            font: tc.fi !== undefined ? indexToFont(tc.fi) : (tc.fn || FONT_INDEX_MAP[DEFAULT_FONT_INDEX])
+        };
+        if (tc.im) theme = migrateLegacyInversion(theme, true);
+        return theme;
+    }
+    function compactThemeForShare(theme) {
+        if (!theme || !theme.bg) return undefined;
+        const presetId = matchPresetId(theme);
+        const fi = fontToIndex(theme.font);
+        if (presetId) {
+            if (fi === DEFAULT_FONT_INDEX) return presetId;
+            return { p: presetId, fi: fi };
+        }
+        const out = { bg: theme.bg, f: theme.face, n: theme.number };
+        if (fi !== DEFAULT_FONT_INDEX) out.fi = fi;
+        return out;
+    }
+
     function isScriptFont(font) {
         return SCRIPT_FONTS.indexOf(font) !== -1;
     }
@@ -3466,6 +3553,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const STORAGE_VERSION = 1;
     const COOKIE_MAX_CHARS = 3800;
     const SETTINGS_CODE_PREFIX = 'LUNA7:';
+    const SHORT_LINK_API = '/api/short';
+    const SHORT_LINK_HOST = 'https://clock.petralian.com';
+
+    const DEFAULT_COMPACT_SETTINGS = {
+        v: STORAGE_VERSION,
+        ps: { fm: 25, sb: 5, lb: 15, sbl: 4, dg: 4, asb: 0, asf: 0, soc: 1, fts: 0 },
+        h12: 0,
+        qe: 1,
+        qi: 10,
+        bnt: 'none',
+        bnv: 30,
+        bne: 0,
+        sv: 80,
+        sd: 0,
+        qem: 1,
+        tc: 0
+    };
 
     function getCookiePath() {
         return location.pathname.replace(/\/[^/]*$/, '/') || '/';
@@ -3510,6 +3614,15 @@ document.addEventListener('DOMContentLoaded', function() {
             soc: ps.soundOnComplete ? 1 : 0, fts: ps.flipTickSound ? 1 : 0
         };
     }
+    function compactPomoDelta(ps) {
+        const full = compactPomo(ps);
+        const def = DEFAULT_COMPACT_SETTINGS.ps;
+        const out = {};
+        Object.keys(full).forEach(function(k) {
+            if (full[k] !== def[k]) out[k] = full[k];
+        });
+        return Object.keys(out).length ? out : undefined;
+    }
     function expandPomo(cp) {
         if (!cp) return {};
         return {
@@ -3529,15 +3642,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
     function expandThemeSlot(ct) {
-        if (!ct || !ct.bg) return null;
-        let theme = {
-            bg: ct.bg,
-            face: ct.f,
-            number: ct.n,
-            font: ct.fn || "'Nunito', sans-serif"
-        };
-        if (ct.im) theme = migrateLegacyInversion(theme, true);
-        return theme;
+        return expandThemeCompact(ct);
     }
     function captureCurrentTheme() {
         return {
@@ -3622,32 +3727,99 @@ document.addEventListener('DOMContentLoaded', function() {
             ct3: compactThemeSlot(data.customThemes && data.customThemes[2])
         };
     }
+    function toShareCompact(data, opts) {
+        opts = opts || {};
+        const forUrlBar = !!opts.forUrlBar;
+        const raw = { v: STORAGE_VERSION };
+        const psDelta = compactPomoDelta(data.pomoSettings);
+        if (psDelta) raw.ps = psDelta;
+        if (data.is12Hour) raw.h12 = 1;
+        if (!data.quotesEnabled) raw.qe = 0;
+        if (data.quotesIntervalMinutes !== DEFAULT_COMPACT_SETTINGS.qi) raw.qi = data.quotesIntervalMinutes;
+        if (data.userName) raw.nm = data.userName;
+        if (data.bgNoiseType !== DEFAULT_COMPACT_SETTINGS.bnt) raw.bnt = data.bgNoiseType;
+        if (data.bgNoiseVolume !== DEFAULT_COMPACT_SETTINGS.bnv) raw.bnv = data.bgNoiseVolume;
+        if (data.bgNoiseEnabled) raw.bne = 1;
+        if (data.soundsVolume !== DEFAULT_COMPACT_SETTINGS.sv) raw.sv = data.soundsVolume;
+        if (data.simpleDigitsMode) raw.sd = 1;
+        if (!data.quoteEmojisEnabled) raw.qem = 0;
+        if (data.themeCustomized) raw.tc = 1;
+        if (data.theme && data.theme.bg) {
+            const isDefaultTheme = !data.themeCustomized &&
+                data.theme.bg === defaultColors.bg &&
+                data.theme.face === defaultColors.face &&
+                data.theme.number === defaultColors.number &&
+                fontToIndex(data.theme.font) === DEFAULT_FONT_INDEX;
+            if (!isDefaultTheme) raw.th = compactThemeForShare(data.theme);
+        }
+        if (!forUrlBar && data.customThemes) {
+            const ct1 = compactThemeForShare(data.customThemes[0]);
+            const ct2 = compactThemeForShare(data.customThemes[1]);
+            const ct3 = compactThemeForShare(data.customThemes[2]);
+            if (ct1) raw.ct1 = ct1;
+            if (ct2) raw.ct2 = ct2;
+            if (ct3) raw.ct3 = ct3;
+        }
+        return raw;
+    }
+    function mergeCompactWithDefaults(c) {
+        return {
+            v: c.v || STORAGE_VERSION,
+            ps: Object.assign({}, DEFAULT_COMPACT_SETTINGS.ps, c.ps || {}),
+            sc: c.sc,
+            ld: c.ld,
+            cc: c.cc,
+            h12: c.h12 !== undefined ? c.h12 : DEFAULT_COMPACT_SETTINGS.h12,
+            qe: c.qe !== undefined ? c.qe : DEFAULT_COMPACT_SETTINGS.qe,
+            qi: c.qi !== undefined ? c.qi : DEFAULT_COMPACT_SETTINGS.qi,
+            nm: c.nm || '',
+            bnt: c.bnt !== undefined ? c.bnt : DEFAULT_COMPACT_SETTINGS.bnt,
+            bnv: c.bnv !== undefined ? c.bnv : DEFAULT_COMPACT_SETTINGS.bnv,
+            bne: c.bne !== undefined ? c.bne : DEFAULT_COMPACT_SETTINGS.bne,
+            sv: c.sv !== undefined ? c.sv : DEFAULT_COMPACT_SETTINGS.sv,
+            sd: c.sd !== undefined ? c.sd : DEFAULT_COMPACT_SETTINGS.sd,
+            qem: c.qem !== undefined ? c.qem : DEFAULT_COMPACT_SETTINGS.qem,
+            tc: c.tc !== undefined ? c.tc : DEFAULT_COMPACT_SETTINGS.tc,
+            ext: c.ext,
+            im: c.im,
+            dm: c.dm,
+            th: c.th,
+            ct1: c.ct1,
+            ct2: c.ct2,
+            ct3: c.ct3
+        };
+    }
+    function settingsMatchDefaults() {
+        const share = toShareCompact(buildSettingsObject(), { forUrlBar: true });
+        return Object.keys(share).filter(function(k) { return k !== 'v'; }).length === 0;
+    }
     function fromStored(raw) {
         if (!raw) return null;
         try {
             const c = JSON.parse(raw);
             if (!c) return null;
             if (c.pomoSettings) return c;
+            const merged = mergeCompactWithDefaults(c);
             return {
-                pomoSettings: expandPomo(c.ps),
-                sessionsCompletedToday: c.sc || 0,
-                lastStatsDate: c.ld || '',
-                currentSessionInCycle: c.cc || 0,
-                is12Hour: !!c.h12,
-                quotesEnabled: c.qe !== 0,
-                quotesIntervalMinutes: c.qi || 10,
-                userName: c.nm || '',
-                bgNoiseType: c.bnt,
-                bgNoiseVolume: c.bnv,
-                bgNoiseEnabled: !!c.bne,
-                soundsVolume: c.sv,
-                simpleDigitsMode: !!c.sd,
-                quoteEmojisEnabled: c.qem !== 0,
-                inversionMode: c.im !== undefined ? !!c.im : !!c.dm,
-                themeCustomized: !!c.tc,
-                ext: c.ext,
-                theme: c.th ? { bg: c.th.bg, face: c.th.f, number: c.th.n, font: c.th.fn } : undefined,
-                customThemes: [expandThemeSlot(c.ct1), expandThemeSlot(c.ct2), expandThemeSlot(c.ct3)]
+                pomoSettings: expandPomo(merged.ps),
+                sessionsCompletedToday: merged.sc || 0,
+                lastStatsDate: merged.ld || '',
+                currentSessionInCycle: merged.cc || 0,
+                is12Hour: !!merged.h12,
+                quotesEnabled: merged.qe !== 0,
+                quotesIntervalMinutes: merged.qi || 10,
+                userName: merged.nm || '',
+                bgNoiseType: merged.bnt,
+                bgNoiseVolume: merged.bnv,
+                bgNoiseEnabled: !!merged.bne,
+                soundsVolume: merged.sv,
+                simpleDigitsMode: !!merged.sd,
+                quoteEmojisEnabled: merged.qem !== 0,
+                inversionMode: merged.im !== undefined ? !!merged.im : !!merged.dm,
+                themeCustomized: !!merged.tc,
+                ext: merged.ext,
+                theme: expandThemeCompact(merged.th),
+                customThemes: [expandThemeCompact(merged.ct1), expandThemeCompact(merged.ct2), expandThemeCompact(merged.ct3)]
             };
         } catch (e) {
             return null;
@@ -3706,9 +3878,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (urlSyncTimer) clearTimeout(urlSyncTimer);
         urlSyncTimer = setTimeout(function() {
             try {
-                const payload = compressSettingsPayload(getSettingsJson());
-                const newHash = '#i=' + payload;
                 const base = location.pathname + location.search;
+                if (settingsMatchDefaults()) {
+                    if (location.hash) history.replaceState(null, '', base);
+                    return;
+                }
+                const payload = compressSettingsPayload(getShareSettingsJson({ forUrlBar: true }));
+                const newHash = '#i=' + payload;
                 if (location.hash !== newHash) {
                     history.replaceState(null, '', base + newHash);
                 }
@@ -3794,6 +3970,57 @@ document.addEventListener('DOMContentLoaded', function() {
         return JSON.stringify(toCompact(buildSettingsObject()));
     }
 
+    function getShareSettingsJson(opts) {
+        return JSON.stringify(toShareCompact(buildSettingsObject(), opts));
+    }
+
+    function getShortLinkApiBase() {
+        const host = location.hostname;
+        if (host === 'clock.petralian.com' || host.endsWith('.petralian.com')) {
+            return '';
+        }
+        return SHORT_LINK_HOST;
+    }
+
+    function createServerShortLink(compressedPayload) {
+        const apiBase = getShortLinkApiBase();
+        return fetch(apiBase + SHORT_LINK_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payload: compressedPayload })
+        }).then(function(res) {
+            if (!res.ok) return null;
+            return res.json();
+        }).then(function(data) {
+            if (!data) return null;
+            const id = data.id || data.shortId;
+            if (!id) return null;
+            return SHORT_LINK_HOST + '/s/' + id;
+        }).catch(function() {
+            return null;
+        });
+    }
+
+    function fetchShortLinkPayload(id) {
+        const apiBase = getShortLinkApiBase();
+        return fetch(apiBase + SHORT_LINK_API + '/' + encodeURIComponent(id))
+            .then(function(res) {
+                if (!res.ok) return null;
+                return res.json();
+            })
+            .then(function(data) {
+                if (!data) return null;
+                return data.payload || data.p || null;
+            })
+            .catch(function() {
+                return null;
+            });
+    }
+
+    function buildLeanHashUrl(opts) {
+        return getSettingsShareBase() + '#i=' + compressSettingsPayload(getShareSettingsJson(opts || { forUrlBar: false }));
+    }
+
     function compressSettingsPayload(json) {
         if (typeof LZString !== 'undefined') {
             return LZString.compressToEncodedURIComponent(json);
@@ -3833,15 +4060,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function encodeSettingsCode() {
-        return SETTINGS_CODE_PREFIX + compressSettingsPayload(getSettingsJson());
+        return SETTINGS_CODE_PREFIX + compressSettingsPayload(getShareSettingsJson({ forUrlBar: false }));
     }
 
     function buildShortImportUrl() {
-        return getSettingsShareBase() + '#i=' + compressSettingsPayload(getSettingsJson());
+        return buildLeanHashUrl({ forUrlBar: false });
     }
 
     function buildImportUrl() {
-        return getSettingsShareBase() + '#import=' + encodeURIComponent(getSettingsBase64Payload());
+        return getSettingsShareBase() + '#import=' + encodeURIComponent(utf8ToBase64(getShareSettingsJson({ forUrlBar: false })));
     }
 
     function decodeSettingsCode(raw) {
@@ -3863,18 +4090,32 @@ document.addEventListener('DOMContentLoaded', function() {
         return parseSettingsPayload(s);
     }
 
-    function applyImportedSettings(input) {
-        const data = decodeSettingsCode(input);
-        if (!data) {
-            showToast('That code didn\'t work — try copying again');
-            return false;
+    function resolveImportedSettings(input) {
+        let s = String(input || '').trim();
+        if (!s) return Promise.resolve(null);
+        const shortMatch = s.match(/\/s\/([A-Za-z0-9_-]+)/);
+        if (shortMatch) {
+            return fetchShortLinkPayload(shortMatch[1]).then(function(payload) {
+                if (payload) return parseSettingsPayload(payload);
+                return null;
+            });
         }
-        applySettingsData(data);
-        syncUIFromSettings();
-        applyCustomizations();
-        saveAll();
-        showToast('Settings applied! 🎉');
-        return true;
+        return Promise.resolve(decodeSettingsCode(s));
+    }
+
+    function applyImportedSettings(input) {
+        return resolveImportedSettings(input).then(function(data) {
+            if (!data) {
+                showToast('That code didn\'t work — try copying again');
+                return false;
+            }
+            applySettingsData(data);
+            syncUIFromSettings();
+            applyCustomizations();
+            saveAll();
+            showToast('Settings applied! 🎉');
+            return true;
+        });
     }
 
     function tryImportFromHash() {
@@ -3887,6 +4128,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (hash.indexOf('#import=') === 0) {
             applyImportedSettings(decodeURIComponent(hash.slice(8)));
         }
+    }
+
+    function tryImportFromShortPath() {
+        const m = location.pathname.match(/\/s\/([A-Za-z0-9_-]+)/);
+        if (!m) return;
+        fetchShortLinkPayload(m[1]).then(function(payload) {
+            if (payload) applyImportedSettings('#i=' + payload);
+        });
     }
 
     function initFeedbackMailLink() {
@@ -3973,18 +4222,29 @@ document.addEventListener('DOMContentLoaded', function() {
         qrModalCanvas.innerHTML = '';
         qrModalOverlay.classList.add('open');
         qrModalOverlay.setAttribute('aria-hidden', 'false');
-        const url = buildShortImportUrl();
+        const localUrl = buildLeanHashUrl({ forUrlBar: false });
+        const compressed = compressSettingsPayload(getShareSettingsJson({ forUrlBar: false }));
         const qrSize = Math.min(240, Math.max(180, window.innerWidth - 96));
-        requestAnimationFrame(function() {
-            qrModalCanvas.innerHTML = '';
-            qrCodeInstance = new QRCode(qrModalCanvas, {
-                text: url,
-                width: qrSize,
-                height: qrSize,
-                colorDark: '#2c2c2e',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.M
+        function renderQr(url, serverLink) {
+            qrModalHint.textContent = serverLink
+                ? 'Server short link — scan to sync settings'
+                : 'Open your camera and scan to sync settings';
+            requestAnimationFrame(function() {
+                qrModalCanvas.innerHTML = '';
+                qrCodeInstance = new QRCode(qrModalCanvas, {
+                    text: url,
+                    width: qrSize,
+                    height: qrSize,
+                    colorDark: '#2c2c2e',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
+                });
             });
+        }
+        createServerShortLink(compressed).then(function(serverUrl) {
+            renderQr(serverUrl || localUrl, !!serverUrl);
+        }).catch(function() {
+            renderQr(localUrl, false);
         });
     }
 
@@ -4060,7 +4320,17 @@ document.addEventListener('DOMContentLoaded', function() {
         copyTextToClipboard(encodeSettingsCode(), 'Code copied!');
     });
     document.getElementById('copyShortLinkBtn').addEventListener('click', function() {
-        copyTextToClipboard(buildShortImportUrl(), 'Short link copied!');
+        const localUrl = buildLeanHashUrl({ forUrlBar: false });
+        const compressed = compressSettingsPayload(getShareSettingsJson({ forUrlBar: false }));
+        createServerShortLink(compressed).then(function(serverUrl) {
+            if (serverUrl) {
+                copyTextToClipboard(serverUrl, 'Short link copied! (server)');
+            } else {
+                copyTextToClipboard(localUrl, 'Short link copied! (local hash)');
+            }
+        }).catch(function() {
+            copyTextToClipboard(localUrl, 'Short link copied! (local hash)');
+        });
     });
     document.getElementById('showQrBtn').addEventListener('click', showQrCodeModal);
     document.getElementById('applySettingsBtn').addEventListener('click', function() {
@@ -4878,7 +5148,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateGreeting();
     updateTimeDisplay();
     tryImportFromHash();
-    syncUrlFromSettings();
+    tryImportFromShortPath();
     setInterval(updateGreeting, 30000);
     setInterval(updateTimeDisplay, 1000);
     syncBgNoise();
