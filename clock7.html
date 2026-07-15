@@ -47,6 +47,7 @@
             --laps-muted: var(--text-secondary);
             --laps-stripe: rgba(255,255,255,0.25);
             --flip-size: clamp(40px, 11vw, 56px);
+            --flip-digit-w: 0.72em;
             --page-pad: clamp(12px, 4vw, 20px);
             --radius-ui: 16px;
             --radius-pill: 9999px;
@@ -1041,9 +1042,9 @@
             display: block;
             flex: 0 0 auto;
             height: 1.2em;
-            width: 0.65em;
-            min-width: 0.65em;
-            max-width: 0.65em;
+            width: var(--flip-digit-w);
+            min-width: var(--flip-digit-w);
+            max-width: var(--flip-digit-w);
             overflow: hidden;
             color: var(--number);
             white-space: nowrap;
@@ -1071,7 +1072,7 @@
             border-radius: 0.1em;
             z-index: 1;
             background: var(--face);
-            padding: 0.1em;
+            padding: 0.1em 0.14em;
             box-sizing: border-box;
             text-align: center;
             user-select: none;
@@ -1086,8 +1087,8 @@
             background: var(--face);
             padding-top: 0.1em;
             padding-bottom: 0;
-            padding-left: 0.1em;
-            padding-right: 0.1em;
+            padding-left: 0.14em;
+            padding-right: 0.14em;
             border-top-left-radius: 0.1em;
             border-top-right-radius: 0.1em;
             box-sizing: border-box;
@@ -1121,8 +1122,8 @@
             background: var(--face-dim);
             padding-top: 0;
             padding-bottom: 0.1em;
-            padding-left: 0.1em;
-            padding-right: 0.1em;
+            padding-left: 0.14em;
+            padding-right: 0.14em;
             border-bottom-left-radius: 0.1em;
             border-bottom-right-radius: 0.1em;
             overflow: hidden;
@@ -1158,8 +1159,8 @@
             z-index: 9;
             padding-top: 0;
             padding-bottom: 0.1em;
-            padding-left: 0.1em;
-            padding-right: 0.1em;
+            padding-left: 0.14em;
+            padding-right: 0.14em;
             border-bottom-left-radius: 0.1em;
             border-bottom-right-radius: 0.1em;
             box-sizing: border-box;
@@ -1208,7 +1209,7 @@
             font-size: clamp(14px, 3.8vw, 34px);
             color: color-mix(in srgb, var(--number) 22%, transparent);
             font-weight: 300;
-            padding: 0 1px;
+            padding: 0 clamp(2px, 0.4vw, 4px);
             align-self: center;
             margin-bottom: clamp(14px, 3.5vw, 28px);
             flex-shrink: 0;
@@ -1667,9 +1668,7 @@
             }
             .flip-digit-group { gap: clamp(1px, 0.3vw, 3px); }
             .flipper-digit {
-                width: 0.62em;
-                min-width: 0.62em;
-                max-width: 0.62em;
+                --flip-digit-w: 0.68em;
             }
             .separator {
                 font-size: clamp(12px, 3.2vw, 18px);
@@ -1744,7 +1743,7 @@
 
         @media (min-width: 480px) {
             .settings-panel {
-                width: min(360px, calc(100vw - 24px));
+                width: min(400px, calc(100vw - 24px));
                 max-width: calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
                 min-width: min(360px, calc(100vw - 24px));
             }
@@ -1767,9 +1766,9 @@
             }
             .page-shell { max-width: min(780px, 100%); }
             .settings-panel {
-                width: min(400px, calc(100vw - max(32px, env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))));
+                width: min(max(420px, 28vw), calc(100vw - max(32px, env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))));
                 max-width: calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
-                min-width: min(360px, calc(100vw - 32px));
+                min-width: min(400px, calc(100vw - 32px));
                 box-sizing: border-box;
             }
             .settings-body {
@@ -1783,8 +1782,8 @@
             }
             .settings-row > label:not(.toggle-switch) { flex: 1; min-width: 120px; }
             .settings-row--slider {
-                /* label | track | value — value column must not shrink (panel ~368px inner) */
-                grid-template-columns: minmax(0, 1fr) minmax(72px, 1.35fr) min-content;
+                /* label | track | value — wide label column, value must not shrink */
+                grid-template-columns: minmax(13rem, 1.35fr) minmax(80px, 1fr) min-content;
                 grid-template-rows: auto;
                 align-items: center;
                 gap: 0 10px;
@@ -1797,8 +1796,8 @@
                 flex: none;
                 min-width: 0;
                 white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                overflow: visible;
+                text-overflow: clip;
             }
             .settings-row--slider input[type="range"] {
                 grid-column: 2;
@@ -1823,11 +1822,9 @@
             .clock { gap: clamp(8px, 1.5vw, 20px); padding: clamp(24px, 4vw, 44px) clamp(16px, 3.5vw, 50px); }
             .flip-digit-group { gap: clamp(3px, 0.8vw, 6px); }
             .flipper-digit {
-                width: 0.65em;
-                min-width: 0.65em;
-                max-width: 0.65em;
+                --flip-digit-w: 0.74em;
             }
-            .separator { font-size: clamp(22px, 4vw, 34px); padding: 0 2px; }
+            .separator { font-size: clamp(24px, 4.2vw, 36px); padding: 0 clamp(2px, 0.5vw, 5px); }
             .mode-indicator { font-size: clamp(9px, 2.2vw, 11px); padding: 5px 14px; letter-spacing: 0.5px; }
             #fullscreenStage { margin-top: 8px; }
             .session-badge { font-size: 10px; }
@@ -1848,11 +1845,19 @@
         /* Desktop: 1024px+ */
         @media (min-width: 1024px) {
             :root {
-                --flip-size: clamp(48px, 5vw, 80px);
+                --flip-size: clamp(52px, 5.5vw, 88px);
+                --flip-digit-w: 0.76em;
                 --page-pad: clamp(20px, 2.5vw, 28px);
             }
             .page-shell { max-width: min(920px, 100%); }
-            .clock.stopwatch-mode { --flip-size: clamp(44px, 5.5vw, 72px); }
+            .settings-panel {
+                width: min(max(440px, 26vw), calc(100vw - 48px));
+                min-width: min(420px, calc(100vw - 48px));
+            }
+            .settings-row--slider {
+                grid-template-columns: minmax(14rem, 1.4fr) minmax(96px, 1fr) min-content;
+            }
+            .clock.stopwatch-mode { --flip-size: clamp(48px, 6vw, 76px); }
             .fullscreen-mode .clock { --flip-size: clamp(72px, 14vmin, 180px); }
             .fullscreen-mode .clock.stopwatch-mode { --flip-size: clamp(64px, 12vmin, 160px); }
         }
