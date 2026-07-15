@@ -2,6 +2,10 @@
 .vscode/mcp.json
 .cursor/mcp.json
 
+# Secrets / local env
+.env
+.env.*
+
 # Dependencies / dev scratch
 node_modules/
 _test_lz.js

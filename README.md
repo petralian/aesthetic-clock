@@ -1,8 +1,9 @@
-# LunaClock
+# LunaClock (aesthetic-clock)
 
-Teen-focused flip clock for Luna Petralia — made by Luna & Nathan. Single-file static HTML app (no build step).
+Teen-focused flip clock — made by Luna & Nathan. Single-file static HTML app (no build step).
 
 **Live:** https://clock.petralian.com  
+**GitHub (planned):** repository name `aesthetic-clock`  
 **Main file:** `clock7.html` (current production build)
 
 ## Stack
@@ -18,8 +19,7 @@ Teen-focused flip clock for Luna Petralia — made by Luna & Nathan. Single-file
 **Static server (recommended for cookies/path behavior):**
 
 ```powershell
-# Python 3
-cd "D:\VS Code Projects\LunaClock"
+# Python 3 — run from the repo root after cloning aesthetic-clock
 python -m http.server 8080
 # → http://localhost:8080/clock7.html
 ```
@@ -33,23 +33,20 @@ Older iterations (`clock.html` … `clock6.html`) are kept for reference; ship c
 
 ## Deploy
 
-Target: **clock.petralian.com** (static hosting, e.g. aaPanel).
+Target: **https://clock.petralian.com** (static hosting, e.g. aaPanel).
 
 1. Upload `clock7.html` to the site subfolder (see HTML comment in file for cookie path behavior).
-2. Verify live: flip clock, settings sync (LUNA7 code + QR), stopwatch, pomodoro, inversion mode.
+2. Verify live: flip clock, settings sync (LUNA7 code + QR), stopwatch, pomodoro, light/dark preset themes.
 3. No build step — what you upload is what runs.
 
-## Agent / vault docs
+## Contributing & docs
 
 | Doc | Purpose |
 |-----|---------|
-| `AGENTS.md` | Agent bootstrap order, key paths, MCP |
+| `AGENTS.md` | Agent bootstrap, key paths, MCP (optional for contributors) |
 | `.instructions.md` | LunaClock coding conventions |
-| `.github/copilot-instructions.md` | Copilot bootstrap + footer link |
-| `memories/repo/` | Machine-readable session memory |
-
-**Obsidian vault:** `D:\Obsidian\Obsidian\40_VSCode\LunaClock\`  
-**Brain:** `D:\Obsidian\Obsidian\00_Brain\`
+| `.github/copilot-instructions.md` | Copilot bootstrap |
+| `memories/repo/` | Maintainer session notes |
 
 ## Test baseline
 
@@ -58,5 +55,5 @@ No automated test suite. Manual smoke test after edits:
 - [ ] Clock flips (12h and 24h)
 - [ ] Mode bar: Stopwatch → Clock → Pomodoro (Clock default)
 - [ ] Settings persist (cookies) + LUNA7 code export/import
-- [ ] Inversion mode toggle
+- [ ] Light/dark preset theme groups (WCAG contrast)
 - [ ] Mobile viewport (pill buttons, no horizontal scroll)
