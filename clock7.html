@@ -36,7 +36,7 @@
             --text-muted: #7a7a88;
             --chrome-bg: rgba(255,255,255,0.6);
             --chrome-border: rgba(0,0,0,0.12);
-            --flip-size: clamp(26px, 7.5vw, 40px);
+            --flip-size: clamp(40px, 11vw, 56px);
             --page-pad: clamp(12px, 4vw, 20px);
         }
 
@@ -117,17 +117,17 @@
         .greeting-banner.compact { padding: 8px 16px; font-size: 13px; }
         .greeting-banner.compact .time-display { display: none; }
         .settings-text-input {
-            flex: 1 1 100%;
+            flex: 1 1 120px;
             min-width: 0;
             max-width: 100%;
-            width: 100%;
+            width: auto;
             padding: 10px 14px;
             border-radius: 50px;
             border: 1px solid rgba(255,255,255,0.5);
             background: rgba(255,255,255,0.65);
             font-family: var(--font);
             font-size: 13px;
-            color: var(--number);
+            color: var(--settings-ui-text);
             font-weight: 600;
             min-height: 44px;
         }
@@ -152,8 +152,8 @@
             padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
             text-align: center;
             font-size: 11px;
-            color: var(--number);
-            opacity: 0.45;
+            color: var(--settings-ui-subtle);
+            opacity: 1;
             font-weight: 600;
             border-top: 1px solid rgba(107,74,122,0.08);
             line-height: 1.5;
@@ -171,7 +171,7 @@
             background: rgba(255,255,255,0.5);
             border: 1px solid rgba(0,0,0,0.08);
             font-size: 15px;
-            color: var(--number);
+            color: var(--settings-ui-text);
             text-align: center;
             line-height: 1.4;
         }
@@ -246,6 +246,10 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            --settings-ui-text: #1a1a22;
+            --settings-ui-muted: #3d3d4a;
+            --settings-ui-subtle: #52525e;
+            color: var(--settings-ui-text);
         }
         .settings-drawer.open .settings-panel { transform: translateX(0); }
         .settings-header {
@@ -262,7 +266,7 @@
         }
         .settings-header h2 {
             font-size: 18px;
-            color: var(--number);
+            color: var(--settings-ui-text);
             font-weight: 800;
         }
         .settings-close {
@@ -271,7 +275,7 @@
             border: 1px solid rgba(0,0,0,0.12);
             border-radius: 50%;
             background: rgba(107,74,122,0.08);
-            color: var(--number);
+            color: var(--settings-ui-text);
             font-size: 18px;
             cursor: pointer;
             font-family: var(--font);
@@ -335,13 +339,14 @@
         }
         .sync-btn {
             flex: 1 1 calc(50% - 4px);
-            min-width: 0;
-            min-height: 50px;
+            min-width: min(100%, 148px);
+            max-width: 100%;
+            min-height: 44px;
             padding: 10px 14px;
             border: none;
             border-radius: 9999px;
             background: rgba(255,255,255,0.72);
-            color: var(--text-primary);
+            color: var(--settings-ui-text);
             cursor: pointer;
             font-family: var(--font);
             font-size: 12px;
@@ -365,7 +370,7 @@
             background: rgba(255,255,255,0.65);
             font-family: var(--font);
             font-size: 12px;
-            color: var(--number);
+            color: var(--settings-ui-text);
             font-weight: 600;
             resize: vertical;
             margin-bottom: 10px;
@@ -374,7 +379,7 @@
         .qr-modal-overlay {
             position: fixed;
             inset: 0;
-            z-index: 10000;
+            z-index: 12000;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -410,6 +415,9 @@
             line-height: 1.4;
         }
         .qr-modal-canvas {
+            min-height: 220px;
+            align-items: center;
+            justify-content: center;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -417,26 +425,36 @@
             margin-bottom: 14px;
         }
         .qr-modal-canvas img,
-        .qr-modal-canvas canvas { border-radius: 8px; }
+        .qr-modal-canvas canvas { border-radius: 12px; }
         .qr-modal-close {
+            position: relative;
+            z-index: 5;
             min-height: 50px;
             width: 100%;
             padding: 10px 18px;
             border: none;
             border-radius: 9999px;
             background: rgba(99,102,241,0.15);
-            color: var(--number);
+            color: var(--settings-ui-text, var(--number));
             font-family: var(--font);
             font-size: 14px;
             font-weight: 700;
             cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
         .scan-modal-reader {
+            position: relative;
+            z-index: 1;
             width: 100%;
             max-width: 280px;
             margin: 0 auto 12px;
             border-radius: 12px;
             overflow: hidden;
+        }
+        .scan-modal-reader #qr-shaded-region,
+        .scan-modal-reader #qr-shaded-region * {
+            pointer-events: none;
         }
         .settings-toast {
             position: fixed;
@@ -471,8 +489,8 @@
             text-transform: uppercase;
             letter-spacing: 0.14em;
             font-variant: small-caps;
-            color: var(--text-primary);
-            opacity: 0.82;
+            color: var(--settings-ui-muted);
+            opacity: 1;
             padding: 0 0 10px;
             margin: 0;
         }
@@ -485,20 +503,59 @@
             border-top: 1px solid rgba(0,0,0,0.06);
             font-size: 14px;
             font-weight: 600;
-            color: var(--text-primary);
+            color: var(--settings-ui-text);
             flex-wrap: wrap;
         }
         .settings-row:first-of-type { border-top: none; }
-        .settings-row label { flex: 1 1 100%; min-width: 0; }
-        .settings-row input[type="range"] { flex: 2 1 140px; min-width: 0; accent-color: var(--accent); }
-        .settings-row .val { min-width: 32px; text-align: right; font-weight: 800; font-size: 13px; }
+        .settings-row > label:not(.toggle-switch) { flex: 1 1 auto; min-width: 0; }
+        .settings-row input[type="range"] {
+            flex: 2 1 100px;
+            min-width: 0;
+            max-width: 180px;
+            accent-color: var(--accent);
+            height: 28px;
+            border-radius: 9999px;
+            background: transparent;
+        }
+        .settings-row input[type="range"]::-webkit-slider-runnable-track {
+            height: 8px;
+            border-radius: 9999px;
+            background: rgba(0,0,0,0.12);
+        }
+        .settings-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid color-mix(in srgb, var(--accent) 55%, #6e6e73);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+            margin-top: -7px;
+        }
+        .settings-row input[type="range"]::-moz-range-track {
+            height: 8px;
+            border-radius: 9999px;
+            background: rgba(0,0,0,0.12);
+        }
+        .settings-row input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid color-mix(in srgb, var(--accent) 55%, #6e6e73);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+        }
+        .settings-row .val { flex-shrink: 0; min-width: 32px; text-align: right; font-weight: 800; font-size: 13px; }
         .toggle-switch {
             position: relative;
             display: inline-flex;
             align-items: center;
-            width: 52px;
-            height: 32px;
-            min-height: 32px;
+            justify-content: center;
+            width: 48px;
+            height: 44px;
+            min-height: 44px;
+            flex: 0 0 auto;
             flex-shrink: 0;
         }
         .toggle-switch input[type="checkbox"] {
@@ -510,7 +567,11 @@
         }
         .toggle-slider {
             position: absolute;
-            inset: 0;
+            left: 0;
+            right: 0;
+            height: 26px;
+            top: 50%;
+            transform: translateY(-50%);
             cursor: pointer;
             background: rgba(0,0,0,0.14);
             border-radius: 9999px;
@@ -520,8 +581,8 @@
         .toggle-slider::before {
             content: '';
             position: absolute;
-            height: 26px;
-            width: 26px;
+            height: 22px;
+            width: 22px;
             left: 2px;
             top: 50%;
             transform: translateY(-50%);
@@ -535,16 +596,14 @@
             border-color: color-mix(in srgb, var(--accent) 50%, transparent);
         }
         .toggle-switch input:checked + .toggle-slider::before {
-            transform: translate(20px, -50%);
+            transform: translate(22px, -50%);
         }
         .toggle-switch input:focus-visible + .toggle-slider {
             outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
             outline-offset: 2px;
         }
-        .settings-row input[type="color"] {
-            width: 44px; height: 44px;
-            border: 2px solid rgba(0,0,0,0.12);
-            border-radius: 50%;
+        /* Color pickers — rounded swatches, never sharp squares */
+        .settings-panel input[type="color"] {
             cursor: pointer;
             padding: 0;
             -webkit-appearance: none;
@@ -552,11 +611,28 @@
             background: none;
             overflow: hidden;
             flex-shrink: 0;
+            border: 2px solid rgba(0,0,0,0.12);
             box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
         }
-        .settings-row input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; border-radius: 50%; }
-        .settings-row input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
-        .settings-row input[type="color"]::-moz-color-swatch { border: none; border-radius: 50%; }
+        .settings-row input[type="color"] {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+        }
+        .appearance-color-item input[type="color"] {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+        }
+        .settings-panel input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        .settings-row input[type="color"]::-webkit-color-swatch-wrapper { border-radius: 50%; }
+        .appearance-color-item input[type="color"]::-webkit-color-swatch-wrapper { border-radius: 12px; }
+        .settings-panel input[type="color"]::-webkit-color-swatch { border: none; }
+        .settings-row input[type="color"]::-webkit-color-swatch { border-radius: 50%; }
+        .appearance-color-item input[type="color"]::-webkit-color-swatch { border-radius: 12px; }
+        .settings-panel input[type="color"]::-moz-color-swatch { border: none; }
+        .settings-row input[type="color"]::-moz-color-swatch { border-radius: 50%; }
+        .appearance-color-item input[type="color"]::-moz-color-swatch { border-radius: 12px; }
         .appearance-colors-row {
             display: flex;
             align-items: center;
@@ -570,21 +646,18 @@
             flex-direction: column;
             align-items: center;
             gap: 4px;
+            padding: 2px;
+            border-radius: 14px;
         }
         .appearance-color-item label {
             font-size: 10px;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            opacity: 0.55;
+            color: var(--settings-ui-subtle);
+            opacity: 1;
             flex: none;
             min-width: 0;
-        }
-        .appearance-color-item input[type="color"] {
-            width: 32px;
-            height: 32px;
-            border: 2px solid rgba(0,0,0,0.12);
-            box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
         }
         .appearance-compact-row {
             padding: 8px 16px 10px;
@@ -598,6 +671,9 @@
         .appearance-compact-row select {
             min-height: 38px;
             padding: 8px 12px;
+            flex-shrink: 0;
+            max-width: min(200px, 58vw);
+            border-radius: 9999px;
         }
         .appearance-section .preset-row {
             padding: 6px 16px 10px;
@@ -629,12 +705,14 @@
             border: 1px solid rgba(255,255,255,0.5);
             background: rgba(255,255,255,0.65);
             font-size: 13px;
-            color: var(--number);
+            color: var(--settings-ui-text);
             font-family: var(--font);
             font-weight: 600;
             cursor: pointer;
             min-height: 44px;
-            max-width: 100%;
+            flex: 0 1 auto;
+            flex-shrink: 0;
+            max-width: min(200px, 58vw);
         }
         .preset-row {
             display: flex;
@@ -680,7 +758,7 @@
             width: calc(100% - 32px);
         }
         .format-toggle {
-            min-height: 50px;
+            min-height: 44px;
             padding: 8px 18px;
             border: 1px solid rgba(255,255,255,0.5);
             border-radius: 9999px;
@@ -691,6 +769,9 @@
             font-weight: 700;
             cursor: pointer;
             transition: background 0.2s;
+            flex: 0 0 auto;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
         .format-toggle:hover { background: rgba(255,255,255,0.85); }
         .settings-section.hidden { display: none; }
@@ -720,7 +801,7 @@
             gap: clamp(3px, 1.2vw, 20px);
             background: var(--panel-bg);
             backdrop-filter: blur(14px);
-            padding: clamp(36px, 7vw, 52px) clamp(10px, 3vw, 50px) clamp(14px, 4vw, 44px);
+            padding: clamp(12px, 2.5vw, 24px) clamp(10px, 3vw, 50px) clamp(14px, 4vw, 36px);
             border-radius: clamp(16px, 4vw, 36px);
             box-shadow: 0 16px 48px rgba(107,74,122,0.1);
             border: 1px solid rgba(255,255,255,0.5);
@@ -765,13 +846,13 @@
             display: inline-block;
             height: 1.2em;
             width: 0.62em;
-            min-width: clamp(18px, 5.5vw, 30px);
-            max-width: clamp(28px, 9vw, 48px);
-            overflow-y: hidden;
-            overflow-x: hidden;
+            min-width: clamp(22px, 6.5vw, 34px);
+            max-width: clamp(36px, 11vw, 56px);
+            overflow: hidden;
             color: var(--number);
             white-space: nowrap;
-            flex-shrink: 1;
+            flex-shrink: 0;
+            isolation: isolate;
         }
         .flipper-digit::after {
             content: '';
@@ -790,16 +871,14 @@
             position: relative;
             height: 1.2em;
             border-radius: 0.1em;
-            z-index: 8;
+            z-index: 1;
             background: var(--face);
-            padding-top: 0.1em;
-            padding-bottom: 0.1em;
-            padding-left: 0.1em;
-            padding-right: 0.1em;
+            padding: 0.1em;
             box-sizing: border-box;
             text-align: center;
             user-select: none;
             font-weight: 800;
+            line-height: 1em;
         }
         .digit-top {
             position: absolute;
@@ -934,17 +1013,19 @@
         .separator.hidden { display: none !important; }
 
         .mode-indicator {
-            position: absolute;
-            top: clamp(8px, 2vw, 14px);
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 5;
+            position: relative;
+            top: auto;
+            left: auto;
+            transform: none;
+            align-self: center;
+            flex-shrink: 0;
+            z-index: 2;
             background: var(--panel-bg);
             backdrop-filter: blur(8px);
             padding: 5px clamp(10px, 3vw, 18px);
             border-radius: 9999px;
-            font-size: clamp(8px, 2.2vw, 11px);
-            max-width: calc(100% - 24px);
+            font-size: clamp(9px, 2.2vw, 11px);
+            max-width: calc(100% - 16px);
             color: var(--text-primary);
             letter-spacing: 0.5px;
             text-transform: uppercase;
@@ -954,12 +1035,12 @@
             white-space: normal;
             text-align: center;
             line-height: 1.25;
-            max-width: min(90vw, 100%);
             overflow: hidden;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             box-shadow: 0 4px 14px rgba(107,74,122,0.08);
+            margin-bottom: 2px;
         }
         .session-badge {
             display: block;
@@ -1179,7 +1260,7 @@
         .lap-item .lap-time { font-size: 16px; font-weight: 800; }
         .lap-item.best-lap { background: rgba(120,200,150,0.25); }
         .lap-item.best-lap .lap-time { color: rgba(60,140,90,1); }
-        .no-laps { color: rgba(107,74,122,0.4); text-align: center; padding: 16px; font-style: italic; font-size: 13px; }
+        .no-laps { color: var(--text-secondary); opacity: 1; text-align: center; padding: 16px; font-style: italic; font-size: 13px; }
 
         .daily-goal-bar {
             width: 100%;
@@ -1221,7 +1302,8 @@
             border: 1px solid var(--panel-border);
         }
 
-        .clock.stopwatch-mode { --flip-size: clamp(34px, 9.5vw, 68px); }
+        .clock.stopwatch-mode,
+        .clock.pomodoro-mode { --flip-size: clamp(44px, 12vw, 72px); }
 
         .exit-fullscreen-btn {
             display: none;
@@ -1291,8 +1373,7 @@
             overflow: visible;
         }
         .fullscreen-mode .mode-indicator {
-            top: clamp(10px, 2vmin, 16px);
-            z-index: 5;
+            margin-bottom: clamp(6px, 1.5vmin, 12px);
             font-size: clamp(10px, 2vmin, 13px);
             padding: 6px clamp(12px, 2.5vmin, 20px);
         }
@@ -1309,12 +1390,69 @@
 
         /* ─── Mobile-first breakpoints ─── */
 
+        @media (max-width: 767px) {
+            :root {
+                --flip-size: clamp(48px, 14vw, 76px);
+                --page-pad: 10px;
+            }
+            body { gap: 6px; }
+            .page-shell { gap: 6px; }
+            .greeting-banner {
+                padding: 7px 12px;
+                font-size: 13px;
+            }
+            .greeting-banner .time-display { display: none; }
+            .top-bar {
+                flex-direction: row;
+                flex-wrap: nowrap;
+            }
+            .top-bar-btn {
+                flex: 1 1 50%;
+                min-height: 44px;
+                font-size: 13px;
+                padding: 8px 12px;
+            }
+            #fullscreenStage {
+                gap: 6px;
+                margin-top: 0;
+            }
+            .clock {
+                padding: 10px 8px 8px;
+            }
+            .clock.stopwatch-mode,
+            .clock.pomodoro-mode {
+                --flip-size: clamp(52px, 15vw, 80px);
+            }
+            .flip-digit-group { gap: 2px; }
+            .separator {
+                font-size: clamp(22px, 5.5vw, 30px);
+                margin-bottom: clamp(8px, 2vw, 14px);
+            }
+            .quote-display {
+                font-size: 12px;
+                min-height: auto;
+                padding: 4px 6px;
+            }
+            .mode-bar .btn-mode {
+                padding: 10px 6px;
+                font-size: 12px;
+            }
+            .mode-panel {
+                padding: 12px;
+                gap: 8px;
+            }
+            .panel-header { display: none; }
+            .stopwatch-elapsed { padding: 0; font-size: 13px; }
+            .laps-container { max-height: 88px; }
+            .fullscreen-mode .clock {
+                --flip-size: clamp(56px, 16vmin, 130px);
+            }
+        }
+
         /* Very narrow phones: stack mode buttons */
         @media (max-width: 359px) {
             .mode-bar { flex-direction: column; align-items: stretch; }
             .mode-bar .btn-mode { flex: 1 1 auto; width: 100%; }
-            .top-bar { flex-direction: column; }
-            .top-bar-btn { flex: 1 1 auto; width: 100%; }
         }
 
         @media (min-width: 480px) {
@@ -1341,8 +1479,9 @@
                 min-width: 120px;
                 width: auto;
             }
-            .settings-row label { flex: 1; min-width: 120px; }
-            .settings-row input[type="range"] { min-width: 100px; }
+            .settings-row > label:not(.toggle-switch) { flex: 1; min-width: 120px; }
+            .settings-row input[type="range"] { min-width: 100px; max-width: 220px; }
+            .settings-row select { max-width: min(220px, 50%); }
             .top-bar { justify-content: flex-end; flex-wrap: nowrap; }
             .top-bar-btn { flex: 0 1 auto; min-width: 44px; }
             .clock { gap: clamp(8px, 1.5vw, 20px); padding: clamp(24px, 4vw, 44px) clamp(20px, 4vw, 50px); }
@@ -1397,6 +1536,9 @@
             background: #1a1a24;
             color: #e8e8f0;
             box-shadow: -8px 0 40px rgba(0,0,0,0.45);
+            --settings-ui-text: #e8e8f0;
+            --settings-ui-muted: #c8c8d8;
+            --settings-ui-subtle: #a8a8b8;
         }
         body.inversion-mode .settings-header {
             border-bottom-color: rgba(255,255,255,0.08);
@@ -1431,10 +1573,23 @@
             border-color: rgba(255,255,255,0.12);
             color: #f0f0f5;
         }
-        body.inversion-mode .settings-row input[type="color"],
-        body.inversion-mode .appearance-color-item input[type="color"] {
+        body.inversion-mode .settings-panel input[type="color"] {
             border-color: rgba(255,255,255,0.28);
             box-shadow: 0 0 0 1px rgba(255,255,255,0.15);
+        }
+        body.inversion-mode .settings-row input[type="range"]::-webkit-slider-runnable-track {
+            background: rgba(255,255,255,0.14);
+        }
+        body.inversion-mode .settings-row input[type="range"]::-moz-range-track {
+            background: rgba(255,255,255,0.14);
+        }
+        body.inversion-mode .settings-row input[type="range"]::-webkit-slider-thumb {
+            background: #f0f0f5;
+            border-color: color-mix(in srgb, var(--accent) 45%, #a8a8b8);
+        }
+        body.inversion-mode .settings-row input[type="range"]::-moz-range-thumb {
+            background: #f0f0f5;
+            border-color: color-mix(in srgb, var(--accent) 45%, #a8a8b8);
         }
         body.inversion-mode .appearance-color-item label {
             color: #a8a8b8;
@@ -1545,12 +1700,12 @@
     </div>
 
     <div id="fullscreenStage">
-        <div class="clock" id="clock">
-            <div class="mode-indicator" id="modeIndicator">
-                <span id="modeIndicatorText">⏰ Clock</span>
-                <span class="session-badge" id="sessionBadge" style="display:none;"></span>
-            </div>
+        <div class="mode-indicator" id="modeIndicator">
+            <span id="modeIndicatorText">⏰ Clock</span>
+            <span class="session-badge" id="sessionBadge" style="display:none;"></span>
+        </div>
 
+        <div class="clock" id="clock">
             <div class="flip-card" id="hoursCard">
                 <div class="flip-digit-group">
                     <div class="flipper-digit" id="hoursTens">
@@ -1888,6 +2043,9 @@
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
+                <div class="settings-row" style="font-size:12px;opacity:0.6;justify-content:center;">
+                    <span id="soundSourceNote">Ambient sounds &amp; music from <a href="https://mixkit.co/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">Mixkit</a> — Beautiful Dream (Diego Nava), Wedding Harp (Francisco Alvear)</span>
+                </div>
             </div>
 
             <div class="settings-section sync-section">
@@ -1907,7 +2065,7 @@
                 </div>
             </div>
         </div>
-        <div class="settings-footer">Made with ❤️ by Luna &amp; Nathan Petralia<br>Ambient sounds &amp; music from <a href="https://mixkit.co/" target="_blank" rel="noopener">Mixkit</a> — Beautiful Dream (Diego Nava), Wedding Harp (Francisco Alvear)</div>
+        <div class="settings-footer">Made with ❤️ by Luna &amp; Nathan Petralia</div>
     </div>
 </div>
 
@@ -2163,6 +2321,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let isBreak = false;
     let isLongBreak = false;
     let clockInterval = null;
+    let clockTimeout = null;
     let isFullscreen = false;
     let settingsOpen = false;
     let showQuotes = true;
@@ -3051,16 +3210,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function clearQrScannerInstance(scanner) {
+        if (!scanner) return;
+        try {
+            scanner.clear();
+        } catch (e) {}
+    }
+
     function stopQrScanner() {
         if (!html5QrScanner) return;
-        html5QrScanner.stop().catch(function() {}).finally(function() {
-            html5QrScanner.clear();
-            html5QrScanner = null;
-        });
+        const scanner = html5QrScanner;
+        html5QrScanner = null;
+        try {
+            if (scanner.isScanning && scanner.isScanning()) {
+                scanner.stop().catch(function() {}).finally(function() {
+                    clearQrScannerInstance(scanner);
+                });
+                return;
+            }
+        } catch (e) {}
+        clearQrScannerInstance(scanner);
     }
 
     function closeQrModal() {
-        stopQrScanner();
         qrModalOverlay.classList.remove('open');
         qrModalOverlay.setAttribute('aria-hidden', 'true');
         qrModalCanvas.innerHTML = '';
@@ -3070,6 +3242,7 @@ document.addEventListener('DOMContentLoaded', function() {
         qrModalTitle.textContent = 'Scan with your other device';
         qrModalHint.textContent = 'Open your camera and scan to sync settings';
         qrCodeInstance = null;
+        stopQrScanner();
     }
 
     function showQrCodeModal() {
@@ -3077,6 +3250,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showToast('That code didn\'t work — try copying again');
             return;
         }
+        closeSettings();
         stopQrScanner();
         qrModalTitle.textContent = 'Scan with your other device';
         qrModalHint.textContent = 'Open your camera and scan to sync settings';
@@ -3084,17 +3258,21 @@ document.addEventListener('DOMContentLoaded', function() {
         scanModalReader.classList.add('hidden');
         scanModalReader.innerHTML = '';
         qrModalCanvas.innerHTML = '';
-        const url = buildShortImportUrl();
-        qrCodeInstance = new QRCode(qrModalCanvas, {
-            text: url,
-            width: 220,
-            height: 220,
-            colorDark: '#2c2c2e',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.M
-        });
         qrModalOverlay.classList.add('open');
         qrModalOverlay.setAttribute('aria-hidden', 'false');
+        const url = buildShortImportUrl();
+        const qrSize = Math.min(240, Math.max(180, window.innerWidth - 96));
+        requestAnimationFrame(function() {
+            qrModalCanvas.innerHTML = '';
+            qrCodeInstance = new QRCode(qrModalCanvas, {
+                text: url,
+                width: qrSize,
+                height: qrSize,
+                colorDark: '#2c2c2e',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        });
     }
 
     function loadHtml5QrcodeScript() {
@@ -3112,6 +3290,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showScanQrModal() {
+        closeSettings();
         loadHtml5QrcodeScript().then(function() {
             stopQrScanner();
             qrModalTitle.textContent = 'Scan QR code';
@@ -3125,7 +3304,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html5QrScanner = new Html5Qrcode('scanModalReader');
             html5QrScanner.start(
                 { facingMode: 'environment' },
-                { fps: 8, qrbox: { width: 220, height: 220 } },
+                { fps: 10, qrbox: { width: Math.min(220, window.innerWidth - 80), height: Math.min(220, window.innerWidth - 80) } },
                 function(decodedText) {
                     stopQrScanner();
                     closeQrModal();
@@ -3174,9 +3353,24 @@ document.addEventListener('DOMContentLoaded', function() {
         applyImportedSettings(importSettingsInput.value);
     });
     document.getElementById('scanQrBtn').addEventListener('click', showScanQrModal);
-    document.getElementById('qrModalCloseBtn').addEventListener('click', closeQrModal);
+    let qrCloseTouched = false;
+    document.getElementById('qrModalCloseBtn').addEventListener('touchend', function(e) {
+        e.preventDefault();
+        qrCloseTouched = true;
+        closeQrModal();
+    });
+    document.getElementById('qrModalCloseBtn').addEventListener('click', function() {
+        if (qrCloseTouched) { qrCloseTouched = false; return; }
+        closeQrModal();
+    });
     qrModalOverlay.addEventListener('click', function(e) {
         if (e.target === qrModalOverlay) closeQrModal();
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && qrModalOverlay.classList.contains('open')) {
+            e.preventDefault();
+            closeQrModal();
+        }
     });
 
     function applyThemePalette(palette) {
@@ -3316,8 +3510,9 @@ document.addEventListener('DOMContentLoaded', function() {
         stopwatchPanel.classList.toggle('show', mode === 'stopwatch');
         pomodoroPanel.classList.toggle('show', mode === 'pomodoro');
 
-        greetingBanner.classList.toggle('compact', mode === 'pomodoro');
+        greetingBanner.classList.toggle('compact', mode === 'pomodoro' || window.innerWidth < 768);
         clock.classList.toggle('stopwatch-mode', mode === 'stopwatch');
+        clock.classList.toggle('pomodoro-mode', mode === 'pomodoro');
         millisecondsCard.classList.add('hidden');
         setPomodoroLayout(mode === 'pomodoro');
         if (mode === 'stopwatch') {
@@ -3562,6 +3757,7 @@ document.addEventListener('DOMContentLoaded', function() {
         timeFormatBtn.textContent = is12Hour ? '12-hour' : '24-hour';
     }
     function stopAllTimers() {
+        if (clockTimeout) { clearTimeout(clockTimeout); clockTimeout = null; }
         if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
         if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
         if (pomodoroInterval) { clearInterval(pomodoroInterval); pomodoroInterval = null; }
@@ -3590,8 +3786,14 @@ document.addEventListener('DOMContentLoaded', function() {
             flipPair(digitEls.secondsTens, digitEls.secondsOnes, pad(now.getSeconds()), true);
         };
 
-        tick();
-        clockInterval = setInterval(tick, 1000);
+        function scheduleClockTick() {
+            tick();
+            const now = new Date();
+            const msUntilNext = Math.max(50, 1000 - now.getMilliseconds());
+            clockTimeout = setTimeout(scheduleClockTick, msUntilNext);
+        }
+
+        scheduleClockTick();
         updateControlsForMode();
         saveAll();
     }
@@ -3622,7 +3824,7 @@ document.addEventListener('DOMContentLoaded', function() {
             stopwatchTime = Date.now() - startTime;
             updateDisplay(stopwatchTime, true);
             updateStopwatchElapsed(stopwatchTime);
-        }, 1000);
+        }, 200);
     }
 
     function resetStopwatch() {
@@ -3910,6 +4112,16 @@ document.addEventListener('DOMContentLoaded', function() {
     if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
     }
+
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && !isStopwatchMode && !isPomodoroMode) {
+            stopAllTimers();
+            startClock();
+        }
+    });
+    window.addEventListener('resize', function() {
+        updateControlsForMode();
+    });
 
     // ─── Init ───
     loadAll();
