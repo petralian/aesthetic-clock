@@ -1480,6 +1480,30 @@
                 width: auto;
             }
             .settings-row > label:not(.toggle-switch) { flex: 1; min-width: 120px; }
+            .settings-row:has(input[type="range"]) {
+                display: grid;
+                grid-template-columns: minmax(120px, 1fr) minmax(120px, 200px) 2.5rem;
+                align-items: center;
+                flex-wrap: nowrap;
+                gap: 10px 12px;
+            }
+            .settings-row:has(input[type="range"]) > label:not(.toggle-switch) {
+                grid-column: 1;
+                flex: none;
+                min-width: 0;
+            }
+            .settings-row:has(input[type="range"]) input[type="range"] {
+                grid-column: 2;
+                width: 100%;
+                max-width: 200px;
+                min-width: 0;
+                flex: none;
+                justify-self: end;
+            }
+            .settings-row:has(input[type="range"]) .val {
+                grid-column: 3;
+                justify-self: end;
+            }
             .settings-row input[type="range"] { min-width: 100px; max-width: 220px; }
             .settings-row select { max-width: min(220px, 50%); }
             .top-bar { justify-content: flex-end; flex-wrap: nowrap; }
@@ -1849,7 +1873,7 @@
             <div class="settings-section appearance-section">
                 <div class="settings-section-title">Appearance</div>
                 <div class="settings-row">
-                    <label for="inversionModeEnabled">Inversion mode</label>
+                    <label for="inversionModeEnabled">Dark / Light</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="inversionModeEnabled">
                         <span class="toggle-slider"></span>
@@ -1928,14 +1952,14 @@
                     </label>
                 </div>
                 <div class="settings-row">
-                    <label for="quotesEnabled">Motivational quotes</label>
+                    <label for="quotesEnabled">Show motivational quotes</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="quotesEnabled" checked>
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
                 <div class="settings-row">
-                    <label for="quoteEmojisEnabled">Quote emojis</label>
+                    <label for="quoteEmojisEnabled">Show quote emojis</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="quoteEmojisEnabled" checked>
                         <span class="toggle-slider"></span>
@@ -2487,6 +2511,24 @@ document.addEventListener('DOMContentLoaded', function() {
         weddingHarp: 'https://assets.mixkit.co/music/672/672.mp3'
     };
 
+    /* Per-track loudness normalization (1.0 = reference) */
+    const AMBIENT_GAIN = {
+        white: 0.5,
+        brown: 0.5,
+        rain: 0.42,
+        ocean: 0.4,
+        forest: 0.85,
+        cafe: 0.9,
+        fireplace: 0.85,
+        piano: 1.35,
+        beautifulDream: 0.95,
+        weddingHarp: 0.95
+    };
+
+    function getAmbientGain(type) {
+        return AMBIENT_GAIN[type] || 0.45;
+    }
+
     const bgNoiseSettings = {
         type: 'none',
         volume: 30,
@@ -2507,12 +2549,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ─── Audio ───
     let audioCtx = null;
+    let audioUnlocked = false;
+    let qrModalThemeSnapshot = null;
+
+    function unlockAudio() {
+        try {
+            const ctx = getAudio();
+            if (ctx.state === 'suspended') ctx.resume();
+            if (!audioUnlocked) {
+                const buffer = ctx.createBuffer(1, 1, 22050);
+                const src = ctx.createBufferSource();
+                src.buffer = buffer;
+                src.connect(ctx.destination);
+                src.start(0);
+                audioUnlocked = true;
+            }
+        } catch (e) {}
+    }
+
+    function installAudioUnlock() {
+        function once() {
+            unlockAudio();
+            if (bgNoiseSettings.enabled && bgNoiseSettings.type !== 'none') syncBgNoise();
+            document.removeEventListener('touchstart', once, true);
+            document.removeEventListener('click', once, true);
+        }
+        document.addEventListener('touchstart', once, true);
+        document.addEventListener('click', once, true);
+    }
+
     function getAudio() {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         return audioCtx;
     }
     function playTickSound() {
         if (!pomoSettings.flipTickSound) return;
+        unlockAudio();
         try {
             const ctx = getAudio();
             const osc = ctx.createOscillator();
@@ -2528,6 +2600,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     function playChime() {
         if (!pomoSettings.soundOnComplete) return;
+        unlockAudio();
         try {
             const ctx = getAudio();
             [523, 659, 784].forEach(function(freq, i) {
@@ -2597,20 +2670,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function startHtmlAmbient(url) {
+    function startHtmlAmbient(url, type) {
+        unlockAudio();
         const audio = new Audio(url);
         audio.loop = true;
         audio.crossOrigin = 'anonymous';
-        audio.volume = getNoiseVolume();
+        audio.playsInline = true;
+        audio.setAttribute('playsinline', '');
+        const mult = getAmbientGain(type);
+        audio.volume = Math.min(1, getNoiseVolume() * mult);
         audio.play().catch(function() {});
         bgAudioEl = audio;
+        bgAudioEl._ambientType = type;
     }
 
     function startProceduralNoise(type) {
         try {
+            unlockAudio();
             const ctx = getAudio();
             if (ctx.state === 'suspended') ctx.resume();
-            const vol = getNoiseVolume() * 0.35;
+            const mult = getAmbientGain(type);
+            const vol = getNoiseVolume() * mult;
             const masterGain = ctx.createGain();
             masterGain.gain.value = vol;
             masterGain.connect(ctx.destination);
@@ -2638,7 +2718,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const gain = ctx.createGain();
                     osc.type = 'triangle';
                     osc.frequency.value = freq;
-                    gain.gain.value = vol * 0.25;
+                    gain.gain.value = vol * 0.85;
                     osc.connect(gain);
                     gain.connect(masterGain);
                     const t = ctx.currentTime;
@@ -2657,11 +2737,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     filter.type = 'bandpass';
                     filter.frequency.value = 800;
                     filter.Q.value = 0.4;
-                    masterGain.gain.value = vol * 0.8;
+                    masterGain.gain.value = vol * 0.85;
                 } else {
                     filter.type = 'lowpass';
                     filter.frequency.value = 400;
-                    masterGain.gain.value = vol * 0.7;
+                    masterGain.gain.value = vol * 0.75;
                     const lfo = ctx.createOscillator();
                     const lfoGain = ctx.createGain();
                     lfo.frequency.value = 0.15;
@@ -2689,7 +2769,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (type === 'none' || !bgNoiseSettings.enabled) return;
 
         if (AMBIENT_LOOPS[type]) {
-            startHtmlAmbient(AMBIENT_LOOPS[type]);
+            startHtmlAmbient(AMBIENT_LOOPS[type], type);
             return;
         }
         startProceduralNoise(type);
@@ -2705,10 +2785,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateBgNoiseVolume() {
         const vol = getNoiseVolume();
-        if (bgAudioEl) bgAudioEl.volume = vol;
-        if (bgAudioGainNode) bgAudioGainNode.gain.value = vol * 0.35;
+        const type = bgNoiseSettings.type;
+        const mult = getAmbientGain(type);
+        if (bgAudioEl) {
+            bgAudioEl.volume = Math.min(1, vol * mult);
+        }
+        if (bgAudioGainNode) {
+            bgAudioGainNode.gain.value = vol * mult;
+        }
         if (bgNoiseNodes && bgNoiseNodes.nodes[0] && !bgAudioGainNode) {
-            bgNoiseNodes.nodes[0].gain.value = vol * 0.35;
+            bgNoiseNodes.nodes[0].gain.value = vol * mult;
         }
     }
 
@@ -2861,6 +2947,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ─── Settings drawer ───
     function openSettings() {
+        unlockAudio();
         settingsOpen = true;
         settingsDrawer.classList.add('open');
         settingsDrawer.setAttribute('aria-hidden', 'false');
@@ -3232,6 +3319,26 @@ document.addEventListener('DOMContentLoaded', function() {
         clearQrScannerInstance(scanner);
     }
 
+    function snapshotThemeForModal() {
+        qrModalThemeSnapshot = {
+            inversionMode: inversionMode,
+            bg: bgColor.value,
+            face: clockFaceColor.value,
+            number: numberColor.value
+        };
+    }
+
+    function restoreThemeAfterModal() {
+        if (!qrModalThemeSnapshot) return;
+        inversionMode = qrModalThemeSnapshot.inversionMode;
+        bgColor.value = qrModalThemeSnapshot.bg;
+        clockFaceColor.value = qrModalThemeSnapshot.face;
+        numberColor.value = qrModalThemeSnapshot.number;
+        qrModalThemeSnapshot = null;
+        syncInversionModeUI();
+        applyCustomizations();
+    }
+
     function closeQrModal() {
         qrModalOverlay.classList.remove('open');
         qrModalOverlay.setAttribute('aria-hidden', 'true');
@@ -3243,6 +3350,9 @@ document.addEventListener('DOMContentLoaded', function() {
         qrModalHint.textContent = 'Open your camera and scan to sync settings';
         qrCodeInstance = null;
         stopQrScanner();
+        restoreThemeAfterModal();
+        document.body.style.pointerEvents = 'none';
+        setTimeout(function() { document.body.style.pointerEvents = ''; }, 350);
     }
 
     function showQrCodeModal() {
@@ -3250,6 +3360,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showToast('That code didn\'t work — try copying again');
             return;
         }
+        snapshotThemeForModal();
         closeSettings();
         stopQrScanner();
         qrModalTitle.textContent = 'Scan with your other device';
@@ -3290,6 +3401,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showScanQrModal() {
+        snapshotThemeForModal();
         closeSettings();
         loadHtml5QrcodeScript().then(function() {
             stopQrScanner();
@@ -3354,12 +3466,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     document.getElementById('scanQrBtn').addEventListener('click', showScanQrModal);
     let qrCloseTouched = false;
-    document.getElementById('qrModalCloseBtn').addEventListener('touchend', function(e) {
+    const qrModalCloseBtn = document.getElementById('qrModalCloseBtn');
+    qrModalCloseBtn.addEventListener('touchend', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         qrCloseTouched = true;
         closeQrModal();
-    });
-    document.getElementById('qrModalCloseBtn').addEventListener('click', function() {
+    }, { passive: false });
+    qrModalCloseBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         if (qrCloseTouched) { qrCloseTouched = false; return; }
         closeQrModal();
     });
@@ -3416,8 +3532,13 @@ document.addEventListener('DOMContentLoaded', function() {
             stopQuoteRotation();
             return;
         }
-        if (isPomodoroMode) startQuoteRotation();
-        else refreshCurrentQuote();
+        if (isPomodoroMode) {
+            startQuoteRotation();
+        } else if (currentQuoteText) {
+            refreshCurrentQuote();
+        } else {
+            showNextQuote();
+        }
     }
 
     function stripLeadingEmoji(text) {
@@ -4046,6 +4167,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     randomThemeBtn.addEventListener('click', generateRandomTheme);
     bgNoiseType.addEventListener('change', function() {
+        unlockAudio();
         bgNoiseSettings.type = bgNoiseType.value;
         if (bgNoiseSettings.type !== 'none' && !bgNoiseSettings.enabled) {
             bgNoiseSettings.enabled = true;
@@ -4061,6 +4183,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateBgNoiseVolume();
     });
     bgNoiseEnabled.addEventListener('change', function() {
+        unlockAudio();
         bgNoiseSettings.enabled = bgNoiseEnabled.checked;
         saveAll();
         syncBgNoise();
@@ -4124,6 +4247,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ─── Init ───
+    installAudioUnlock();
     loadAll();
     syncInversionModeUI();
     applyCustomizations();
