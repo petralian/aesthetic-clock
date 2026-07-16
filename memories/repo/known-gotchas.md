@@ -1,17 +1,22 @@
 # LunaClock — known gotchas
 
-**Updated:** 2026-07-15
+**Updated:** 2026-07-16
 
 ## Single-file app
 
-- **All logic in `clock7.html`** — search before duplicating functions; large file (~3.8k lines)
+- **All logic in `clock7.html`** — search before duplicating functions; large file (~6k lines)
 - **No build step** — CDN deps (QRCode, fonts, Mixkit, Quotable); handle network failures gracefully
 - **Cookie path** derives from URL pathname — opening as `file://` or wrong server path breaks persistence vs production
 - **Flip digits are canvas** (`FlipEngine`) — CSS 3D faces are unused when `.has-canvas`; mode switch / `stopAllTimers` must call `FlipEngine.cancelAll()` (via `stopDisplayLoop`) so mid-flip never bleeds into the next mode
+- **FlipEngine smoothness** — ease-in-out cubic + perspective foreshortening (`cos/(1+sin/P)`); never zero `cssW`/`cssH` on resize (only reset buffer when size/DPR actually changed); theme tokens cached until `repaintAll` / `invalidateTokens`
+- **Canvas digit stretch (2026-07-16)** — HTML canvas defaults to **300×150**. With CSS faces `display:none` and `.flipper-digit { width: auto }`, that intrinsic size blew digits past the grey `#clock` panel. **Must:** fixed `width/min/max: var(--flip-digit-w)`, `.flip-digit-group { width: auto }`, `syncSize` from em/`--flip-digit-w` (never `getBoundingClientRect`), init `canvas.width=1`. Guarded by `tests/layout.spec.js`
 - **One rAF display loop** — clock / stopwatch / pomodoro time sampling lives in `displayFrame`; do not reintroduce per-mode `setInterval` for digit updates
-- **Playwright smoke** — `npm test` (desktop + Pixel 7); agent browser QA via Playwright MCP in `.cursor/mcp.json.example` (`npx @playwright/mcp@latest`). Reject rustwright (alpha) for this repo
+- **Clock animates / stopwatch instant** — `flipDigit` forces `setInstant` in stopwatch mode; clock flips on second change only
+- **Timezone override** — settings `timezoneSelect` + stage `#tzChip`; clock digits via `getZonedParts()` / `Intl`; persist `timeZone` in share payload
+- **Playwright** — `npm test` / `npx playwright test` (smoke + visual-qa + timezone + layout; desktop + Pixel 7). Reject rustwright (alpha) for this repo
 - **Mode switch paint order** — always `updateControlsForMode()` then `FlipEngine.afterLayout(...)` before sampling digits; painting while `#hoursCard` is still `.hidden` leaves blank/wrong canvas tiles
 - **Hold reset** — single rAF timer at `HOLD_RESET_MS = 2000` (no parallel setTimeout); label shows `2.0s`…`0.0s`
+- **Deploy** — `scp clock7.html root@46.224.49.175:/www/wwwroot/clock.petralian.com/index.html` then `chown www:www` (user-authorized for this repo)
 - **Timezone** — `timezoneOverride` (compact key `tz`); empty = device local. Clock digits / greeting / small time use `getZonedParts()`. Chip `#tzChip` above clock; zone quotes on change via `TIMEZONE_QUOTES`
 
 ## UX constraints

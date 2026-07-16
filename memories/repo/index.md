@@ -1,6 +1,6 @@
 # LunaClock — repo memory (machine-readable)
 
-**Updated:** 2026-07-15
+**Updated:** 2026-07-16
 
 ## Identity
 
@@ -39,4 +39,4 @@
 
 ## Current priority (2026-07-16)
 
-Canvas flip + single rAF loop shipped locally; Playwright smoke green. Deploy still blocked (aaPanel). Pending: clock7 polish from Bridge + manual visual QA of canvas flips.
+Smooth FlipEngine (perspective + easing) + timezone override deployed to clock.petralian.com (`5bdf5f4`). Playwright **22/22**. Remaining Bridge polish: lz-string `#i=`, emoji toggle, ambient URL audit.
