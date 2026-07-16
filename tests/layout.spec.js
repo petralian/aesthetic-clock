@@ -12,18 +12,28 @@ const DIGIT_IDS = [
   'secondsOnes',
 ];
 
+const STOPWATCH_DIGIT_IDS = [
+  'minutesTens',
+  'minutesOnes',
+  'secondsTens',
+  'secondsOnes',
+  'millisTens',
+  'millisOnes',
+];
+
 const shotDir = path.join(__dirname, '..', 'test-results', 'layout-qa');
 const TOL = 4; // px — allow subpixel / border / shadow bleed
 
 /**
  * @param {import('@playwright/test').Page} page
+ * @param {string[]} ids
  */
-async function measureClockLayout(page) {
-  return page.evaluate((ids) => {
+async function measureClockLayout(page, ids = DIGIT_IDS) {
+  return page.evaluate((digitIds) => {
     const clock = document.getElementById('clock');
     if (!clock) return null;
     const clockBox = clock.getBoundingClientRect();
-    const digits = ids.map((id) => {
+    const digits = digitIds.map((id) => {
       const el = document.getElementById(id);
       const r = el.getBoundingClientRect();
       const canvas = el.querySelector('canvas.digit-canvas');
@@ -51,7 +61,7 @@ async function measureClockLayout(page) {
       },
       digits,
     };
-  }, DIGIT_IDS);
+  }, ids);
 }
 
 test.describe('LunaClock flip layout containment', () => {
@@ -148,6 +158,41 @@ test.describe('LunaClock flip layout containment', () => {
 
     await page.locator('#fullscreenStage').screenshot({
       path: path.join(shotDir, `${testInfo.project.name}-after-modes.png`),
+    });
+  });
+
+  test('stopwatch with ms visible keeps all digits inside #clock', async ({ page }, testInfo) => {
+    await page.locator('#stopwatchModeBtn').click();
+    await expect(page.locator('#clock')).toHaveAttribute('data-mode', 'stopwatch');
+    await expect(page.locator('#millisecondsCard')).toBeVisible();
+    await expect(page.locator('#millisecondsCard')).not.toHaveClass(/hidden/);
+
+    await page.locator('#startStopBtn').click();
+    await page.waitForTimeout(180);
+
+    const layout = await measureClockLayout(page, STOPWATCH_DIGIT_IDS);
+    expect(layout).toBeTruthy();
+    expect(layout.digits).toHaveLength(STOPWATCH_DIGIT_IDS.length);
+
+    for (const d of layout.digits) {
+      expect(d.width, `${d.id} width`).toBeGreaterThan(6);
+      expect(d.height, `${d.id} height`).toBeGreaterThan(6);
+      expect(d.left, `${d.id} left`).toBeGreaterThanOrEqual(layout.clock.left - TOL);
+      expect(d.right, `${d.id} right`).toBeLessThanOrEqual(layout.clock.right + TOL);
+      expect(d.top, `${d.id} top`).toBeGreaterThanOrEqual(layout.clock.top - TOL);
+      expect(d.bottom, `${d.id} bottom`).toBeLessThanOrEqual(layout.clock.bottom + TOL);
+      expect(d.aspect, `${d.id} aspect`).toBeGreaterThan(0.45);
+      expect(d.aspect, `${d.id} aspect`).toBeLessThan(1.35);
+    }
+
+    const millis = layout.digits.filter((d) => d.id.startsWith('millis'));
+    const seconds = layout.digits.filter((d) => d.id.startsWith('seconds'));
+    const avgMsH = millis.reduce((s, d) => s + d.height, 0) / millis.length;
+    const avgSecH = seconds.reduce((s, d) => s + d.height, 0) / seconds.length;
+    expect(avgMsH, 'ms digits smaller than seconds').toBeLessThan(avgSecH * 0.9);
+
+    await page.locator('#clock').screenshot({
+      path: path.join(shotDir, `${testInfo.project.name}-stopwatch-ms.png`),
     });
   });
 });
