@@ -2793,16 +2793,31 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         }
 
+        function emFactor(token, fallback) {
+            const m = String(token || '').trim().match(/^([\d.]+)em$/i);
+            return m ? parseFloat(m[1]) : fallback;
+        }
+
         function syncSize(state) {
             const container = state.container;
             const hidden = container.closest && container.closest('.flip-card.hidden, .hidden');
-            if (hidden || (!container.offsetWidth && !container.offsetHeight)) {
+            if (hidden) {
                 state.needsLayout = true;
                 return false;
             }
-            const rect = container.getBoundingClientRect();
-            const cssW = Math.max(1, Math.round(rect.width || container.offsetWidth || 40));
-            const cssH = Math.max(1, Math.round(rect.height || container.offsetHeight || 48));
+            const style = getComputedStyle(container);
+            const fontSize = parseFloat(style.fontSize) || 40;
+            const digitWEm = emFactor(
+                style.getPropertyValue('--flip-digit-w') || readToken('--flip-digit-w', '1.05em'),
+                1.05
+            );
+            // Size from CSS em box — never getBoundingClientRect (canvas default 300×150 stretches tiles)
+            const cssW = Math.max(1, Math.round(fontSize * digitWEm));
+            const cssH = Math.max(1, Math.round(fontSize * 1.2));
+            if (!container.offsetParent && !container.offsetWidth && !container.offsetHeight) {
+                state.needsLayout = true;
+                return false;
+            }
             const dpr = Math.min(2.5, window.devicePixelRatio || 1);
             state.needsLayout = false;
             // Only reset the canvas buffer when size/DPR actually changed — never mid-flip churn
