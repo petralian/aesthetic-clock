@@ -2275,6 +2275,110 @@
             border: 1px solid rgba(0,0,0,0.12);
         }
 
+        /* Productivity fullscreen — controls + dual stopwatch/pomodoro */
+        .fs-productivity {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: clamp(12px, 2.5vmin, 20px);
+            width: 100%;
+            max-width: min(1100px, 100%);
+        }
+        .fullscreen-mode.productivity-fs .fs-productivity {
+            display: flex;
+        }
+        .fullscreen-mode.productivity-fs .fullscreen-pomo-pause {
+            display: none !important;
+        }
+        .fs-mode-pills {
+            display: flex;
+            gap: clamp(8px, 1.5vmin, 12px);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .fs-pill {
+            padding: clamp(8px, 1.5vmin, 12px) clamp(16px, 3vmin, 24px);
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.55);
+            background: rgba(255,255,255,0.42);
+            backdrop-filter: blur(10px);
+            color: var(--text-primary);
+            font-family: var(--font);
+            font-size: clamp(12px, 2.2vmin, 14px);
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .fs-pill.active {
+            background: rgba(255,255,255,0.88);
+            box-shadow: 0 4px 16px rgba(107,74,122,0.12);
+        }
+        .fs-dual-grid {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(14px, 2.5vmin, 22px);
+            width: 100%;
+        }
+        .fs-pane {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: clamp(10px, 2vmin, 14px);
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--mode-panel-border, rgba(255,255,255,0.48));
+            border-radius: var(--radius-ui);
+            padding: clamp(14px, 2.5vmin, 20px);
+            width: 100%;
+        }
+        .fs-pane.active { display: flex; }
+        .fs-pane-label {
+            font-size: clamp(12px, 2.2vmin, 14px);
+            font-weight: 700;
+            color: var(--panel-header-text, var(--text-primary));
+        }
+        .fs-readout {
+            font-size: clamp(22px, 5vmin, 36px);
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.04em;
+            color: var(--number);
+        }
+        .fs-pomo-meta {
+            font-size: clamp(11px, 2vmin, 13px);
+            color: var(--text-muted);
+            text-align: center;
+        }
+        .fs-controls {
+            display: flex;
+            gap: clamp(8px, 2vw, 10px);
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+        .fullscreen-mode.productivity-fs .fs-controls .btn-primary {
+            min-width: 7.5rem;
+        }
+        .fullscreen-mode.productivity-fs #fsPomoStartBtn {
+            min-width: 10.75rem;
+        }
+        @media (min-width: 900px) {
+            .fullscreen-mode.productivity-fs .fs-dual-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: clamp(16px, 2.5vmin, 24px);
+            }
+            .fullscreen-mode.productivity-fs .fs-pane {
+                display: flex;
+            }
+            .fullscreen-mode.productivity-fs .fs-mode-pills {
+                display: none;
+            }
+            .fullscreen-mode.productivity-fs #clock {
+                margin-bottom: clamp(4px, 1vmin, 8px);
+            }
+        }
+
         /* ─── Mobile-first breakpoints ─── */
 
         @media (max-width: 767px) {
@@ -2954,6 +3058,39 @@
             <div class="am-pm" id="amPmDisplay">AM</div>
         </div>
         <div class="quote-display typo-body" id="quoteDisplay">✨ Focus on the present moment</div>
+
+        <div class="fs-productivity" id="fsProductivity" aria-hidden="true">
+            <div class="fs-mode-pills" id="fsModePills" role="tablist" aria-label="Productivity mode">
+                <button type="button" class="fs-pill typo-ui" id="fsPillStopwatch" role="tab" aria-selected="false">⏱️ Stopwatch</button>
+                <button type="button" class="fs-pill typo-ui" id="fsPillPomodoro" role="tab" aria-selected="false">🍅 Pomodoro</button>
+            </div>
+            <div class="fs-dual-grid" id="fsDualGrid">
+                <div class="fs-pane fs-pane-sw" id="fsPaneStopwatch" role="tabpanel">
+                    <div class="fs-pane-label typo-ui">⏱️ Stopwatch</div>
+                    <div class="fs-readout typo-ui" id="fsSwReadout" aria-live="polite">00:00:00:00</div>
+                    <div class="fs-controls stopwatch-controls">
+                        <button class="btn btn-primary typo-ui" id="fsStartStopBtn" type="button">▶️ Start</button>
+                        <button class="btn btn-danger hold-reset-btn typo-ui" id="fsResetBtn" type="button">
+                            <span class="hold-reset-fill" aria-hidden="true"></span>
+                            <span class="hold-reset-label">Hold 2s to reset</span>
+                        </button>
+                        <button class="btn typo-ui" id="fsLapBtn" type="button">⏱️ Lap</button>
+                    </div>
+                </div>
+                <div class="fs-pane fs-pane-pomo" id="fsPanePomodoro" role="tabpanel">
+                    <div class="fs-pane-label typo-ui">🍅 Pomodoro</div>
+                    <div class="fs-readout typo-ui" id="fsPomoReadout" aria-live="polite">00:25:00</div>
+                    <div class="fs-pomo-meta typo-ui" id="fsPomoMeta"></div>
+                    <div class="fs-controls pomodoro-controls">
+                        <button class="btn btn-primary typo-ui" id="fsPomoStartBtn" type="button">▶️ Start Focus</button>
+                        <button class="btn btn-danger hold-reset-btn typo-ui" id="fsPomoResetBtn" type="button">
+                            <span class="hold-reset-fill" aria-hidden="true"></span>
+                            <span class="hold-reset-label">Hold 2s to reset</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="mode-bar" id="modeBar">
@@ -3814,6 +3951,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const fullscreenBtn = document.getElementById('fullscreenBtn');
     const exitFullscreenBtn = document.getElementById('exitFullscreenBtn');
     const fullscreenPomoPause = document.getElementById('fullscreenPomoPause');
+    const fsProductivity = document.getElementById('fsProductivity');
+    const fsPillStopwatch = document.getElementById('fsPillStopwatch');
+    const fsPillPomodoro = document.getElementById('fsPillPomodoro');
+    const fsPaneStopwatch = document.getElementById('fsPaneStopwatch');
+    const fsPanePomodoro = document.getElementById('fsPanePomodoro');
+    const fsSwReadout = document.getElementById('fsSwReadout');
+    const fsPomoReadout = document.getElementById('fsPomoReadout');
+    const fsPomoMeta = document.getElementById('fsPomoMeta');
+    const fsStartStopBtn = document.getElementById('fsStartStopBtn');
+    const fsResetBtn = document.getElementById('fsResetBtn');
+    const fsLapBtn = document.getElementById('fsLapBtn');
+    const fsPomoStartBtn = document.getElementById('fsPomoStartBtn');
+    const fsPomoResetBtn = document.getElementById('fsPomoResetBtn');
     const clock = document.getElementById('clock');
     if (typeof ResizeObserver !== 'undefined') {
         new ResizeObserver(function() { FlipEngine.resizeAll(); }).observe(clock);
@@ -4059,6 +4209,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let displayRafId = null;
     let lastClockSecond = -1;
     let isFullscreen = false;
+    let fsFocusMode = 'stopwatch';
+    let pomoWakeTimer = null;
     let settingsOpen = false;
     let showQuotes = true;
     let quoteEmojisOn = true;
@@ -6358,6 +6510,135 @@ document.addEventListener('DOMContentLoaded', function() {
         return 'clock';
     }
 
+    function isProductivityMode() {
+        return isStopwatchMode || isPomodoroMode;
+    }
+
+    function anyTimerActive() {
+        return isRunning || pomodoroRunning;
+    }
+
+    function formatStopwatchReadout(ms) {
+        const t = formatTime(ms);
+        return pad(t.hours) + ':' + pad(t.minutes) + ':' + pad(t.seconds) + ':' + pad(t.millis);
+    }
+
+    function formatPomoReadout(ms) {
+        const t = formatCountdown(ms);
+        return pad(t.hours) + ':' + pad(t.minutes) + ':' + pad(t.seconds);
+    }
+
+    function syncFsReadouts() {
+        if (fsSwReadout) fsSwReadout.textContent = formatStopwatchReadout(stopwatchTime);
+        if (fsPomoReadout) fsPomoReadout.textContent = formatPomoReadout(pomodoroRemaining);
+        if (fsPomoMeta) {
+            let meta = '';
+            if (pomodoroRunning) meta = pomodoroRunning ? '▶ Running' : '';
+            if (!isBreak && isPomodoroMode) {
+                meta = 'Session ' + (currentSessionInCycle + 1) + ' of ' + pomoSettings.sessionsBeforeLong;
+            } else if (isBreak) {
+                meta = isLongBreak ? '☕ Long break' : '☕ Short break';
+            }
+            if (sessionsCompletedToday > 0) {
+                meta = (meta ? meta + ' · ' : '') + 'Today: ' + sessionsCompletedToday + '/' + pomoSettings.dailyGoal;
+            }
+            fsPomoMeta.textContent = meta;
+        }
+    }
+
+    function syncFsControlLabels() {
+        if (fsStartStopBtn) fsStartStopBtn.textContent = startStopBtn.textContent;
+        if (fsPomoStartBtn) fsPomoStartBtn.textContent = pomodoroStartBtn.textContent;
+    }
+
+    function setFsFocus(mode) {
+        fsFocusMode = mode === 'pomodoro' ? 'pomodoro' : 'stopwatch';
+        if (fsPillStopwatch) {
+            fsPillStopwatch.classList.toggle('active', fsFocusMode === 'stopwatch');
+            fsPillStopwatch.setAttribute('aria-selected', fsFocusMode === 'stopwatch' ? 'true' : 'false');
+        }
+        if (fsPillPomodoro) {
+            fsPillPomodoro.classList.toggle('active', fsFocusMode === 'pomodoro');
+            fsPillPomodoro.setAttribute('aria-selected', fsFocusMode === 'pomodoro' ? 'true' : 'false');
+        }
+        if (fsPaneStopwatch) fsPaneStopwatch.classList.toggle('active', fsFocusMode === 'stopwatch');
+        if (fsPanePomodoro) fsPanePomodoro.classList.toggle('active', fsFocusMode === 'pomodoro');
+        if (isFullscreen && isProductivityMode()) {
+            if (fsFocusMode === 'stopwatch' && !isStopwatchMode) enterStopwatchMode();
+            else if (fsFocusMode === 'pomodoro' && !isPomodoroMode) enterPomodoroMode();
+        }
+        syncFsReadouts();
+        syncFsControlLabels();
+    }
+
+    function updateFsProductivityUI() {
+        const show = isFullscreen && isProductivityMode();
+        body.classList.toggle('productivity-fs', show);
+        if (fsProductivity) {
+            fsProductivity.setAttribute('aria-hidden', show ? 'false' : 'true');
+        }
+        if (show) {
+            setFsFocus(isPomodoroMode ? 'pomodoro' : 'stopwatch');
+        }
+        syncFsReadouts();
+        syncFsControlLabels();
+    }
+
+    function clearPomoWakeTimer() {
+        if (pomoWakeTimer) {
+            clearTimeout(pomoWakeTimer);
+            pomoWakeTimer = null;
+        }
+    }
+
+    function schedulePomodoroWake() {
+        clearPomoWakeTimer();
+        if (!pomodoroRunning || pomodoroEndAt == null) return;
+        const delay = Math.max(0, pomodoroEndAt - Date.now() + 50);
+        pomoWakeTimer = setTimeout(function() {
+            resyncTimersFromWallClock();
+        }, delay);
+    }
+
+    function checkPomodoroComplete() {
+        if (!pomodoroRunning || pomodoroEndAt == null) return false;
+        pomodoroRemaining = Math.max(0, pomodoroEndAt - Date.now());
+        if (pomodoroRemaining > 0) return false;
+        pomodoroRunning = false;
+        pomodoroEndAt = null;
+        clearPomoWakeTimer();
+        pomodoroStartBtn.textContent = isBreak ? '▶️ Start Break' : '▶️ Start Focus';
+        onPomodoroComplete();
+        return true;
+    }
+
+    function resyncTimersFromWallClock() {
+        const now = Date.now();
+        if (pomodoroRunning && pomodoroEndAt != null) {
+            pomodoroRemaining = Math.max(0, pomodoroEndAt - now);
+            if (pomodoroRemaining <= 0) {
+                checkPomodoroComplete();
+            } else if (isPomodoroMode) {
+                updateDisplay(pomodoroRemaining, false);
+            }
+        }
+        if (isRunning && stopwatchEpoch != null) {
+            stopwatchTime = now - stopwatchEpoch;
+            if (isStopwatchMode) {
+                updateDisplay(stopwatchTime, false);
+            }
+        }
+        syncFsReadouts();
+        syncFsControlLabels();
+        if (!isStopwatchMode && !isPomodoroMode) {
+            stopAllTimers();
+            startClock();
+        } else if (anyTimerActive()) {
+            startDisplayLoop();
+        }
+        schedulePomodoroWake();
+    }
+
     function updateControlsForMode() {
         const mode = getCurrentMode();
 
@@ -6406,9 +6687,11 @@ document.addEventListener('DOMContentLoaded', function() {
             tzChip.classList.toggle('visible', showTz);
             tzChip.setAttribute('aria-hidden', showTz ? 'false' : 'true');
         }
-        fullscreenPomoPause.classList.toggle('show', isFullscreen && mode === 'pomodoro' && pomodoroRunning);
+        fullscreenPomoPause.classList.toggle('show', isFullscreen && mode === 'pomodoro' && pomodoroRunning && !body.classList.contains('productivity-fs'));
         fullscreenPomoPause.textContent = pomodoroRunning ? '⏸️ Pause' : '▶️ Resume';
         syncPomodoroStartLabel();
+        syncFsControlLabels();
+        updateFsProductivityUI();
         update12hrButtons();
     }
 
@@ -6848,18 +7131,20 @@ document.addEventListener('DOMContentLoaded', function() {
         displayRafId = requestAnimationFrame(displayFrame);
         FlipEngine.tickAnimations(now);
 
-        if (isPomodoroMode && pomodoroRunning && pomodoroEndAt != null) {
+        if (pomodoroRunning && pomodoroEndAt != null) {
             pomodoroRemaining = Math.max(0, pomodoroEndAt - Date.now());
-            updateDisplay(pomodoroRemaining, true);
             if (pomodoroRemaining <= 0) {
-                pomodoroRunning = false;
-                pomodoroEndAt = null;
-                pomodoroStartBtn.textContent = isBreak ? '▶️ Start Break' : '▶️ Start Focus';
-                onPomodoroComplete();
+                checkPomodoroComplete();
             }
-        } else if (isStopwatchMode && isRunning && stopwatchEpoch != null) {
+        }
+        if (isRunning && stopwatchEpoch != null) {
             stopwatchTime = Date.now() - stopwatchEpoch;
-            updateDisplay(stopwatchTime, true);
+        }
+
+        if (isPomodoroMode) {
+            updateDisplay(pomodoroRemaining, pomodoroRunning);
+        } else if (isStopwatchMode) {
+            updateDisplay(stopwatchTime, isRunning);
         } else if (!isStopwatchMode && !isPomodoroMode) {
             const sec = getZonedParts().seconds;
             if (sec !== lastClockSecond) {
@@ -6867,23 +7152,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 sampleClockDigits(true);
             }
         }
+
+        if (isFullscreen && body.classList.contains('productivity-fs')) {
+            syncFsReadouts();
+        }
+    }
+
+    function pauseDisplayLoop() {
+        if (displayRafId) {
+            cancelAnimationFrame(displayRafId);
+            displayRafId = null;
+        }
+        FlipEngine.cancelAll();
+        lastClockSecond = -1;
+    }
+
+    function stopDisplayLoop() {
+        pauseDisplayLoop();
+        stopwatchEpoch = null;
+        pomodoroEndAt = null;
+        clearPomoWakeTimer();
     }
 
     function startDisplayLoop() {
         if (displayRafId) return;
         lastClockSecond = -1;
         displayRafId = requestAnimationFrame(displayFrame);
-    }
-
-    function stopDisplayLoop() {
-        if (displayRafId) {
-            cancelAnimationFrame(displayRafId);
-            displayRafId = null;
-        }
-        FlipEngine.cancelAll();
-        stopwatchEpoch = null;
-        pomodoroEndAt = null;
-        lastClockSecond = -1;
     }
 
     function stopAllTimers() {
@@ -6916,14 +7210,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function enterStopwatchMode() {
         isStopwatchMode = true;
         isPomodoroMode = false;
-        pomodoroRunning = false;
         stopQuoteRotation();
-        stopAllTimers();
         modeIndicatorText.textContent = '⏱️ Stopwatch';
         updateControlsForMode();
         FlipEngine.afterLayout(function() {
             updateDisplay(stopwatchTime, false);
-            startDisplayLoop();
+            if (anyTimerActive() || isStopwatchMode) startDisplayLoop();
         });
     }
 
@@ -6933,12 +7225,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (stopwatchEpoch != null) stopwatchTime = Date.now() - stopwatchEpoch;
             stopwatchEpoch = null;
             startStopBtn.textContent = '▶️ Start';
+            syncFsControlLabels();
+            syncFsReadouts();
             return;
         }
         isRunning = true;
         stopwatchEpoch = Date.now() - stopwatchTime;
         startStopBtn.textContent = '⏸️ Stop';
         startDisplayLoop();
+        syncFsControlLabels();
     }
 
     function resetStopwatch() {
@@ -6949,11 +7244,14 @@ document.addEventListener('DOMContentLoaded', function() {
         startStopBtn.textContent = '▶️ Start';
         allDigitEls.forEach(function(el) { flipDigit(el, '0', false); });
         lapsContainer.innerHTML = '<div class="no-laps">No laps recorded</div>';
+        syncFsReadouts();
+        syncFsControlLabels();
     }
 
     function resetPomodoro() {
         pomodoroRunning = false;
         pomodoroEndAt = null;
+        clearPomoWakeTimer();
         if (pomodoroInterval) {
             clearInterval(pomodoroInterval);
             pomodoroInterval = null;
@@ -6966,6 +7264,8 @@ document.addEventListener('DOMContentLoaded', function() {
         FlipEngine.cancelAll();
         updateDisplay(pomodoroRemaining, false);
         updateControlsForMode();
+        syncFsReadouts();
+        syncFsControlLabels();
     }
 
     const HOLD_RESET_MS = 2000;
@@ -7166,21 +7466,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function enterPomodoroMode() {
         isStopwatchMode = false;
         isPomodoroMode = true;
-        isRunning = false;
-        pomodoroRunning = false;
-        pomodoroEndAt = null;
-        isBreak = false;
-        isLongBreak = false;
-        pomodoroRemaining = getFocusMs();
-        stopAllTimers();
-        modeIndicatorText.textContent = '🍅 Pomodoro — Focus';
+        modeIndicatorText.textContent = isBreak
+            ? (isLongBreak ? '☕ Long Break' : '☕ Short Break')
+            : '🍅 Pomodoro — Focus';
         updatePomoStats();
         if (showQuotes) startQuoteRotation();
         else stopQuoteRotation();
         updateControlsForMode();
         FlipEngine.afterLayout(function() {
             updateDisplay(pomodoroRemaining, false);
-            startDisplayLoop();
+            if (anyTimerActive() || isPomodoroMode) startDisplayLoop();
         });
     }
 
@@ -7241,15 +7536,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearInterval(pomodoroInterval);
                 pomodoroInterval = null;
             }
+            clearPomoWakeTimer();
             pomodoroStartBtn.textContent = isBreak ? '▶️ Start Break' : '▶️ Start Focus';
             updateControlsForMode();
+            syncFsControlLabels();
+            syncFsReadouts();
             return;
         }
         pomodoroRunning = true;
         pomodoroEndAt = Date.now() + pomodoroRemaining;
         pomodoroStartBtn.textContent = '⏸️ Pause';
         startDisplayLoop();
+        schedulePomodoroWake();
         updateControlsForMode();
+        syncFsControlLabels();
     }
 
     // ─── Fullscreen ───
@@ -7258,7 +7558,11 @@ document.addEventListener('DOMContentLoaded', function() {
         body.classList.add('fullscreen-mode');
         exitFullscreenBtn.classList.add('show');
         closeSettings();
+        if (isProductivityMode()) {
+            fsFocusMode = isPomodoroMode ? 'pomodoro' : 'stopwatch';
+        }
         updateControlsForMode();
+        updateFsProductivityUI();
         if (document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen().catch(function() {});
         }
@@ -7266,8 +7570,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function exitFullscreen() {
         isFullscreen = false;
         body.classList.remove('fullscreen-mode');
+        body.classList.remove('productivity-fs');
         exitFullscreenBtn.classList.remove('show');
         fullscreenPomoPause.classList.remove('show');
+        if (fsProductivity) fsProductivity.setAttribute('aria-hidden', 'true');
         if (document.fullscreenElement && document.exitFullscreen) {
             document.exitFullscreen().catch(function() {});
         }
@@ -7329,6 +7635,13 @@ document.addEventListener('DOMContentLoaded', function() {
     startStopBtn.addEventListener('click', startStopwatch);
     bindHoldToReset(resetBtn, resetStopwatch);
     bindHoldToReset(pomodoroResetBtn, resetPomodoro);
+    if (fsStartStopBtn) fsStartStopBtn.addEventListener('click', startStopwatch);
+    if (fsResetBtn) bindHoldToReset(fsResetBtn, resetStopwatch);
+    if (fsLapBtn) fsLapBtn.addEventListener('click', recordLap);
+    if (fsPomoStartBtn) fsPomoStartBtn.addEventListener('click', startPomodoro);
+    if (fsPomoResetBtn) bindHoldToReset(fsPomoResetBtn, resetPomodoro);
+    if (fsPillStopwatch) fsPillStopwatch.addEventListener('click', function() { setFsFocus('stopwatch'); });
+    if (fsPillPomodoro) fsPillPomodoro.addEventListener('click', function() { setFsFocus('pomodoro'); });
     lapBtn.addEventListener('click', recordLap);
     pomodoroStartBtn.addEventListener('click', startPomodoro);
     fullscreenPomoPause.addEventListener('click', startPomodoro);
@@ -7566,10 +7879,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (bgNoiseSettings.enabled && bgNoiseSettings.type !== 'none') {
                 resyncBgNoiseIfNeeded();
             }
-            if (!isStopwatchMode && !isPomodoroMode) {
-                stopAllTimers();
-                startClock();
-            }
+            resyncTimersFromWallClock();
         }
     });
     window.addEventListener('resize', function() {
@@ -7594,6 +7904,30 @@ document.addEventListener('DOMContentLoaded', function() {
     setInterval(updateTimeDisplay, 1000);
     syncBgNoise();
     startClock();
+
+    if (/^(127\.0\.0\.1|localhost)$/.test(location.hostname)) {
+        window.__LUNACLOCK_TEST__ = {
+            getStopwatchTime: function() { return stopwatchTime; },
+            getPomodoroRemaining: function() { return pomodoroRemaining; },
+            isStopwatchRunning: function() { return isRunning; },
+            isPomodoroRunning: function() { return pomodoroRunning; },
+            backdateStopwatch: function(ms) {
+                if (stopwatchEpoch != null) stopwatchEpoch -= ms;
+                if (isRunning) stopwatchTime = Date.now() - stopwatchEpoch;
+            },
+            backdatePomodoro: function(ms) {
+                if (pomodoroEndAt != null) pomodoroEndAt -= ms;
+                if (pomodoroRunning) pomodoroRemaining = Math.max(0, pomodoroEndAt - Date.now());
+            },
+            simulateHidden: function() {
+                Object.defineProperty(document, 'hidden', { configurable: true, get: function() { return true; } });
+            },
+            simulateVisible: function() {
+                Object.defineProperty(document, 'hidden', { configurable: true, get: function() { return false; } });
+                resyncTimersFromWallClock();
+            }
+        };
+    }
 });
 </script>
 </body>
