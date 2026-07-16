@@ -13,6 +13,8 @@ const DIGIT_IDS = [
 ];
 
 const STOPWATCH_DIGIT_IDS = [
+  'hoursTens',
+  'hoursOnes',
   'minutesTens',
   'minutesOnes',
   'secondsTens',
@@ -21,8 +23,18 @@ const STOPWATCH_DIGIT_IDS = [
   'millisOnes',
 ];
 
+const POMODORO_DIGIT_IDS = [
+  'hoursTens',
+  'hoursOnes',
+  'minutesTens',
+  'minutesOnes',
+  'secondsTens',
+  'secondsOnes',
+];
+
 const shotDir = path.join(__dirname, '..', 'test-results', 'layout-qa');
 const TOL = 4; // px — allow subpixel / border / shadow bleed
+const MS_BOTTOM_TOL = 6; // px — ms digit bottoms vs seconds digit bottoms
 
 /**
  * @param {import('@playwright/test').Page} page
@@ -140,11 +152,15 @@ test.describe('LunaClock flip layout containment', () => {
     await page.locator('#stopwatchModeBtn').click();
     await expect(page.locator('#clock')).toHaveAttribute('data-mode', 'stopwatch');
     await expect(page.locator('#tzChip')).not.toBeVisible();
+    await expect(page.locator('#hoursCard')).toBeVisible();
+    await expect(page.locator('#hoursCard')).not.toHaveClass(/hidden/);
     await page.waitForTimeout(100);
 
     await page.locator('#pomodoroModeBtn').click();
     await expect(page.locator('#clock')).toHaveAttribute('data-mode', 'pomodoro');
     await expect(page.locator('#tzChip')).not.toBeVisible();
+    await expect(page.locator('#hoursCard')).toBeVisible();
+    await expect(page.locator('#hoursCard')).not.toHaveClass(/hidden/);
     await page.waitForTimeout(100);
 
     await page.locator('#clockModeBtn').click();
@@ -164,9 +180,11 @@ test.describe('LunaClock flip layout containment', () => {
     });
   });
 
-  test('stopwatch with ms visible keeps all digits inside #clock', async ({ page }, testInfo) => {
+  test('stopwatch with hours+ms keeps digits inside #clock and MS bottoms align', async ({ page }, testInfo) => {
     await page.locator('#stopwatchModeBtn').click();
     await expect(page.locator('#clock')).toHaveAttribute('data-mode', 'stopwatch');
+    await expect(page.locator('#hoursCard')).toBeVisible();
+    await expect(page.locator('#hoursCard')).not.toHaveClass(/hidden/);
     await expect(page.locator('#millisecondsCard')).toBeVisible();
     await expect(page.locator('#millisecondsCard')).not.toHaveClass(/hidden/);
 
@@ -190,12 +208,72 @@ test.describe('LunaClock flip layout containment', () => {
 
     const millis = layout.digits.filter((d) => d.id.startsWith('millis'));
     const seconds = layout.digits.filter((d) => d.id.startsWith('seconds'));
+    const hours = layout.digits.filter((d) => d.id.startsWith('hours'));
     const avgMsH = millis.reduce((s, d) => s + d.height, 0) / millis.length;
     const avgSecH = seconds.reduce((s, d) => s + d.height, 0) / seconds.length;
     expect(avgMsH, 'ms digits smaller than seconds').toBeLessThan(avgSecH * 0.9);
+    expect(hours.length, 'hours visible in stopwatch').toBe(2);
+
+    const avgMsBottom = millis.reduce((s, d) => s + d.bottom, 0) / millis.length;
+    const avgSecBottom = seconds.reduce((s, d) => s + d.bottom, 0) / seconds.length;
+    expect(Math.abs(avgMsBottom - avgSecBottom), 'ms digit bottoms ≈ seconds digit bottoms').toBeLessThanOrEqual(MS_BOTTOM_TOL);
 
     await page.locator('#clock').screenshot({
       path: path.join(shotDir, `${testInfo.project.name}-stopwatch-ms.png`),
     });
+  });
+
+  test('pomodoro shows hours and keeps digits inside #clock', async ({ page }, testInfo) => {
+    await page.locator('#pomodoroModeBtn').click();
+    await expect(page.locator('#clock')).toHaveAttribute('data-mode', 'pomodoro');
+    await expect(page.locator('#hoursCard')).toBeVisible();
+    await expect(page.locator('#hoursCard')).not.toHaveClass(/hidden/);
+    await expect(page.locator('#millisecondsCard')).toHaveClass(/hidden/);
+    await page.waitForTimeout(120);
+
+    const layout = await measureClockLayout(page, POMODORO_DIGIT_IDS);
+    expect(layout).toBeTruthy();
+    for (const d of layout.digits) {
+      expect(d.left, `${d.id} left`).toBeGreaterThanOrEqual(layout.clock.left - TOL);
+      expect(d.right, `${d.id} right`).toBeLessThanOrEqual(layout.clock.right + TOL);
+      expect(d.aspect, `${d.id} aspect`).toBeLessThan(1.35);
+    }
+
+    await page.locator('#clock').screenshot({
+      path: path.join(shotDir, `${testInfo.project.name}-pomodoro-hours.png`),
+    });
+  });
+
+  test('pomodoro slider and number input stay in sync', async ({ page }) => {
+    await page.locator('#settingsOpenBtn').click();
+    await expect(page.locator('#pomodoroSettingsSection')).toBeVisible();
+
+    const slider = page.locator('#focusTime');
+    const num = page.locator('#focusTimeVal');
+    await expect(num).toHaveAttribute('type', 'number');
+
+    await slider.fill('40');
+    await expect(num).toHaveValue('40');
+
+    await num.fill('12');
+    await expect(slider).toHaveValue('12');
+
+    // Clamp to slider max
+    await num.fill('99');
+    await num.blur();
+    await expect(slider).toHaveValue('60');
+    await expect(num).toHaveValue('60');
+  });
+
+  test('stopwatch laps show HH:MM:SS:cs', async ({ page }) => {
+    await page.locator('#stopwatchModeBtn').click();
+    await expect(page.locator('#clock')).toHaveAttribute('data-mode', 'stopwatch');
+    await page.locator('#startStopBtn').click();
+    await page.waitForTimeout(120);
+    await page.locator('#lapBtn').click();
+    const lapTime = page.locator('.lap-item .lap-time').first();
+    await expect(lapTime).toBeVisible();
+    const text = await lapTime.textContent();
+    expect(text).toMatch(/^\d{2}:\d{2}:\d{2}:\d{2}$/);
   });
 });
