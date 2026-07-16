@@ -3177,6 +3177,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function tickAnimations(now) {
             let any = false;
+            let tickOnce = false;
             units.forEach(function(state, container) {
                 if (!state.flipping) return;
                 any = true;
@@ -3190,14 +3191,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     state.progress = 0;
                     state.startTs = 0;
                     paint(state, 1);
-                    if (state.playTick && state.onComplete) state.onComplete();
+                    const wantTick = !!state.playTick;
+                    if (wantTick) tickOnce = true;
+                    state.playTick = false;
                     if (state.pending !== null) {
                         const queued = state.pending;
                         state.pending = null;
-                        if (queued !== state.value) flip(container, queued, state.playTick);
+                        if (queued !== state.value) flip(container, queued, wantTick);
                     }
                 }
             });
+            // One tick per frame even if 6 digits finish together (second rollover)
+            if (tickOnce) {
+                const sample = units.values().next().value;
+                if (sample && sample.onComplete) sample.onComplete();
+            }
             return any;
         }
 
@@ -3944,6 +3952,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // ─── Audio ───
     let audioCtx = null;
     let audioUnlocked = false;
+    let tickOscActive = null;
+    let lastTickSoundAt = 0;
     let qrModalThemeSnapshot = null;
     let bgPlayToastShown = false;
     let bgMediaSource = null;
@@ -4010,18 +4020,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function playTickSound() {
         if (!pomoSettings.flipTickSound) return;
+        const nowMs = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+        // Coalesce near-simultaneous flips (extra guard beyond FlipEngine one-per-frame)
+        if (nowMs - lastTickSoundAt < 45) return;
+        lastTickSoundAt = nowMs;
         unlockAudio();
         try {
             const ctx = getAudio();
+            if (ctx.state === 'suspended') ctx.resume();
+            const peak = 0.055 * getSoundsVolume();
+            if (peak < 0.0005) return;
+
+            // Stop any still-ringing tick so volumes never stack
+            if (tickOscActive) {
+                try { tickOscActive.stop(); } catch (e) {}
+                tickOscActive = null;
+            }
+
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = 880;
             osc.connect(gain);
             gain.connect(ctx.destination);
-            osc.frequency.value = 800;
-            gain.gain.value = 0.04 * getSoundsVolume();
-            osc.start();
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
-            osc.stop(ctx.currentTime + 0.05);
+
+            const t0 = ctx.currentTime;
+            // Fixed envelope peak — never leave gain hanging after unlock/resume
+            gain.gain.setValueAtTime(0.0001, t0);
+            gain.gain.exponentialRampToValueAtTime(peak, t0 + 0.006);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.045);
+            osc.start(t0);
+            osc.stop(t0 + 0.05);
+            tickOscActive = osc;
+            osc.onended = function() {
+                if (tickOscActive === osc) tickOscActive = null;
+                try { osc.disconnect(); gain.disconnect(); } catch (e) {}
+            };
         } catch (e) {}
     }
     function playChime() {
