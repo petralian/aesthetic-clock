@@ -1812,41 +1812,151 @@
             text-align: center;
         }
         .laps-container {
-            max-height: 200px;
-            overflow-y: auto;
-            overflow-x: hidden;
+            overflow: visible;
             width: 100%;
             max-width: 100%;
             background: var(--laps-bg, rgba(255,255,255,0.42));
             border-radius: var(--radius-ui);
-            padding: 6px 0;
+            padding: 8px;
             border: 1px solid var(--laps-border, rgba(255,255,255,0.4));
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
         .lap-item {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-            padding: 12px clamp(12px, 3vw, 18px);
+            flex-direction: column;
+            gap: 0;
+            padding: 10px clamp(12px, 3vw, 16px);
             color: var(--laps-text, var(--number));
             font-size: clamp(12px, 3vw, 14px);
             font-weight: 600;
             font-variant-numeric: tabular-nums;
             min-height: 44px;
             min-width: 0;
+            border-radius: 999px;
+            background: var(--laps-row-alt, rgba(255,255,255,0.25));
+            cursor: pointer;
+            transition: background 0.2s ease, border-radius 0.2s ease, box-shadow 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
         }
-        .lap-item:nth-child(odd) { background: var(--laps-row-alt, rgba(255,255,255,0.25)); }
-        .lap-item .lap-num { font-size: 12px; opacity: 0.75; font-weight: 700; min-width: 50px; color: var(--laps-text-muted, var(--text-muted)); }
-        .lap-item .lap-time {
-            font-size: 15px;
+        .lap-item:nth-child(even) { background: rgba(255,255,255,0.12); }
+        .lap-item.expanded,
+        .lap-item:focus-visible {
+            border-radius: 18px;
+            box-shadow: 0 0 0 1px var(--laps-border, rgba(255,255,255,0.35));
+        }
+        .lap-main {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            min-width: 0;
+            width: 100%;
+        }
+        .lap-item .lap-num {
+            font-size: 12px;
+            opacity: 0.75;
+            font-weight: 700;
+            min-width: 48px;
+            flex-shrink: 0;
+            color: var(--laps-text-muted, var(--text-muted));
+        }
+        .lap-item .lap-time,
+        .lap-item .lap-delta {
+            font-size: clamp(13px, 3.2vw, 15px);
             font-weight: 800;
             font-variant-numeric: tabular-nums;
             letter-spacing: 0.02em;
             color: var(--laps-text, var(--number));
             white-space: nowrap;
+            flex: 1 1 auto;
+            text-align: center;
+        }
+        .lap-item .lap-cum-compact {
+            font-size: 11px;
+            font-weight: 700;
+            opacity: 0.7;
+            white-space: nowrap;
+            flex-shrink: 0;
+            color: var(--laps-text-muted, var(--text-muted));
+            font-variant-numeric: tabular-nums;
+        }
+        .lap-details {
+            display: grid;
+            grid-template-rows: 0fr;
+            opacity: 0;
+            transition: grid-template-rows 0.22s ease, opacity 0.18s ease, margin 0.22s ease;
+            margin-top: 0;
+            pointer-events: none;
+        }
+        .lap-details-inner {
+            overflow: hidden;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding-top: 0;
+        }
+        .lap-item.expanded .lap-details {
+            grid-template-rows: 1fr;
+            opacity: 1;
+            margin-top: 8px;
+            pointer-events: auto;
+        }
+        .lap-item.expanded .lap-details-inner {
+            padding-top: 6px;
+            border-top: 1px dashed var(--laps-border, rgba(255,255,255,0.35));
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .lap-item:hover {
+                border-radius: 18px;
+                box-shadow: 0 0 0 1px var(--laps-border, rgba(255,255,255,0.35));
+            }
+            .lap-item:hover .lap-details {
+                grid-template-rows: 1fr;
+                opacity: 1;
+                margin-top: 8px;
+                pointer-events: auto;
+            }
+            .lap-item:hover .lap-details-inner {
+                padding-top: 6px;
+                border-top: 1px dashed var(--laps-border, rgba(255,255,255,0.35));
+            }
+        }
+        .lap-detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--laps-text-muted, var(--text-muted));
+        }
+        .lap-detail-row .lap-detail-value {
+            font-variant-numeric: tabular-nums;
+            font-weight: 800;
+            color: var(--laps-text, var(--number));
+            white-space: nowrap;
+        }
+        .lap-detail-row .lap-vs-faster { color: var(--laps-best-text, rgba(60,140,90,1)); }
+        .lap-detail-row .lap-vs-slower { color: var(--laps-text, var(--number)); opacity: 0.85; }
+        .lap-best-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            align-self: flex-start;
+            margin-top: 2px;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800;
+            background: var(--laps-best-bg, rgba(120,200,150,0.35));
+            color: var(--laps-best-text, rgba(60,140,90,1));
         }
         .lap-item.best-lap { background: var(--laps-best-bg, rgba(120,200,150,0.25)); }
-        .lap-item.best-lap .lap-time { color: var(--laps-best-text, rgba(60,140,90,1)); }
+        .lap-item.best-lap .lap-time,
+        .lap-item.best-lap .lap-delta { color: var(--laps-best-text, rgba(60,140,90,1)); }
         .no-laps { color: var(--laps-text-muted, var(--text-secondary)); opacity: 1; text-align: center; padding: 16px; font-style: italic; font-size: 13px; }
 
         .daily-goal-bar {
@@ -2179,7 +2289,6 @@
                 flex-shrink: 0;
             }
             .panel-header { display: none; }
-            .laps-container { max-height: 88px; }
             .settings-body {
                 padding: 10px 12px calc(16px + env(safe-area-inset-bottom, 0px));
             }
@@ -6603,16 +6712,102 @@ document.addEventListener('DOMContentLoaded', function() {
         return pad(lt.hours) + ':' + pad(lt.minutes) + ':' + pad(lt.seconds) + ':' + pad(lt.millis);
     }
 
+    /** Signed delta vs prior lap: +HH:MM:SS:cs / −HH:MM:SS:cs / same. */
+    function formatLapDiff(ms) {
+        if (ms === 0) return 'same';
+        const sign = ms > 0 ? '+' : '−';
+        return sign + formatLapTime(Math.abs(ms));
+    }
+
+    function getLapDeltas(lapTimes) {
+        // lapTimes: newest-first absolute cumulatives
+        return lapTimes.map(function(cum, i) {
+            const prevCum = i + 1 < lapTimes.length ? lapTimes[i + 1] : 0;
+            return cum - prevCum;
+        });
+    }
+
+    function renderLaps() {
+        if (!laps.length) {
+            lapsContainer.innerHTML = '<div class="no-laps">No laps recorded</div>';
+            return;
+        }
+        const deltas = getLapDeltas(laps);
+        const bestDelta = deltas.length > 1 ? Math.min.apply(null, deltas) : null;
+        lapsContainer.innerHTML = laps.map(function(cum, i) {
+            const lapNum = laps.length - i;
+            const delta = deltas[i];
+            const isBest = bestDelta !== null && delta === bestDelta;
+            // Chronologically previous lap is next in newest-first array
+            const hasPrior = i + 1 < laps.length;
+            const vsPrior = hasPrior ? delta - deltas[i + 1] : null;
+            let vsClass = '';
+            let vsHtml = '';
+            if (vsPrior !== null) {
+                vsClass = vsPrior < 0 ? 'lap-vs-faster' : (vsPrior > 0 ? 'lap-vs-slower' : '');
+                vsHtml =
+                    '<div class="lap-detail-row">' +
+                        '<span>vs prior lap</span>' +
+                        '<span class="lap-detail-value lap-vs ' + vsClass + '">' + formatLapDiff(vsPrior) + '</span>' +
+                    '</div>';
+            }
+            const bestBadge = isBest
+                ? '<span class="lap-best-badge" aria-label="Best lap">✦ Best lap</span>'
+                : '';
+            return (
+                '<div class="lap-item' + (isBest ? ' best-lap' : '') + '"' +
+                    ' role="button" tabindex="0" aria-expanded="false"' +
+                    ' data-lap-index="' + i + '">' +
+                    '<div class="lap-main">' +
+                        '<span class="lap-num">Lap ' + lapNum + '</span>' +
+                        '<span class="lap-time lap-delta">' + formatLapTime(delta) + '</span>' +
+                        '<span class="lap-cum-compact" title="Cumulative">Σ ' + formatLapTime(cum) + '</span>' +
+                    '</div>' +
+                    '<div class="lap-details">' +
+                        '<div class="lap-details-inner">' +
+                            '<div class="lap-detail-row">' +
+                                '<span>Cumulative</span>' +
+                                '<span class="lap-detail-value lap-cum">' + formatLapTime(cum) + '</span>' +
+                            '</div>' +
+                            vsHtml +
+                            bestBadge +
+                        '</div>' +
+                    '</div>' +
+                '</div>'
+            );
+        }).join('');
+    }
+
+    function toggleLapExpanded(item) {
+        if (!item || !item.classList.contains('lap-item')) return;
+        const open = item.classList.toggle('expanded');
+        item.setAttribute('aria-expanded', open ? 'true' : 'false');
+        // Accordion: close siblings so mobile stays tidy
+        Array.prototype.forEach.call(lapsContainer.querySelectorAll('.lap-item.expanded'), function(el) {
+            if (el !== item) {
+                el.classList.remove('expanded');
+                el.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+
+    lapsContainer.addEventListener('click', function(e) {
+        const item = e.target.closest('.lap-item');
+        if (!item || !lapsContainer.contains(item)) return;
+        toggleLapExpanded(item);
+    });
+    lapsContainer.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const item = e.target.closest('.lap-item');
+        if (!item || !lapsContainer.contains(item)) return;
+        e.preventDefault();
+        toggleLapExpanded(item);
+    });
+
     function recordLap() {
         if (!isRunning) return;
         laps.unshift(stopwatchTime);
-        const bestLap = laps.length > 1 ? Math.min.apply(null, laps) : stopwatchTime;
-        if (laps.length === 1) lapsContainer.innerHTML = '';
-        lapsContainer.innerHTML = laps.map(function(lap, i) {
-            const timeStr = formatLapTime(lap);
-            const isBest = lap === bestLap && laps.length > 1;
-            return '<div class="lap-item' + (isBest ? ' best-lap' : '') + '"><span class="lap-num">Lap ' + (laps.length - i) + '</span><span class="lap-time">' + timeStr + '</span></div>';
-        }).join('');
+        renderLaps();
     }
 
     // ─── Pomodoro ───

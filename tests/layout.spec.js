@@ -276,4 +276,85 @@ test.describe('LunaClock flip layout containment', () => {
     const text = await lapTime.textContent();
     expect(text).toMatch(/^\d{2}:\d{2}:\d{2}:\d{2}$/);
   });
+
+  test('stopwatch laps show delta + cumulative and expand details', async ({ page }, testInfo) => {
+    await page.locator('#stopwatchModeBtn').click();
+    await expect(page.locator('#clock')).toHaveAttribute('data-mode', 'stopwatch');
+    await page.locator('#startStopBtn').click();
+
+    for (let i = 0; i < 3; i++) {
+      await page.waitForTimeout(80);
+      await page.locator('#lapBtn').click();
+    }
+
+    const items = page.locator('.lap-item');
+    await expect(items).toHaveCount(3);
+
+    const first = items.first();
+    await expect(first.locator('.lap-delta')).toBeVisible();
+    await expect(first.locator('.lap-cum-compact')).toBeVisible();
+    const deltaText = await first.locator('.lap-delta').textContent();
+    const cumCompact = await first.locator('.lap-cum-compact').textContent();
+    expect(deltaText).toMatch(/^\d{2}:\d{2}:\d{2}:\d{2}$/);
+    expect(cumCompact).toMatch(/^Σ \d{2}:\d{2}:\d{2}:\d{2}$/);
+
+    // Best lap badge among ≥2 laps
+    await expect(page.locator('.lap-item.best-lap')).toHaveCount(1);
+
+    // Expand via click (works on mobile + desktop)
+    await first.click();
+    await expect(first).toHaveClass(/expanded/);
+    await expect(first).toHaveAttribute('aria-expanded', 'true');
+    await expect(first.locator('.lap-cum')).toBeVisible();
+    const cumText = await first.locator('.lap-cum').textContent();
+    expect(cumText).toMatch(/^\d{2}:\d{2}:\d{2}:\d{2}$/);
+    // Newest lap (not chronological first) should show vs prior
+    await expect(first.locator('.lap-vs')).toBeVisible();
+
+    // Accordion: opening another collapses the first
+    await items.nth(1).click();
+    await expect(items.nth(1)).toHaveClass(/expanded/);
+    await expect(first).not.toHaveClass(/expanded/);
+
+    // Desktop: hover also reveals details without requiring .expanded
+    if (!testInfo.project.name.includes('mobile')) {
+      await first.hover();
+      await expect(first.locator('.lap-details-inner')).toBeVisible();
+    }
+  });
+
+  test('laps container grows without fixed max-height scroll box', async ({ page }) => {
+    await page.locator('#stopwatchModeBtn').click();
+    await expect(page.locator('#clock')).toHaveAttribute('data-mode', 'stopwatch');
+    await page.locator('#startStopBtn').click();
+
+    const container = page.locator('#lapsContainer');
+    const style0 = await container.evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return { maxHeight: cs.maxHeight, overflowY: cs.overflowY, scrollHeight: el.scrollHeight };
+    });
+    expect(style0.maxHeight === 'none' || style0.maxHeight === '0px' || parseFloat(style0.maxHeight) > 5000).toBeTruthy();
+    expect(['visible', 'auto', 'clip'].includes(style0.overflowY) || style0.overflowY === 'visible').toBeTruthy();
+    // Must not be a short clipped scroll box
+    expect(style0.overflowY).not.toBe('scroll');
+    if (style0.maxHeight !== 'none' && style0.maxHeight !== '0px') {
+      expect(parseFloat(style0.maxHeight)).toBeGreaterThan(400);
+    }
+
+    for (let i = 0; i < 4; i++) {
+      await page.waitForTimeout(60);
+      await page.locator('#lapBtn').click();
+    }
+
+    const after = await container.evaluate((el) => ({
+      scrollHeight: el.scrollHeight,
+      clientHeight: el.clientHeight,
+      maxHeight: getComputedStyle(el).maxHeight,
+      overflowY: getComputedStyle(el).overflowY,
+    }));
+    expect(after.scrollHeight).toBeGreaterThan(style0.scrollHeight);
+    // Content not trapped in a shorter scroll viewport
+    expect(after.clientHeight).toBeGreaterThanOrEqual(after.scrollHeight - 2);
+    expect(after.maxHeight).toBe('none');
+  });
 });
