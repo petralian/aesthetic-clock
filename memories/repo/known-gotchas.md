@@ -17,6 +17,7 @@
 - **One rAF display loop** — clock / stopwatch / pomodoro time sampling lives in `displayFrame`; do not reintroduce per-mode `setInterval` for digit updates
 - **Clock animates / stopwatch instant** — `flipDigit` forces `setInstant` in stopwatch mode; clock flips on second change only
 - **Timezone override** — settings `timezoneSelect` rebuilt by `rebuildTimezoneSelect()` (Auto pinned, UTC± via `Intl` shortOffset, sort by offset minutes, Brussels + Hong Kong); chip `#tzChip` in `#modeRow` beside `#modeIndicator` — **Clock mode only** (`.tz-chip.visible`); digits via `getZonedParts()`; persist `timeZone` in share payload
+- **Fullscreen centering** — `.fullscreen-mode #fullscreenStage` must be viewport-fixed with `%` width (not `100vw`/`96vw`); `.clock` should be `width: fit-content; max-width: 100%; margin-inline: auto` — a fixed `min(96vw, 1100px)` slab looked left-biased. Guarded by `tests/fullscreen.spec.js`
 - **Page background** — Appearance Default / Upload / Browse stock. Stock = curated Unsplash `images.unsplash.com` URLs (no API key) + attribution chip. Upload = compressed JPEG data URL in `lunaclock_v7_bg_upload` localStorage only (never cookie/share). Compact keys `pbm`/`pbs` for stock mode+id only
 - **My Themes compact** — pill rows with swatch + icon Save/Apply (💾/✓); denser than full Save/Apply text buttons
 - **Stopwatch ms** — `#millisecondsCard` only in stopwatch; `formatTime` centiseconds (`ms%1000/10`); smaller `--flip-size` on ms card; `setInstant` (no flip spam); layout test asserts containment with ms visible
