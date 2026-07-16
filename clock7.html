@@ -594,6 +594,31 @@
             grid-column: 2;
             grid-row: 1;
         }
+        .settings-row--slider input.val[type="number"] {
+            width: 3.25em;
+            min-width: 3.25em;
+            max-width: 4.5em;
+            padding: 4px 6px;
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-ui);
+            background: var(--panel-bg);
+            color: inherit;
+            font: inherit;
+            font-weight: 800;
+            font-size: 13px;
+            text-align: right;
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+        .settings-row--slider input.val[type="number"]::-webkit-outer-spin-button,
+        .settings-row--slider input.val[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .settings-row--slider input.val[type="number"]:focus {
+            outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+            outline-offset: 1px;
+        }
         .settings-row--slider input[type="range"] {
             grid-column: 1 / -1;
             grid-row: 2;
@@ -1812,7 +1837,14 @@
         }
         .lap-item:nth-child(odd) { background: var(--laps-row-alt, rgba(255,255,255,0.25)); }
         .lap-item .lap-num { font-size: 12px; opacity: 0.75; font-weight: 700; min-width: 50px; color: var(--laps-text-muted, var(--text-muted)); }
-        .lap-item .lap-time { font-size: 16px; font-weight: 800; color: var(--laps-text, var(--number)); }
+        .lap-item .lap-time {
+            font-size: 15px;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.02em;
+            color: var(--laps-text, var(--number));
+            white-space: nowrap;
+        }
         .lap-item.best-lap { background: var(--laps-best-bg, rgba(120,200,150,0.25)); }
         .lap-item.best-lap .lap-time { color: var(--laps-best-text, rgba(60,140,90,1)); }
         .no-laps { color: var(--laps-text-muted, var(--text-secondary)); opacity: 1; text-align: center; padding: 16px; font-style: italic; font-size: 13px; }
@@ -1857,10 +1889,11 @@
             border: 1px solid var(--panel-border);
         }
 
-        .clock.stopwatch-mode,
+        /* Slightly tighter when stopwatch shows H:M:S:ms (4 groups) */
+        .clock.stopwatch-mode { --flip-size: clamp(40px, 10.5vw, 64px); }
         .clock.pomodoro-mode { --flip-size: clamp(44px, 12vw, 72px); }
 
-        /* Stopwatch MM | SS | ms — fixed pair layout, no flex squeeze */
+        /* Stopwatch HH | MM | SS | ms — fixed pair layout, no flex squeeze */
         .clock.stopwatch-mode .flip-card {
             flex: 0 0 auto;
             max-width: none;
@@ -1869,16 +1902,17 @@
             width: auto;
             flex: 0 0 auto;
         }
-        /* Centiseconds stay compact so H/M/S tiles keep their size inside #clock */
+        /* Centiseconds compact; flex-end + matching label footprint → digit bottoms align with seconds */
         .clock.stopwatch-mode #millisecondsCard {
             --flip-size: clamp(22px, 5.5vw, 34px);
             align-self: flex-end;
-            margin-bottom: 0.15em;
+            margin-bottom: 0;
         }
         .clock.stopwatch-mode #millisecondsCard .label {
-            margin-top: clamp(4px, 1vw, 8px);
-            font-size: clamp(8px, 1.8vw, 10px);
+            margin-top: clamp(8px, 2vw, 14px);
+            font-size: clamp(9px, 2.2vw, 11px);
             letter-spacing: 0.08em;
+            line-height: 1.2;
         }
         .clock.stopwatch-mode .flipper-digit .digit-top2:not(.r) {
             visibility: hidden !important;
@@ -2300,10 +2334,10 @@
                 font-size: clamp(13px, 3vw, 14px);
                 padding: 12px 14px;
             }
-            .clock.stopwatch-mode { --flip-size: clamp(44px, 6.5vw, 72px); }
-            .clock.pomodoro-mode { --flip-size: clamp(48px, 7vw, 80px); }
+            .clock.stopwatch-mode { --flip-size: clamp(40px, 6vw, 64px); }
+            .clock.pomodoro-mode { --flip-size: clamp(44px, 6.5vw, 72px); }
             .fullscreen-mode .clock { --flip-size: clamp(64px, min(14vmin, 11vw), 150px); }
-            .fullscreen-mode .clock.stopwatch-mode { --flip-size: clamp(56px, min(12vmin, 10vw), 130px); }
+            .fullscreen-mode .clock.stopwatch-mode { --flip-size: clamp(52px, min(11vmin, 9.5vw), 120px); }
         }
 
         /* Desktop: 1024px+ */
@@ -2321,9 +2355,9 @@
             .settings-row--slider {
                 grid-template-columns: minmax(14rem, 1.4fr) minmax(96px, 1fr) min-content;
             }
-            .clock.stopwatch-mode { --flip-size: clamp(48px, 6vw, 76px); }
+            .clock.stopwatch-mode { --flip-size: clamp(44px, 5.5vw, 68px); }
             .fullscreen-mode .clock { --flip-size: clamp(72px, min(14vmin, 10vw), 160px); }
-            .fullscreen-mode .clock.stopwatch-mode { --flip-size: clamp(64px, min(12vmin, 9vw), 140px); }
+            .fullscreen-mode .clock.stopwatch-mode { --flip-size: clamp(56px, min(11vmin, 8.5vw), 128px); }
         }
 
         /* Landscape / short viewport: tight clock cluster + compact settings chrome */
@@ -2909,28 +2943,28 @@
                 <div class="settings-section-title">Pomodoro</div>
                 <div class="settings-row settings-row--slider">
                     <label for="focusTime">Focus time</label>
-                    <input type="range" id="focusTime" min="5" max="60" value="25">
-                    <span class="val" id="focusTimeVal">25</span>
+                    <input type="range" id="focusTime" min="5" max="60" value="25" aria-valuetext="25 minutes">
+                    <input type="number" class="val" id="focusTimeVal" min="5" max="60" value="25" inputmode="numeric" aria-label="Focus time minutes">
                 </div>
                 <div class="settings-row settings-row--slider">
                     <label for="shortBreak">Short break</label>
                     <input type="range" id="shortBreak" min="1" max="15" value="5">
-                    <span class="val" id="shortBreakVal">5</span>
+                    <input type="number" class="val" id="shortBreakVal" min="1" max="15" value="5" inputmode="numeric" aria-label="Short break minutes">
                 </div>
                 <div class="settings-row settings-row--slider">
                     <label for="longBreak">Long break</label>
                     <input type="range" id="longBreak" min="10" max="30" value="15">
-                    <span class="val" id="longBreakVal">15</span>
+                    <input type="number" class="val" id="longBreakVal" min="10" max="30" value="15" inputmode="numeric" aria-label="Long break minutes">
                 </div>
                 <div class="settings-row settings-row--slider">
                     <label for="sessionsBeforeLong">Sessions before long break</label>
                     <input type="range" id="sessionsBeforeLong" min="2" max="8" value="4">
-                    <span class="val" id="sessionsBeforeLongVal">4</span>
+                    <input type="number" class="val" id="sessionsBeforeLongVal" min="2" max="8" value="4" inputmode="numeric" aria-label="Sessions before long break">
                 </div>
                 <div class="settings-row settings-row--slider">
                     <label for="dailyGoal">Daily session goal</label>
                     <input type="range" id="dailyGoal" min="1" max="12" value="4">
-                    <span class="val" id="dailyGoalVal">4</span>
+                    <input type="number" class="val" id="dailyGoalVal" min="1" max="12" value="4" inputmode="numeric" aria-label="Daily session goal">
                 </div>
                 <div class="settings-row">
                     <label for="autoStartBreaks">Auto-start breaks</label>
@@ -5841,7 +5875,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('soundOnComplete').checked = pomoSettings.soundOnComplete;
         document.getElementById('flipTickSound').checked = pomoSettings.flipTickSound;
         ['focusTime','shortBreak','longBreak','sessionsBeforeLong','dailyGoal'].forEach(function(id) {
-            document.getElementById(id + 'Val').textContent = document.getElementById(id).value;
+            const slider = document.getElementById(id);
+            const num = document.getElementById(id + 'Val');
+            if (slider && num) num.value = slider.value;
         });
         updatePomoStats();
     }
@@ -5889,19 +5925,16 @@ document.addEventListener('DOMContentLoaded', function() {
         body.setAttribute('data-mode', mode);
         millisecondsCard.classList.toggle('hidden', mode !== 'stopwatch');
         setPomodoroLayout(mode === 'pomodoro');
-        if (mode === 'stopwatch') {
-            const t = formatTime(stopwatchTime);
-            setStopwatchHoursVisibility(t.hours > 0);
-        } else if (mode !== 'pomodoro') {
-            setStopwatchHoursVisibility(true);
-        }
+        // Hours always visible in stopwatch + pomodoro for stable HH:MM:SS layout
+        hoursCard.classList.remove('hidden');
+        sep1.classList.remove('hidden');
 
         if (mode === 'clock') {
             document.getElementById('hoursLabel').textContent = 'Hours';
             document.getElementById('minutesLabel').textContent = 'Minutes';
             document.getElementById('secondsLabel').textContent = 'Seconds';
         } else if (mode === 'pomodoro') {
-            document.getElementById('hoursLabel').textContent = '';
+            document.getElementById('hoursLabel').textContent = 'Hours';
             document.getElementById('minutesLabel').textContent = 'Minutes';
             document.getElementById('secondsLabel').textContent = 'Seconds';
         } else if (mode === 'stopwatch') {
@@ -5956,7 +5989,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function formatCountdown(ms) {
         const totalSeconds = Math.floor(ms / 1000);
         return {
-            minutes: Math.floor(totalSeconds / 60),
+            hours: Math.floor(totalSeconds / 3600),
+            minutes: Math.floor((totalSeconds % 3600) / 60),
             seconds: totalSeconds % 60
         };
     }
@@ -5986,25 +6020,30 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function setPomodoroLayout(on) {
-        hoursCard.classList.toggle('hidden', on);
-        sep1.classList.toggle('hidden', on);
+        // Hours + sep1 stay visible in pomodoro (HH:MM:SS); kept for call-site compatibility
+        void on;
+        hoursCard.classList.remove('hidden');
+        sep1.classList.remove('hidden');
     }
 
     function setStopwatchHoursVisibility(showHours) {
+        // Always show hours in stopwatch for stable layout (00 when under 1h)
+        void showHours;
         if (!isStopwatchMode || isPomodoroMode) return;
-        hoursCard.classList.toggle('hidden', !showHours);
-        sep1.classList.toggle('hidden', !showHours);
+        hoursCard.classList.remove('hidden');
+        sep1.classList.remove('hidden');
     }
 
     function updateDisplay(ms, animate) {
         if (isPomodoroMode) {
             const t = formatCountdown(ms);
+            flipPair(digitEls.hoursTens, digitEls.hoursOnes, pad(t.hours), animate);
             flipPair(digitEls.minutesTens, digitEls.minutesOnes, pad(t.minutes), animate);
             flipPair(digitEls.secondsTens, digitEls.secondsOnes, pad(t.seconds), animate);
         } else {
             const t = formatTime(ms);
             if (isStopwatchMode) {
-                setStopwatchHoursVisibility(t.hours > 0);
+                setStopwatchHoursVisibility(true);
             }
             flipPair(digitEls.hoursTens, digitEls.hoursOnes, pad(t.hours), animate);
             flipPair(digitEls.minutesTens, digitEls.minutesOnes, pad(t.minutes), animate);
@@ -6558,19 +6597,19 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('contextmenu', function(e) { e.preventDefault(); });
     }
 
+    /** Lap string matches stopwatch tiles: HH:MM:SS:cs (always hours + centiseconds). */
+    function formatLapTime(ms) {
+        const lt = formatTime(ms);
+        return pad(lt.hours) + ':' + pad(lt.minutes) + ':' + pad(lt.seconds) + ':' + pad(lt.millis);
+    }
+
     function recordLap() {
         if (!isRunning) return;
         laps.unshift(stopwatchTime);
         const bestLap = laps.length > 1 ? Math.min.apply(null, laps) : stopwatchTime;
         if (laps.length === 1) lapsContainer.innerHTML = '';
         lapsContainer.innerHTML = laps.map(function(lap, i) {
-            const lt = formatTime(lap);
-            let timeStr;
-            if (lt.hours > 0) {
-                timeStr = pad(lt.hours) + ':' + pad(lt.minutes) + ':' + pad(lt.seconds);
-            } else {
-                timeStr = pad(lt.minutes) + ':' + pad(lt.seconds);
-            }
+            const timeStr = formatLapTime(lap);
             const isBest = lap === bestLap && laps.length > 1;
             return '<div class="lap-item' + (isBest ? ' best-lap' : '') + '"><span class="lap-num">Lap ' + (laps.length - i) + '</span><span class="lap-time">' + timeStr + '</span></div>';
         }).join('');
@@ -6816,18 +6855,47 @@ document.addEventListener('DOMContentLoaded', function() {
         syncBgNoise();
     });
 
+    const pomoSliderKeyMap = {
+        focusTime: 'focusMin',
+        shortBreak: 'shortBreakMin',
+        longBreak: 'longBreakMin',
+        sessionsBeforeLong: 'sessionsBeforeLong',
+        dailyGoal: 'dailyGoal'
+    };
+
+    function applyPomoSliderValue(id, raw) {
+        const slider = document.getElementById(id);
+        const num = document.getElementById(id + 'Val');
+        if (!slider || !num) return;
+        const min = parseInt(slider.min, 10);
+        const max = parseInt(slider.max, 10);
+        let n = parseInt(raw, 10);
+        if (isNaN(n)) n = parseInt(slider.value, 10);
+        n = Math.min(max, Math.max(min, n));
+        slider.value = String(n);
+        num.value = String(n);
+        pomoSettings[pomoSliderKeyMap[id]] = n;
+        if (!pomodoroRunning && isPomodoroMode && !isBreak) {
+            pomodoroRemaining = getFocusMs();
+            updateDisplay(pomodoroRemaining, false);
+        }
+        updatePomoStats();
+        saveAll();
+    }
+
     ['focusTime','shortBreak','longBreak','sessionsBeforeLong','dailyGoal'].forEach(function(id) {
-        const el = document.getElementById(id);
-        el.addEventListener('input', function() {
-            document.getElementById(id + 'Val').textContent = el.value;
-            const keyMap = { focusTime:'focusMin', shortBreak:'shortBreakMin', longBreak:'longBreakMin', sessionsBeforeLong:'sessionsBeforeLong', dailyGoal:'dailyGoal' };
-            pomoSettings[keyMap[id]] = parseInt(el.value, 10);
-            if (!pomodoroRunning && isPomodoroMode && !isBreak) {
-                pomodoroRemaining = getFocusMs();
-                updateDisplay(pomodoroRemaining, false);
-            }
-            updatePomoStats();
-            saveAll();
+        const slider = document.getElementById(id);
+        const num = document.getElementById(id + 'Val');
+        if (!slider || !num) return;
+        slider.addEventListener('input', function() {
+            applyPomoSliderValue(id, slider.value);
+        });
+        num.addEventListener('input', function() {
+            if (num.value === '' || num.value === '-') return;
+            applyPomoSliderValue(id, num.value);
+        });
+        num.addEventListener('change', function() {
+            applyPomoSliderValue(id, num.value === '' ? slider.value : num.value);
         });
     });
     ['autoStartBreaks','autoStartFocus','soundOnComplete','flipTickSound'].forEach(function(id) {
