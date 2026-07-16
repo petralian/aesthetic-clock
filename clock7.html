@@ -4378,6 +4378,7 @@ document.addEventListener('DOMContentLoaded', function() {
             quotesEnabled: showQuotes,
             quotesIntervalMinutes: quotesIntervalMinutes,
             userName: userNameInput.value,
+            timeZone: timezoneOverride || '',
             bgNoiseType: bgNoiseSettings.type,
             bgNoiseVolume: bgNoiseSettings.volume,
             bgNoiseEnabled: bgNoiseSettings.enabled,
@@ -4400,6 +4401,7 @@ document.addEventListener('DOMContentLoaded', function() {
             qe: data.quotesEnabled ? 1 : 0,
             qi: data.quotesIntervalMinutes,
             nm: data.userName || '',
+            tz: data.timeZone || '',
             bnt: data.bgNoiseType,
             bnv: data.bgNoiseVolume,
             bne: data.bgNoiseEnabled ? 1 : 0,
@@ -4423,6 +4425,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!data.quotesEnabled) raw.qe = 0;
         if (data.quotesIntervalMinutes !== DEFAULT_COMPACT_SETTINGS.qi) raw.qi = data.quotesIntervalMinutes;
         if (data.userName) raw.nm = data.userName;
+        if (data.timeZone) raw.tz = data.timeZone;
         if (data.bgNoiseType !== DEFAULT_COMPACT_SETTINGS.bnt) raw.bnt = data.bgNoiseType;
         if (data.bgNoiseVolume !== DEFAULT_COMPACT_SETTINGS.bnv) raw.bnv = data.bgNoiseVolume;
         if (data.bgNoiseEnabled) raw.bne = 1;
@@ -4459,6 +4462,7 @@ document.addEventListener('DOMContentLoaded', function() {
             qe: c.qe !== undefined ? c.qe : DEFAULT_COMPACT_SETTINGS.qe,
             qi: c.qi !== undefined ? c.qi : DEFAULT_COMPACT_SETTINGS.qi,
             nm: c.nm || '',
+            tz: c.tz || '',
             bnt: c.bnt !== undefined ? c.bnt : DEFAULT_COMPACT_SETTINGS.bnt,
             bnv: c.bnv !== undefined ? c.bnv : DEFAULT_COMPACT_SETTINGS.bnv,
             bne: c.bne !== undefined ? c.bne : DEFAULT_COMPACT_SETTINGS.bne,
@@ -4495,6 +4499,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 quotesEnabled: merged.qe !== 0,
                 quotesIntervalMinutes: merged.qi || 10,
                 userName: merged.nm || '',
+                timeZone: merged.tz || '',
                 bgNoiseType: merged.bnt,
                 bgNoiseVolume: merged.bnv,
                 bgNoiseEnabled: !!merged.bne,
@@ -4528,6 +4533,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showQuotes = data.quotesEnabled !== false;
         quotesIntervalMinutes = data.quotesIntervalMinutes || 10;
         if (data.userName) userNameInput.value = data.userName;
+        if (typeof data.timeZone === 'string') timezoneOverride = data.timeZone;
         if (data.bgNoiseType) {
             let noiseType = data.bgNoiseType === 'chimes' ? 'piano' : data.bgNoiseType;
             if (noiseType === 'lofi') noiseType = 'beautifulDream';
@@ -4619,6 +4625,8 @@ document.addEventListener('DOMContentLoaded', function() {
         syncThemeModeUI();
         syncCustomThemesUI();
         quotesIntervalSelect.value = String(quotesIntervalMinutes);
+        if (timezoneSelect) timezoneSelect.value = timezoneOverride || '';
+        updateTimezoneIndicator(false);
         update12hrButtons();
         updateGreeting();
     }
@@ -5348,14 +5356,144 @@ document.addEventListener('DOMContentLoaded', function() {
         saveAll();
     }
 
+    function getEffectiveTimeZone() {
+        if (timezoneOverride) return timezoneOverride;
+        try {
+            return Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function getTimezoneMeta(iana) {
+        if (TIMEZONE_META[iana]) return TIMEZONE_META[iana];
+        if (!iana) return TIMEZONE_META[''];
+        const city = iana.split('/').pop().replace(/_/g, ' ');
+        return { emoji: '🌍', short: city, quoteKey: 'local' };
+    }
+
+    function getZonedParts(date) {
+        const d = date || new Date();
+        const tz = getEffectiveTimeZone();
+        try {
+            const opts = {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hourCycle: 'h23'
+            };
+            if (tz) opts.timeZone = tz;
+            const parts = new Intl.DateTimeFormat('en-US', opts).formatToParts(d);
+            const map = {};
+            parts.forEach(function(p) {
+                if (p.type !== 'literal') map[p.type] = p.value;
+            });
+            return {
+                hours: parseInt(map.hour, 10) || 0,
+                minutes: parseInt(map.minute, 10) || 0,
+                seconds: parseInt(map.second, 10) || 0
+            };
+        } catch (e) {
+            return {
+                hours: d.getHours(),
+                minutes: d.getMinutes(),
+                seconds: d.getSeconds()
+            };
+        }
+    }
+
+    function getTimezoneOffsetLabel(iana) {
+        try {
+            const opts = { timeZoneName: 'shortOffset' };
+            if (iana) opts.timeZone = iana;
+            const parts = new Intl.DateTimeFormat('en-US', opts).formatToParts(new Date());
+            for (let i = 0; i < parts.length; i++) {
+                if (parts[i].type === 'timeZoneName') return parts[i].value.replace('GMT', 'UTC');
+            }
+        } catch (e) {}
+        try {
+            const opts = { timeZoneName: 'short' };
+            if (iana) opts.timeZone = iana;
+            const parts = new Intl.DateTimeFormat('en-US', opts).formatToParts(new Date());
+            for (let i = 0; i < parts.length; i++) {
+                if (parts[i].type === 'timeZoneName') return parts[i].value;
+            }
+        } catch (e2) {}
+        return '';
+    }
+
+    function updateTimezoneIndicator(animate) {
+        if (!tzChip) return;
+        const iana = getEffectiveTimeZone();
+        const key = timezoneOverride || '';
+        const meta = getTimezoneMeta(key || iana);
+        const offset = getTimezoneOffsetLabel(iana);
+        if (tzChipEmoji) tzChipEmoji.textContent = meta.emoji;
+        if (tzChipLabel) {
+            if (key) {
+                tzChipLabel.textContent = meta.short;
+            } else {
+                const city = (iana || '').split('/').pop();
+                tzChipLabel.textContent = city ? ('Local · ' + city.replace(/_/g, ' ')) : 'Local';
+            }
+        }
+        if (tzChipOffset) tzChipOffset.textContent = offset ? ('· ' + offset) : '';
+        tzChip.title = (key ? meta.short + ' (' + key + ')' : 'Device local (' + (iana || 'unknown') + ')') + (offset ? ' ' + offset : '');
+        if (animate) {
+            tzChip.classList.remove('pop');
+            void tzChip.offsetWidth;
+            tzChip.classList.add('pop');
+        }
+    }
+
+    function pickTimezoneQuote() {
+        const key = timezoneOverride || '';
+        const meta = getTimezoneMeta(key || getEffectiveTimeZone());
+        const pool = TIMEZONE_QUOTES[meta.quoteKey] || TIMEZONE_QUOTES.local;
+        return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function showTimezoneQuote() {
+        if (!showQuotes) return;
+        const text = pickTimezoneQuote();
+        displayQuote(text, null, false, ['timezone']);
+        if (!isPomodoroMode) {
+            quoteDisplay.classList.remove('hidden');
+            quoteDisplay.classList.add('pomodoro-quote');
+        }
+    }
+
+    function applyTimezoneChange(fromUser) {
+        if (timezoneSelect) timezoneSelect.value = timezoneOverride;
+        updateTimezoneIndicator(!!fromUser);
+        updateGreeting();
+        updateTimeDisplay();
+        lastClockSecond = -1;
+        if (!isStopwatchMode && !isPomodoroMode) {
+            sampleClockDigits(false);
+        }
+        if (fromUser) {
+            showTimezoneQuote();
+            showToast((TIMEZONE_META[timezoneOverride] || getTimezoneMeta(getEffectiveTimeZone())).emoji + ' Timezone updated');
+        }
+        saveAll();
+    }
+
     function updateTimeDisplay() {
-        const text = '🕐 ' + new Date().toLocaleTimeString();
+        const parts = getZonedParts();
+        let h = parts.hours;
+        let suffix = '';
+        if (is12Hour) {
+            suffix = h >= 12 ? ' PM' : ' AM';
+            h = h % 12 || 12;
+        }
+        const text = '🕐 ' + pad(h) + ':' + pad(parts.minutes) + ':' + pad(parts.seconds) + suffix;
         timeDisplay.textContent = text;
         if (stageTimeDisplay) stageTimeDisplay.textContent = text;
     }
 
     function updateGreeting() {
-        const hour = new Date().getHours();
+        const hour = getZonedParts().hours;
         let greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Good night';
         const name = userNameInput.value.trim();
         greetingMessage.textContent = name ? greet + ', ' + name + '!' : greet;
@@ -5374,6 +5512,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function getLocalQuote() {
+        if (timezoneOverride && Math.random() < 0.65) {
+            const zq = pickTimezoneQuote();
+            sessionQuoteCache.push(zq);
+            if (sessionQuoteCache.length > 30) sessionQuoteCache.shift();
+            return { text: zq, author: null, fromApi: false, tags: ['timezone'] };
+        }
         const available = localQuotes.filter(function(q) {
             return sessionQuoteCache.indexOf(q) === -1;
         });
@@ -5437,15 +5581,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ─── Single display loop (rAF) — clock / stopwatch / pomodoro + flip ticks ───
     function sampleClockDigits(animate) {
-        const now = new Date();
-        let hours = now.getHours();
+        const parts = getZonedParts();
+        let hours = parts.hours;
         if (is12Hour) {
             amPmDisplay.textContent = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12 || 12;
         }
         flipPair(digitEls.hoursTens, digitEls.hoursOnes, pad(hours), animate);
-        flipPair(digitEls.minutesTens, digitEls.minutesOnes, pad(now.getMinutes()), animate);
-        flipPair(digitEls.secondsTens, digitEls.secondsOnes, pad(now.getSeconds()), animate);
+        flipPair(digitEls.minutesTens, digitEls.minutesOnes, pad(parts.minutes), animate);
+        flipPair(digitEls.secondsTens, digitEls.secondsOnes, pad(parts.seconds), animate);
     }
 
     function displayFrame(now) {
@@ -5465,7 +5609,7 @@ document.addEventListener('DOMContentLoaded', function() {
             stopwatchTime = Date.now() - stopwatchEpoch;
             updateDisplay(stopwatchTime, true);
         } else if (!isStopwatchMode && !isPomodoroMode) {
-            const sec = new Date().getSeconds();
+            const sec = getZonedParts().seconds;
             if (sec !== lastClockSecond) {
                 lastClockSecond = sec;
                 sampleClockDigits(true);
@@ -5861,6 +6005,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (nameUrlSyncTimer) clearTimeout(nameUrlSyncTimer);
         nameUrlSyncTimer = setTimeout(function() { syncUrlFromSettings(); }, 800);
     });
+    if (timezoneSelect) {
+        timezoneSelect.addEventListener('change', function() {
+            timezoneOverride = timezoneSelect.value || '';
+            applyTimezoneChange(true);
+        });
+    }
     quotesIntervalSelect.addEventListener('change', function() {
         quotesIntervalMinutes = parseInt(quotesIntervalSelect.value, 10);
         saveAll();
@@ -5979,6 +6129,7 @@ document.addEventListener('DOMContentLoaded', function() {
     syncThemeModeUI();
     applyCustomizations();
     update12hrButtons();
+    updateTimezoneIndicator(false);
     updateGreeting();
     updateTimeDisplay();
     tryImportFromHash();
