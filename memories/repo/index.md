@@ -39,4 +39,4 @@
 
 ## Current priority (2026-07-16)
 
-Smooth FlipEngine (perspective + easing) + timezone override deployed to clock.petralian.com (`5bdf5f4`). Playwright **22/22**. Remaining Bridge polish: lz-string `#i=`, emoji toggle, ambient URL audit.
+TZ UTC dropdown (Brussels/HK, offset sort) + stopwatch centiseconds deployed (`b49acc1`, `40f2ca9`, `339df67`). Playwright **26/26**. Remaining Bridge polish: lz-string `#i=`, emoji toggle, ambient URL audit.
