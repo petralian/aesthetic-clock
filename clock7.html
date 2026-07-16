@@ -1205,6 +1205,26 @@
             justify-content: center;
         }
 
+        /* Canvas flip digits (replaces CSS 3D faces; calm mode hides canvas) */
+        .flipper-digit.has-canvas {
+            overflow: hidden;
+        }
+        .flipper-digit.has-canvas .digit-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 0.1em;
+            pointer-events: none;
+        }
+        .flipper-digit.has-canvas .digit-next,
+        .flipper-digit.has-canvas .digit-top,
+        .flipper-digit.has-canvas .digit-top2,
+        .flipper-digit.has-canvas .digit-bottom {
+            display: none !important;
+        }
+        .flipper-digit.has-canvas::after { display: none; }
+        .clock.simple-digits .digit-canvas { display: none !important; }
+
         .separator {
             display: flex;
             align-items: center;
@@ -2633,105 +2653,258 @@
 document.addEventListener('DOMContentLoaded', function() {
     const STORAGE_KEY = 'lunaclock_v7';
     const FLIP_MS = 400;
-    const HALF = FLIP_MS / 2;
 
-    // ─── FlipEngine (ResponsiveFlipper — flipclock.online-style 3D flip) ───
+    // ─── FlipEngine (canvas 2.5D flip — cancelable, rAF-driven) ───
     const FlipEngine = (function() {
         const units = new Map();
 
-        function init(container, onComplete) {
-            units.set(container, { flipping: false, pending: null, onComplete: onComplete });
+        function readToken(name, fallback) {
+            const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+            return v || fallback;
         }
 
-        function resetLayers(top, top2, bottom, next, val) {
-            top.textContent = val;
-            top2.textContent = val;
-            bottom.textContent = val;
-            next.textContent = val;
-            top.classList.remove('r');
-            top2.classList.remove('r');
-            bottom.classList.remove('r');
-            top.style.display = '';
-            top.style.visibility = '';
-            top2.style.visibility = 'hidden';
+        function syncSize(state) {
+            const container = state.container;
+            const hidden = container.closest && container.closest('.flip-card.hidden, .hidden');
+            if (hidden || (!container.offsetWidth && !container.offsetHeight)) {
+                state.needsLayout = true;
+                return false;
+            }
+            const rect = container.getBoundingClientRect();
+            const cssW = Math.max(1, Math.round(rect.width || container.offsetWidth || 40));
+            const cssH = Math.max(1, Math.round(rect.height || container.offsetHeight || 48));
+            const dpr = Math.min(2.5, window.devicePixelRatio || 1);
+            if (state.cssW === cssW && state.cssH === cssH && state.dpr === dpr && !state.needsLayout) {
+                return true;
+            }
+            state.needsLayout = false;
+            state.cssW = cssW;
+            state.cssH = cssH;
+            state.dpr = dpr;
+            state.canvas.width = Math.round(cssW * dpr);
+            state.canvas.height = Math.round(cssH * dpr);
+            state.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            return true;
+        }
+
+        function roundRect(ctx, x, y, w, h, r) {
+            const rr = Math.min(r, w / 2, h / 2);
+            ctx.beginPath();
+            ctx.moveTo(x + rr, y);
+            ctx.arcTo(x + w, y, x + w, y + h, rr);
+            ctx.arcTo(x + w, y + h, x, y + h, rr);
+            ctx.arcTo(x, y + h, x, y, rr);
+            ctx.arcTo(x, y, x + w, y, rr);
+            ctx.closePath();
+        }
+
+        function drawDigitHalf(ctx, digit, w, h, half, face, number, font) {
+            const mid = h / 2;
+            ctx.save();
+            if (half === 'top') ctx.beginPath(), ctx.rect(0, 0, w, mid), ctx.clip();
+            else if (half === 'bottom') ctx.beginPath(), ctx.rect(0, mid, w, mid), ctx.clip();
+            roundRect(ctx, 0, 0, w, h, h * 0.08);
+            ctx.fillStyle = face;
+            ctx.fill();
+            ctx.fillStyle = number;
+            ctx.font = font;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(digit, w / 2, h / 2 + h * 0.02);
+            ctx.restore();
+        }
+
+        function paint(state, progress) {
+            if (!syncSize(state)) return;
+            const ctx = state.ctx;
+            const w = state.cssW;
+            const h = state.cssH;
+            const face = readToken('--face', '#f5f5f7');
+            const faceDim = readToken('--face-dim', '#d8d8de');
+            const number = readToken('--number', '#2c2c2e');
+            const fontFamily = readToken('--font-display', readToken('--font', 'sans-serif'));
+            const font = '800 ' + Math.round(h * 0.72) + 'px ' + fontFamily;
+            const from = state.from;
+            const to = state.to;
+            const p = Math.max(0, Math.min(1, progress));
+
+            // Opaque clear — avoid transparent canvas showing page gradient through "wrong" cards
+            ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+            ctx.fillStyle = face;
+            ctx.fillRect(0, 0, w, h);
+
+            if (p <= 0) {
+                drawDigitHalf(ctx, from, w, h, 'full', face, number, font);
+            } else if (p >= 1) {
+                drawDigitHalf(ctx, to, w, h, 'full', face, number, font);
+            } else if (p < 0.5) {
+                const fold = 1 - (p / 0.5);
+                drawDigitHalf(ctx, from, w, h, 'bottom', face, number, font);
+                drawDigitHalf(ctx, to, w, h, 'top', face, number, font);
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(0, 0, w, h / 2);
+                ctx.clip();
+                ctx.translate(0, h / 2);
+                ctx.scale(1, Math.max(0.02, fold));
+                ctx.translate(0, -h / 2);
+                drawDigitHalf(ctx, from, w, h, 'top', faceDim, number, font);
+                ctx.restore();
+            } else {
+                const rise = (p - 0.5) / 0.5;
+                drawDigitHalf(ctx, to, w, h, 'top', face, number, font);
+                drawDigitHalf(ctx, from, w, h, 'bottom', face, number, font);
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(0, h / 2, w, h / 2);
+                ctx.clip();
+                ctx.translate(0, h / 2);
+                ctx.scale(1, Math.max(0.02, rise));
+                ctx.translate(0, -h / 2);
+                drawDigitHalf(ctx, to, w, h, 'bottom', face, number, font);
+                ctx.restore();
+            }
+
+            ctx.fillStyle = 'rgba(0,0,0,0.14)';
+            ctx.fillRect(0, h / 2 - 0.5, w, 1);
+        }
+
+        function snapState(state, value) {
+            state.flipping = false;
+            state.progress = 0;
+            state.startTs = 0;
+            state.from = value;
+            state.to = value;
+            state.value = value;
+            state.pending = null;
+            state.playTick = false;
+            paint(state, 0);
+        }
+
+        function init(container, onComplete) {
+            let canvas = container.querySelector('canvas.digit-canvas');
+            if (!canvas) {
+                canvas = document.createElement('canvas');
+                canvas.className = 'digit-canvas';
+                canvas.setAttribute('aria-hidden', 'true');
+                container.insertBefore(canvas, container.firstChild);
+            }
+            container.classList.add('has-canvas');
+            const state = {
+                container: container,
+                canvas: canvas,
+                ctx: canvas.getContext('2d'),
+                onComplete: onComplete,
+                value: '0',
+                from: '0',
+                to: '0',
+                flipping: false,
+                progress: 0,
+                startTs: 0,
+                pending: null,
+                playTick: false,
+                cssW: 0,
+                cssH: 0,
+                dpr: 1,
+                needsLayout: true
+            };
+            units.set(container, state);
+            snapState(state, '0');
         }
 
         function setInstant(container, value) {
-            const top = container.querySelector('.digit-top');
-            const top2 = container.querySelector('.digit-top2');
-            const bottom = container.querySelector('.digit-bottom');
-            const next = container.querySelector('.digit-next');
-            if (!top) return;
-            const v = String(value).slice(-1);
-            resetLayers(top, top2, bottom, next, v);
-            container.classList.remove('r');
             const state = units.get(container);
-            if (state) { state.flipping = false; state.pending = null; }
-        }
-
-        function afterMs(ms, fn) {
-            var done = false;
-            var timer = setTimeout(function() {
-                if (done) return;
-                done = true;
-                fn();
-            }, ms);
-            return function cancel() {
-                if (done) return;
-                done = true;
-                clearTimeout(timer);
-            };
+            if (!state) return;
+            snapState(state, String(value).slice(-1));
         }
 
         function flip(container, newValue, playTick) {
             const state = units.get(container);
             if (!state) return;
-            const top = container.querySelector('.digit-top');
-            const top2 = container.querySelector('.digit-top2');
-            const bottom = container.querySelector('.digit-bottom');
-            const next = container.querySelector('.digit-next');
             const nextVal = String(newValue).slice(-1);
-            const current = top.textContent;
-            if (current === nextVal) return;
+            if (state.value === nextVal && !state.flipping) return;
 
             if (state.flipping) {
                 state.pending = nextVal;
+                state.playTick = !!playTick;
                 return;
             }
 
             state.flipping = true;
-            container.classList.add('r');
-            next.textContent = nextVal;
-            top2.textContent = nextVal;
+            state.from = state.value;
+            state.to = nextVal;
+            state.progress = 0;
+            state.startTs = 0;
+            state.pending = null;
+            state.playTick = !!playTick;
+            paint(state, 0);
+        }
 
-            top.classList.add('r');
-            top2.classList.add('r');
-            bottom.classList.add('r');
-
-            afterMs(HALF, function() {
-                top.textContent = nextVal;
-                top.style.visibility = 'hidden';
-                top2.textContent = nextVal;
-                afterMs(HALF, function() {
-                    bottom.textContent = nextVal;
-                    bottom.classList.remove('r');
-                    top.classList.remove('r');
-                    top.style.visibility = '';
-                    top2.textContent = nextVal;
-                    top2.classList.remove('r');
-                    container.classList.remove('r');
-                    state.flipping = false;
-                    if (playTick && state.onComplete) state.onComplete();
-                    if (state.pending !== null) {
-                        const queued = state.pending;
-                        state.pending = null;
-                        if (queued !== nextVal) flip(container, queued, playTick);
-                    }
-                });
+        function cancelAll() {
+            units.forEach(function(state) {
+                const v = state.pending !== null ? state.pending : (state.flipping ? state.to : state.value);
+                snapState(state, v);
             });
         }
 
-        return { init: init, flip: flip, setInstant: setInstant };
+        function tickAnimations(now) {
+            let any = false;
+            units.forEach(function(state, container) {
+                if (!state.flipping) return;
+                any = true;
+                if (!state.startTs) state.startTs = now;
+                const t = Math.min(1, (now - state.startTs) / FLIP_MS);
+                state.progress = t;
+                paint(state, t);
+                if (t >= 1) {
+                    state.value = state.to;
+                    state.flipping = false;
+                    state.progress = 0;
+                    state.startTs = 0;
+                    paint(state, 1);
+                    if (state.playTick && state.onComplete) state.onComplete();
+                    if (state.pending !== null) {
+                        const queued = state.pending;
+                        state.pending = null;
+                        if (queued !== state.value) flip(container, queued, state.playTick);
+                    }
+                }
+            });
+            return any;
+        }
+
+        function repaintAll() {
+            units.forEach(function(state) {
+                paint(state, state.flipping ? state.progress : 0);
+            });
+        }
+
+        function resizeAll() {
+            units.forEach(function(state) {
+                state.needsLayout = true;
+                state.cssW = 0;
+                state.cssH = 0;
+                paint(state, state.flipping ? state.progress : 0);
+            });
+        }
+
+        function afterLayout(fn) {
+            requestAnimationFrame(function() {
+                resizeAll();
+                if (typeof fn === 'function') fn();
+            });
+        }
+
+        return {
+            init: init,
+            flip: flip,
+            setInstant: setInstant,
+            cancelAll: cancelAll,
+            tickAnimations: tickAnimations,
+            repaintAll: repaintAll,
+            resizeAll: resizeAll,
+            afterLayout: afterLayout
+        };
     })();
 
     // ─── Digit elements ───
@@ -2776,6 +2949,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const exitFullscreenBtn = document.getElementById('exitFullscreenBtn');
     const fullscreenPomoPause = document.getElementById('fullscreenPomoPause');
     const clock = document.getElementById('clock');
+    if (typeof ResizeObserver !== 'undefined') {
+        new ResizeObserver(function() { FlipEngine.resizeAll(); }).observe(clock);
+    }
+    window.addEventListener('resize', function() { FlipEngine.resizeAll(); });
     const presetBtns = document.querySelectorAll('.preset-btn');
     const bgColor = document.getElementById('bgColor');
     const clockFaceColor = document.getElementById('clockFaceColor');
@@ -2891,10 +3068,14 @@ document.addEventListener('DOMContentLoaded', function() {
     let pomodoroRemaining = 25 * 60 * 1000;
     let pomodoroRunning = false;
     let pomodoroInterval = null;
+    let pomodoroEndAt = null;
+    let stopwatchEpoch = null;
     let isBreak = false;
     let isLongBreak = false;
     let clockInterval = null;
     let clockTimeout = null;
+    let displayRafId = null;
+    let lastClockSecond = -1;
     let isFullscreen = false;
     let settingsOpen = false;
     let showQuotes = true;
@@ -3326,18 +3507,22 @@ document.addEventListener('DOMContentLoaded', function() {
     function unlockAudio() {
         try {
             const ctx = getAudio();
-            if (ctx.state === 'suspended') ctx.resume();
-            if (!audioUnlocked) {
-                const buffer = ctx.createBuffer(1, 1, 22050);
-                const src = ctx.createBufferSource();
-                src.buffer = buffer;
-                src.connect(ctx.destination);
-                src.start(0);
-                audioUnlocked = true;
-            }
-            if (bgAudioEl && bgAudioEl.paused && bgNoiseSettings.enabled && bgNoiseSettings.type !== 'none') {
-                attemptBgPlay(bgAudioEl);
-            }
+            const resumePromise = ctx.state === 'suspended' ? ctx.resume() : Promise.resolve();
+            resumePromise.then(function() {
+                if (!audioUnlocked) {
+                    try {
+                        const buffer = ctx.createBuffer(1, 1, 22050);
+                        const src = ctx.createBufferSource();
+                        src.buffer = buffer;
+                        src.connect(ctx.destination);
+                        src.start(0);
+                        audioUnlocked = true;
+                    } catch (e) {}
+                }
+                if (bgAudioEl && bgAudioEl.paused && bgNoiseSettings.enabled && bgNoiseSettings.type !== 'none') {
+                    attemptBgPlay(bgAudioEl);
+                }
+            }).catch(function() { /* autoplay still blocked until next gesture */ });
         } catch (e) {}
     }
 
@@ -3360,6 +3545,11 @@ document.addEventListener('DOMContentLoaded', function() {
         document.addEventListener('click', once, true);
         document.addEventListener('pointerdown', once, true);
         document.addEventListener('keydown', once, true);
+        // Also unlock when interacting with mode / start controls (common first gestures)
+        ['clockModeBtn', 'stopwatchModeBtn', 'pomodoroModeBtn', 'startStopBtn', 'pomodoroStartBtn'].forEach(function(id) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('pointerdown', once, { once: true, capture: true });
+        });
     }
 
     function getAudio() {
@@ -3432,19 +3622,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function attemptBgPlay(audio) {
         if (!audio) return;
-        unlockAudio();
         try {
             const ctx = getAudio();
-            if (ctx.state === 'suspended') ctx.resume();
+            if (ctx.state === 'suspended') {
+                ctx.resume().catch(function() {});
+            }
         } catch (e) {}
         const playPromise = audio.play();
         if (playPromise && typeof playPromise.then === 'function') {
             playPromise.then(function() {
                 bgPlayToastShown = false;
             }).catch(function() {
+                // Browser autoplay policy — one quiet nudge, then silent retry on next gesture
                 if (!bgPlayToastShown) {
                     bgPlayToastShown = true;
-                    showToast('Tap anywhere to start background audio');
+                    showToast('Tap once to enable sound');
                 }
             });
         }
@@ -4789,6 +4981,8 @@ document.addEventListener('DOMContentLoaded', function() {
         body.classList.toggle('panel-open', mode === 'stopwatch' || mode === 'pomodoro');
         clock.classList.toggle('stopwatch-mode', mode === 'stopwatch');
         clock.classList.toggle('pomodoro-mode', mode === 'pomodoro');
+        clock.setAttribute('data-mode', mode);
+        body.setAttribute('data-mode', mode);
         millisecondsCard.classList.add('hidden');
         setPomodoroLayout(mode === 'pomodoro');
         if (mode === 'stopwatch') {
@@ -4949,6 +5143,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.style.fontFamily = font;
         applyTypographyRoles();
         updateFontPreview();
+        FlipEngine.repaintAll();
         saveAll();
     }
 
@@ -5038,7 +5233,64 @@ document.addEventListener('DOMContentLoaded', function() {
     function update12hrButtons() {
         timeFormatBtn.textContent = is12Hour ? '12-hour' : '24-hour';
     }
+
+    // ─── Single display loop (rAF) — clock / stopwatch / pomodoro + flip ticks ───
+    function sampleClockDigits(animate) {
+        const now = new Date();
+        let hours = now.getHours();
+        if (is12Hour) {
+            amPmDisplay.textContent = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+        }
+        flipPair(digitEls.hoursTens, digitEls.hoursOnes, pad(hours), animate);
+        flipPair(digitEls.minutesTens, digitEls.minutesOnes, pad(now.getMinutes()), animate);
+        flipPair(digitEls.secondsTens, digitEls.secondsOnes, pad(now.getSeconds()), animate);
+    }
+
+    function displayFrame(now) {
+        displayRafId = requestAnimationFrame(displayFrame);
+        FlipEngine.tickAnimations(now);
+
+        if (isPomodoroMode && pomodoroRunning && pomodoroEndAt != null) {
+            pomodoroRemaining = Math.max(0, pomodoroEndAt - Date.now());
+            updateDisplay(pomodoroRemaining, true);
+            if (pomodoroRemaining <= 0) {
+                pomodoroRunning = false;
+                pomodoroEndAt = null;
+                pomodoroStartBtn.textContent = isBreak ? '▶️ Start Break' : '▶️ Start Focus';
+                onPomodoroComplete();
+            }
+        } else if (isStopwatchMode && isRunning && stopwatchEpoch != null) {
+            stopwatchTime = Date.now() - stopwatchEpoch;
+            updateDisplay(stopwatchTime, true);
+        } else if (!isStopwatchMode && !isPomodoroMode) {
+            const sec = new Date().getSeconds();
+            if (sec !== lastClockSecond) {
+                lastClockSecond = sec;
+                sampleClockDigits(true);
+            }
+        }
+    }
+
+    function startDisplayLoop() {
+        if (displayRafId) return;
+        lastClockSecond = -1;
+        displayRafId = requestAnimationFrame(displayFrame);
+    }
+
+    function stopDisplayLoop() {
+        if (displayRafId) {
+            cancelAnimationFrame(displayRafId);
+            displayRafId = null;
+        }
+        FlipEngine.cancelAll();
+        stopwatchEpoch = null;
+        pomodoroEndAt = null;
+        lastClockSecond = -1;
+    }
+
     function stopAllTimers() {
+        stopDisplayLoop();
         if (clockTimeout) { clearTimeout(clockTimeout); clockTimeout = null; }
         if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
         if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
@@ -5055,28 +5307,11 @@ document.addEventListener('DOMContentLoaded', function() {
         stopAllTimers();
         modeIndicatorText.textContent = '⏰ Clock';
         sessionBadge.style.display = 'none';
-
-        const tick = function() {
-            const now = new Date();
-            let hours = now.getHours();
-            if (is12Hour) {
-                amPmDisplay.textContent = hours >= 12 ? 'PM' : 'AM';
-                hours = hours % 12 || 12;
-            }
-            flipPair(digitEls.hoursTens, digitEls.hoursOnes, pad(hours), true);
-            flipPair(digitEls.minutesTens, digitEls.minutesOnes, pad(now.getMinutes()), true);
-            flipPair(digitEls.secondsTens, digitEls.secondsOnes, pad(now.getSeconds()), true);
-        };
-
-        function scheduleClockTick() {
-            tick();
-            const now = new Date();
-            const msUntilNext = Math.max(50, 1000 - now.getMilliseconds());
-            clockTimeout = setTimeout(scheduleClockTick, msUntilNext);
-        }
-
-        scheduleClockTick();
         updateControlsForMode();
+        FlipEngine.afterLayout(function() {
+            sampleClockDigits(false);
+            startDisplayLoop();
+        });
         saveAll();
     }
 
@@ -5088,31 +5323,32 @@ document.addEventListener('DOMContentLoaded', function() {
         stopQuoteRotation();
         stopAllTimers();
         modeIndicatorText.textContent = '⏱️ Stopwatch';
-        updateDisplay(stopwatchTime, false);
         updateControlsForMode();
+        FlipEngine.afterLayout(function() {
+            updateDisplay(stopwatchTime, false);
+            startDisplayLoop();
+        });
     }
 
     function startStopwatch() {
         if (isRunning) {
             isRunning = false;
-            clearInterval(timerInterval);
+            if (stopwatchEpoch != null) stopwatchTime = Date.now() - stopwatchEpoch;
+            stopwatchEpoch = null;
             startStopBtn.textContent = '▶️ Start';
             return;
         }
         isRunning = true;
-        const startTime = Date.now() - stopwatchTime;
+        stopwatchEpoch = Date.now() - stopwatchTime;
         startStopBtn.textContent = '⏸️ Stop';
-        timerInterval = setInterval(function() {
-            stopwatchTime = Date.now() - startTime;
-            updateDisplay(stopwatchTime, true);
-        }, 200);
+        startDisplayLoop();
     }
 
     function resetStopwatch() {
         isRunning = false;
         stopwatchTime = 0;
+        stopwatchEpoch = null;
         laps = [];
-        clearInterval(timerInterval);
         startStopBtn.textContent = '▶️ Start';
         allDigitEls.forEach(function(el) { flipDigit(el, '0', false); });
         lapsContainer.innerHTML = '<div class="no-laps">No laps recorded</div>';
@@ -5120,6 +5356,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function resetPomodoro() {
         pomodoroRunning = false;
+        pomodoroEndAt = null;
         if (pomodoroInterval) {
             clearInterval(pomodoroInterval);
             pomodoroInterval = null;
@@ -5129,6 +5366,7 @@ document.addEventListener('DOMContentLoaded', function() {
         pomodoroRemaining = getFocusMs();
         modeIndicatorText.textContent = '🍅 Pomodoro — Focus';
         sessionBadge.style.display = 'none';
+        FlipEngine.cancelAll();
         updateDisplay(pomodoroRemaining, false);
         updateControlsForMode();
     }
@@ -5140,7 +5378,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const fill = btn.querySelector('.hold-reset-fill');
         const label = btn.querySelector('.hold-reset-label');
         const idleLabel = 'Hold 2s to reset';
-        let holdTimer = null;
         let holdStart = 0;
         let rafId = null;
         let activePointer = null;
@@ -5150,10 +5387,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (label) label.textContent = idleLabel;
 
         function cancelHold() {
-            if (holdTimer) {
-                clearTimeout(holdTimer);
-                holdTimer = null;
-            }
             if (rafId) {
                 cancelAnimationFrame(rafId);
                 rafId = null;
@@ -5165,18 +5398,28 @@ document.addEventListener('DOMContentLoaded', function() {
             if (label) label.textContent = idleLabel;
         }
 
+        function completeHold() {
+            if (holdCompleted) return;
+            holdCompleted = true;
+            cancelHold();
+            onReset();
+        }
+
         function tick() {
             if (!isHolding) return;
-            const elapsed = Date.now() - holdStart;
+            const elapsed = performance.now() - holdStart;
             const pct = Math.min(100, (elapsed / HOLD_RESET_MS) * 100);
             if (fill) fill.style.width = pct + '%';
             if (label) {
-                const remaining = Math.max(0, Math.ceil((HOLD_RESET_MS - elapsed) / 1000));
-                label.textContent = remaining > 0 ? remaining + '…' : '↺ Reset';
+                // One-decimal countdown so "2s" maps to a true 2.0s hold (not 2→1→0 ≈ 3 beats)
+                const left = Math.max(0, HOLD_RESET_MS - elapsed);
+                label.textContent = left <= 0 ? '↺ Reset' : (left / 1000).toFixed(1) + 's';
             }
-            if (elapsed < HOLD_RESET_MS) {
-                rafId = requestAnimationFrame(tick);
+            if (elapsed >= HOLD_RESET_MS) {
+                completeHold();
+                return;
             }
+            rafId = requestAnimationFrame(tick);
         }
 
         function startHold(e) {
@@ -5187,13 +5430,8 @@ document.addEventListener('DOMContentLoaded', function() {
             isHolding = true;
             activePointer = e.pointerId;
             try { btn.setPointerCapture(e.pointerId); } catch (_) { /* noop */ }
-            holdStart = Date.now();
+            holdStart = performance.now();
             btn.classList.add('holding');
-            holdTimer = setTimeout(function() {
-                holdCompleted = true;
-                cancelHold();
-                onReset();
-            }, HOLD_RESET_MS);
             tick();
         }
 
@@ -5247,16 +5485,20 @@ document.addEventListener('DOMContentLoaded', function() {
         isPomodoroMode = true;
         isRunning = false;
         pomodoroRunning = false;
+        pomodoroEndAt = null;
         isBreak = false;
         isLongBreak = false;
         pomodoroRemaining = getFocusMs();
         stopAllTimers();
         modeIndicatorText.textContent = '🍅 Pomodoro — Focus';
         updatePomoStats();
-        updateDisplay(pomodoroRemaining, false);
         if (showQuotes) startQuoteRotation();
         else stopQuoteRotation();
         updateControlsForMode();
+        FlipEngine.afterLayout(function() {
+            updateDisplay(pomodoroRemaining, false);
+            startDisplayLoop();
+        });
     }
 
     function onPomodoroComplete() {
@@ -5310,25 +5552,20 @@ document.addEventListener('DOMContentLoaded', function() {
     function startPomodoro() {
         if (pomodoroRunning) {
             pomodoroRunning = false;
-            clearInterval(pomodoroInterval);
+            if (pomodoroEndAt != null) pomodoroRemaining = Math.max(0, pomodoroEndAt - Date.now());
+            pomodoroEndAt = null;
+            if (pomodoroInterval) {
+                clearInterval(pomodoroInterval);
+                pomodoroInterval = null;
+            }
             pomodoroStartBtn.textContent = isBreak ? '▶️ Start Break' : '▶️ Start Focus';
             updateControlsForMode();
             return;
         }
         pomodoroRunning = true;
-        const endTime = Date.now() + pomodoroRemaining;
+        pomodoroEndAt = Date.now() + pomodoroRemaining;
         pomodoroStartBtn.textContent = '⏸️ Pause';
-        pomodoroInterval = setInterval(function() {
-            pomodoroRemaining = Math.max(0, endTime - Date.now());
-            updateDisplay(pomodoroRemaining, true);
-            if (pomodoroRemaining <= 0) {
-                clearInterval(pomodoroInterval);
-                pomodoroInterval = null;
-                pomodoroRunning = false;
-                pomodoroStartBtn.textContent = isBreak ? '▶️ Start Break' : '▶️ Start Focus';
-                onPomodoroComplete();
-            }
-        }, 200);
+        startDisplayLoop();
         updateControlsForMode();
     }
 

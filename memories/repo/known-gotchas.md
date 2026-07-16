@@ -7,6 +7,9 @@
 - **All logic in `clock7.html`** — search before duplicating functions; large file (~3.8k lines)
 - **No build step** — CDN deps (QRCode, fonts, Mixkit, Quotable); handle network failures gracefully
 - **Cookie path** derives from URL pathname — opening as `file://` or wrong server path breaks persistence vs production
+- **Flip digits are canvas** (`FlipEngine`) — CSS 3D faces are unused when `.has-canvas`; mode switch / `stopAllTimers` must call `FlipEngine.cancelAll()` (via `stopDisplayLoop`) so mid-flip never bleeds into the next mode
+- **One rAF display loop** — clock / stopwatch / pomodoro time sampling lives in `displayFrame`; do not reintroduce per-mode `setInterval` for digit updates
+- **Playwright smoke** — `npm test` (desktop + Pixel 7); agent browser QA via Playwright MCP in `.cursor/mcp.json.example` (`npx @playwright/mcp@latest`). Reject rustwright (alpha) for this repo
 
 ## UX constraints
 

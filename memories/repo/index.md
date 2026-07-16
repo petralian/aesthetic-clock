@@ -34,8 +34,9 @@
 ## MCP
 
 - **VS Code:** `obsidian-lunaclock` in `.vscode/mcp.json.example` — dual-path filesystem (LunaClock vault + `00_Brain`)
-- **Cursor:** `.cursor/mcp.json.example` — copy to `~/.cursor/mcp.json`; uses `mcpServers` key
+- **Cursor:** `.cursor/mcp.json.example` — copy to `~/.cursor/mcp.json`; uses `mcpServers` key; includes **playwright** (`npx @playwright/mcp@latest`)
+- **Smoke tests:** `npm test` → `tests/smoke.spec.js` (desktop + mobile)
 
-## Current priority (2026-07-15)
+## Current priority (2026-07-16)
 
-v7 live at clock.petralian.com. Scaffold + vault wired. Next: v8 planning (task list, lo-fi sounds, streaks) per vault open loops.
+Canvas flip + single rAF loop shipped locally; Playwright smoke green. Deploy still blocked (aaPanel). Pending: clock7 polish from Bridge + manual visual QA of canvas flips.

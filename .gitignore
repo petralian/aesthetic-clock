@@ -9,6 +9,10 @@
 # Dependencies / dev scratch
 node_modules/
 _test_lz.js
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
 
 # OS
 Thumbs.db

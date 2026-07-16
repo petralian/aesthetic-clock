@@ -9,6 +9,10 @@
         "D:\\Obsidian\\Obsidian\\40_VSCode\\LunaClock",
         "D:\\Obsidian\\Obsidian\\00_Brain"
       ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
     }
   }
 }
