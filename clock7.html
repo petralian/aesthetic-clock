@@ -372,10 +372,6 @@
             background: rgba(160,120,220,0.08);
             border-color: rgba(160,120,220,0.22);
         }
-        .settings-section.clock-section {
-            background: rgba(230,180,80,0.08);
-            border-color: rgba(230,180,80,0.25);
-        }
         .settings-section.display-section {
             background: rgba(100,190,130,0.08);
             border-color: rgba(100,190,130,0.22);
@@ -904,16 +900,23 @@
             padding: 10px 14px;
             border-radius: var(--radius-ui);
             border: 1px solid rgba(255,255,255,0.5);
-            background: rgba(255,255,255,0.65);
+            background-color: rgba(255,255,255,0.65);
             font-size: 13px;
             color: var(--settings-ui-text);
-            font-family: var(--font);
+            /* inherit helps iOS closed-state; open picker list is still OS/WebKit-controlled */
+            font-family: inherit;
             font-weight: 600;
             cursor: pointer;
             min-height: 44px;
             flex: 0 1 auto;
             flex-shrink: 0;
             max-width: min(200px, 58vw);
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%233d3d4a' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
         }
         .preset-row {
             display: flex;
@@ -2200,9 +2203,14 @@
         }
         body.theme-dark .settings-text-input,
         body.theme-dark .settings-row select {
-            background: #252532;
+            background-color: #252532;
             border-color: rgba(255,255,255,0.12);
             color: #f0f0f5;
+        }
+        body.theme-dark .settings-row select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23c8c8d8' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
         }
         body.theme-dark .settings-close {
             background: rgba(255,255,255,0.08);
@@ -2243,10 +2251,6 @@
         body.theme-dark .settings-section.appearance-section {
             background: rgba(160,120,220,0.12);
             border-color: rgba(160,120,220,0.28);
-        }
-        body.theme-dark .settings-section.clock-section {
-            background: rgba(230,180,80,0.1);
-            border-color: rgba(230,180,80,0.28);
         }
         body.theme-dark .settings-section.display-section {
             background: rgba(100,190,130,0.1);
@@ -2509,6 +2513,10 @@
                         <!-- Options rebuilt by rebuildTimezoneSelect() — Auto pinned, then UTC offset asc -->
                     </select>
                 </div>
+                <div class="settings-row">
+                    <label>Time format</label>
+                    <button type="button" class="format-toggle" id="timeFormatBtn">24-hour</button>
+                </div>
             </div>
 
             <div class="settings-section appearance-section">
@@ -2593,14 +2601,6 @@
                     </div>
                 </div>
                 <button class="reset-custom-btn" id="resetCustomBtn">↺ Reset theme</button>
-            </div>
-
-            <div class="settings-section clock-section">
-                <div class="settings-section-title">Clock</div>
-                <div class="settings-row">
-                    <label>Time format</label>
-                    <button type="button" class="format-toggle" id="timeFormatBtn">24-hour</button>
-                </div>
             </div>
 
             <div class="settings-section display-section">
@@ -2774,7 +2774,86 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const STORAGE_KEY = 'lunaclock_v7';
+    const BG_UPLOAD_KEY = 'lunaclock_v7_bg_upload';
+    const BG_UPLOAD_MAX_CHARS = 350000;
+    const BG_UPLOAD_MAX_DIM = 1600;
     const FLIP_MS = 420;
+
+    // Curated Unsplash hotlinks (no API key) — soft/calm teen aesthetic
+    const STOCK_BACKGROUNDS = [
+        {
+            id: 'misty-peaks',
+            label: 'Misty peaks',
+            thumb: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=400&q=60&utm_source=lunaclock&utm_medium=referral',
+            full: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1600&q=80&utm_source=lunaclock&utm_medium=referral',
+            photographer: 'Jake Blucker',
+            username: 'jakeblucker',
+            unsplashPath: 'photos/x4RAp9owlO4'
+        },
+        {
+            id: 'soft-lavender',
+            label: 'Lavender field',
+            thumb: 'https://images.unsplash.com/photo-1499002238440-d349b9547636?auto=format&fit=crop&w=400&q=60&utm_source=lunaclock&utm_medium=referral',
+            full: 'https://images.unsplash.com/photo-1499002238440-d349b9547636?auto=format&fit=crop&w=1600&q=80&utm_source=lunaclock&utm_medium=referral',
+            photographer: 'Loc Nguyen',
+            username: 'locnguyen',
+            unsplashPath: 'photos/N3PzeJ0KwN8'
+        },
+        {
+            id: 'peach-bloom',
+            label: 'Peach blooms',
+            thumb: 'https://images.unsplash.com/photo-1490750967868-88aa6486c314?auto=format&fit=crop&w=400&q=60&utm_source=lunaclock&utm_medium=referral',
+            full: 'https://images.unsplash.com/photo-1490750967868-88aa6486c314?auto=format&fit=crop&w=1600&q=80&utm_source=lunaclock&utm_medium=referral',
+            photographer: 'Serge Kutuzov',
+            username: 'sergekutuzov',
+            unsplashPath: 'photos/LqK5fEe3Upw'
+        },
+        {
+            id: 'forest-path',
+            label: 'Forest path',
+            thumb: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=400&q=60&utm_source=lunaclock&utm_medium=referral',
+            full: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1600&q=80&utm_source=lunaclock&utm_medium=referral',
+            photographer: 'Veeterzy',
+            username: 'veeterzy',
+            unsplashPath: 'photos/AsJirOOLN_s'
+        },
+        {
+            id: 'calm-beach',
+            label: 'Calm beach',
+            thumb: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=60&utm_source=lunaclock&utm_medium=referral',
+            full: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80&utm_source=lunaclock&utm_medium=referral',
+            photographer: 'Sean Oulashin',
+            username: 'oulashin',
+            unsplashPath: 'photos/KMn4VEeEPR8'
+        },
+        {
+            id: 'soft-gradient',
+            label: 'Soft glow',
+            thumb: 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=400&q=60&utm_source=lunaclock&utm_medium=referral',
+            full: 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=1600&q=80&utm_source=lunaclock&utm_medium=referral',
+            photographer: 'Gradienta',
+            username: 'gradienta',
+            unsplashPath: 'photos/m_7pL8_9_5o'
+        },
+        {
+            id: 'pastel-sky',
+            label: 'Pastel sky',
+            thumb: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?auto=format&fit=crop&w=400&q=60&utm_source=lunaclock&utm_medium=referral',
+            full: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?auto=format&fit=crop&w=1600&q=80&utm_source=lunaclock&utm_medium=referral',
+            photographer: 'Kenrick Mills',
+            username: 'kenrickmills',
+            unsplashPath: 'photos/1h2YIBUBrRM'
+        },
+        {
+            id: 'cozy-clouds',
+            label: 'Cozy clouds',
+            thumb: 'https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?auto=format&fit=crop&w=400&q=60&utm_source=lunaclock&utm_medium=referral',
+            full: 'https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?auto=format&fit=crop&w=1600&q=80&utm_source=lunaclock&utm_medium=referral',
+            photographer: 'Alexander Andrews',
+            username: 'alex_andrews',
+            unsplashPath: 'photos/mEdTgcMRH9U'
+        }
+    ];
 
     // ─── FlipEngine (canvas perspective flap — cancelable, rAF-driven) ───
     const FlipEngine = (function() {
@@ -3447,6 +3526,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let quoteEmojisOn = true;
     let themeCustomized = false;
     let customThemes = [null, null, null];
+    let pageBgMode = 'none'; // none | stock | upload
+    let pageBgStockId = '';
+    let pageBgUploadDataUrl = '';
     let currentSessionInCycle = 0;
     let sessionsCompletedToday = 0;
     let lastStatsDate = '';
