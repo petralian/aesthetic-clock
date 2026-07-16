@@ -1262,20 +1262,32 @@
         }
         .separator.hidden { display: none !important; }
 
+        .mode-row {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(8px, 2.2vw, 14px);
+            align-self: center;
+            max-width: calc(100% - 16px);
+            z-index: 2;
+        }
+
         .mode-indicator {
             position: relative;
             top: auto;
             left: auto;
             transform: none;
             align-self: center;
-            flex-shrink: 0;
+            flex-shrink: 1;
             z-index: 2;
             background: var(--panel-bg);
             backdrop-filter: blur(8px);
             padding: 5px clamp(10px, 3vw, 18px);
             border-radius: var(--radius-ui);
             font-size: clamp(9px, 2.2vw, 11px);
-            max-width: calc(100% - 16px);
+            max-width: 100%;
             color: var(--text-primary);
             letter-spacing: 0.5px;
             text-transform: uppercase;
@@ -1290,17 +1302,17 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             box-shadow: 0 4px 14px rgba(107,74,122,0.08);
-            margin-bottom: 2px;
+            margin-bottom: 0;
         }
 
         .tz-chip {
-            display: inline-flex;
+            display: none;
             align-items: center;
             justify-content: center;
             gap: 0.35em;
             align-self: center;
             flex-shrink: 0;
-            margin: 2px 0 4px;
+            margin: 0;
             padding: 4px 12px 4px 10px;
             border-radius: 9999px;
             background: color-mix(in srgb, var(--face) 78%, transparent);
@@ -1312,12 +1324,15 @@
             font-weight: 700;
             letter-spacing: 0.04em;
             line-height: 1.2;
-            max-width: calc(100% - 24px);
+            max-width: min(220px, 52vw);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             user-select: none;
             backdrop-filter: blur(6px);
+        }
+        .tz-chip.visible {
+            display: inline-flex;
         }
         .tz-chip-emoji {
             font-size: 1.05em;
@@ -2326,14 +2341,16 @@
     </div>
 
     <div id="fullscreenStage">
-        <div class="mode-indicator" id="modeIndicator">
-            <span id="modeIndicatorText">⏰ Clock</span>
-            <span class="session-badge" id="sessionBadge" style="display:none;"></span>
-        </div>
-        <div class="tz-chip" id="tzChip" title="Clock timezone" aria-live="polite">
-            <span class="tz-chip-emoji" id="tzChipEmoji" aria-hidden="true">🌍</span>
-            <span class="tz-chip-label" id="tzChipLabel">Local</span>
-            <span class="tz-chip-offset" id="tzChipOffset"></span>
+        <div class="mode-row" id="modeRow">
+            <div class="mode-indicator" id="modeIndicator">
+                <span id="modeIndicatorText">⏰ Clock</span>
+                <span class="session-badge" id="sessionBadge" style="display:none;"></span>
+            </div>
+            <div class="tz-chip visible" id="tzChip" title="Clock timezone" aria-live="polite">
+                <span class="tz-chip-emoji" id="tzChipEmoji" aria-hidden="true">🌍</span>
+                <span class="tz-chip-label" id="tzChipLabel">Local</span>
+                <span class="tz-chip-offset" id="tzChipOffset"></span>
+            </div>
         </div>
         <span class="stage-time-display" id="stageTimeDisplay" aria-hidden="true"></span>
 
@@ -2871,8 +2888,19 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.fillStyle = number;
             ctx.font = font;
             ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(digit, w / 2, h / 2 + h * 0.02);
+            // Optical vertical center: prefer ink bounds; else small downward nudge
+            // (middle baseline often sits high because the em box includes unused descender space)
+            let textY = mid;
+            ctx.textBaseline = 'alphabetic';
+            const metrics = ctx.measureText(String(digit));
+            if (metrics.actualBoundingBoxAscent != null && metrics.actualBoundingBoxDescent != null
+                && (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent) > 0) {
+                textY = mid + (metrics.actualBoundingBoxAscent - metrics.actualBoundingBoxDescent) / 2 + h * 0.01;
+            } else {
+                ctx.textBaseline = 'middle';
+                textY = mid + h * 0.035;
+            }
+            ctx.fillText(digit, w / 2, textY);
             ctx.restore();
         }
 
@@ -5354,6 +5382,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         amPmDisplay.style.display = (mode === 'clock' && is12Hour) ? 'flex' : 'none';
+        if (tzChip) {
+            const showTz = mode === 'clock';
+            tzChip.classList.toggle('visible', showTz);
+            tzChip.setAttribute('aria-hidden', showTz ? 'false' : 'true');
+        }
         fullscreenPomoPause.classList.toggle('show', isFullscreen && mode === 'pomodoro' && pomodoroRunning);
         fullscreenPomoPause.textContent = pomodoroRunning ? '⏸️ Pause' : '▶️ Resume';
         syncPomodoroStartLabel();
