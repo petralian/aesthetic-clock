@@ -273,18 +273,21 @@
             inset: 0;
             z-index: 10050;
             pointer-events: none;
+            /* Delay hide so overlay fade + panel slide can finish on close */
             visibility: hidden;
+            transition: visibility 0s linear 0.35s;
         }
         .settings-drawer.open {
             pointer-events: auto;
             visibility: visible;
+            transition: visibility 0s linear 0s;
         }
         .settings-overlay {
             position: absolute;
             inset: 0;
             background: rgba(0,0,0,0.08);
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .settings-drawer.open .settings-overlay { opacity: 1; }
         .settings-panel {
@@ -302,12 +305,23 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            will-change: transform;
             --settings-ui-text: #1a1a22;
             --settings-ui-muted: #3d3d4a;
             --settings-ui-subtle: #52525e;
             color: var(--settings-ui-text);
         }
         .settings-drawer.open .settings-panel { transform: translateX(0); }
+        @media (prefers-reduced-motion: reduce) {
+            .settings-drawer,
+            .settings-drawer.open {
+                transition: none;
+            }
+            .settings-overlay,
+            .settings-panel {
+                transition: none !important;
+            }
+        }
         .settings-header {
             display: flex;
             align-items: center;
