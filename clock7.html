@@ -2878,16 +2878,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function drawHinge(ctx, w, h) {
             const mid = h / 2;
-            const g = ctx.createLinearGradient(0, mid - 3, 0, mid + 3);
+            // Soft theme-aware hairline — semi-transparent so it works on light and dark faces
+            const g = ctx.createLinearGradient(0, mid - 1.5, 0, mid + 1.5);
             g.addColorStop(0, 'rgba(0,0,0,0)');
-            g.addColorStop(0.45, 'rgba(0,0,0,0.18)');
-            g.addColorStop(0.5, 'rgba(0,0,0,0.28)');
-            g.addColorStop(0.55, 'rgba(0,0,0,0.18)');
+            g.addColorStop(0.4, 'rgba(0,0,0,0.04)');
+            g.addColorStop(0.5, 'rgba(0,0,0,0.09)');
+            g.addColorStop(0.6, 'rgba(0,0,0,0.04)');
             g.addColorStop(1, 'rgba(0,0,0,0)');
             ctx.fillStyle = g;
-            ctx.fillRect(0, mid - 3, w, 6);
-            ctx.fillStyle = 'rgba(255,255,255,0.12)';
+            ctx.fillRect(0, mid - 1.5, w, 3);
+            ctx.fillStyle = 'rgba(0,0,0,0.08)';
             ctx.fillRect(0, mid - 0.5, w, 1);
+            ctx.fillStyle = 'rgba(255,255,255,0.06)';
+            ctx.fillRect(0, mid + 0.5, w, 0.5);
         }
 
         function paint(state, linearProgress) {
