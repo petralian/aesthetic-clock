@@ -2377,12 +2377,14 @@
             <div class="flip-card hidden" id="millisecondsCard">
                 <div class="flip-digit-group">
                     <div class="flipper-digit" id="millisTens">
+                        <span class="simple-digit">0</span>
                         <div class="digit-next">0</div>
                         <div class="digit-bottom">0</div>
                         <div class="digit-top2">0</div>
                         <div class="digit-top">0</div>
                     </div>
                     <div class="flipper-digit" id="millisOnes">
+                        <span class="simple-digit">0</span>
                         <div class="digit-next">0</div>
                         <div class="digit-bottom">0</div>
                         <div class="digit-top2">0</div>
@@ -2459,28 +2461,7 @@
                 <div class="settings-row">
                     <label for="timezoneSelect">Timezone</label>
                     <select id="timezoneSelect" class="typo-ui" title="Clock timezone">
-                        <option value="">🏠 Auto (device local)</option>
-                        <option value="Asia/Singapore">🦁 Singapore</option>
-                        <option value="Asia/Kuala_Lumpur">🌴 Kuala Lumpur</option>
-                        <option value="Asia/Jakarta">🌋 Jakarta</option>
-                        <option value="Asia/Manila">🌅 Manila</option>
-                        <option value="Asia/Bangkok">🛕 Bangkok</option>
-                        <option value="Asia/Hong_Kong">🏙️ Hong Kong</option>
-                        <option value="Asia/Shanghai">🐉 Shanghai</option>
-                        <option value="Asia/Tokyo">🗼 Tokyo</option>
-                        <option value="Asia/Seoul">🌸 Seoul</option>
-                        <option value="Asia/Kolkata">🕌 Mumbai / Delhi</option>
-                        <option value="Asia/Dubai">🏜️ Dubai</option>
-                        <option value="Europe/London">☔ London</option>
-                        <option value="Europe/Paris">🥐 Paris</option>
-                        <option value="Europe/Berlin">🥨 Berlin</option>
-                        <option value="America/New_York">🗽 New York</option>
-                        <option value="America/Chicago">🌽 Chicago</option>
-                        <option value="America/Denver">⛰️ Denver</option>
-                        <option value="America/Los_Angeles">🎬 Los Angeles</option>
-                        <option value="America/Sao_Paulo">🎭 São Paulo</option>
-                        <option value="Australia/Sydney">🦘 Sydney</option>
-                        <option value="Pacific/Auckland">🥝 Auckland</option>
+                        <!-- Options rebuilt by rebuildTimezoneSelect() — Auto pinned, then UTC offset asc -->
                     </select>
                 </div>
             </div>
@@ -3266,7 +3247,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     const TIMEZONE_META = {
-        '': { emoji: '🏠', short: 'Local', quoteKey: 'local' },
+        '': { emoji: '🏠', short: 'Local', label: 'Auto (device local)', quoteKey: 'local' },
         'Asia/Singapore': { emoji: '🦁', short: 'Singapore', quoteKey: 'sea' },
         'Asia/Kuala_Lumpur': { emoji: '🌴', short: 'Kuala Lumpur', quoteKey: 'sea' },
         'Asia/Jakarta': { emoji: '🌋', short: 'Jakarta', quoteKey: 'sea' },
@@ -3276,9 +3257,10 @@ document.addEventListener('DOMContentLoaded', function() {
         'Asia/Shanghai': { emoji: '🐉', short: 'Shanghai', quoteKey: 'eastasia' },
         'Asia/Tokyo': { emoji: '🗼', short: 'Tokyo', quoteKey: 'jp' },
         'Asia/Seoul': { emoji: '🌸', short: 'Seoul', quoteKey: 'kr' },
-        'Asia/Kolkata': { emoji: '🕌', short: 'India', quoteKey: 'india' },
+        'Asia/Kolkata': { emoji: '🕌', short: 'India', label: 'Mumbai / Delhi', quoteKey: 'india' },
         'Asia/Dubai': { emoji: '🏜️', short: 'Dubai', quoteKey: 'gulf' },
         'Europe/London': { emoji: '☔', short: 'London', quoteKey: 'uk' },
+        'Europe/Brussels': { emoji: '🇧🇪', short: 'Brussels', quoteKey: 'eu' },
         'Europe/Paris': { emoji: '🥐', short: 'Paris', quoteKey: 'eu' },
         'Europe/Berlin': { emoji: '🥨', short: 'Berlin', quoteKey: 'eu' },
         'America/New_York': { emoji: '🗽', short: 'New York', quoteKey: 'us_east' },
@@ -4343,6 +4325,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // ─── Settings drawer ───
     function openSettings() {
         unlockAudio();
+        rebuildTimezoneSelect();
+        if (timezoneSelect) timezoneSelect.value = timezoneOverride || '';
         settingsOpen = true;
         settingsDrawer.classList.add('open');
         settingsDrawer.setAttribute('aria-hidden', 'false');
@@ -5545,6 +5529,58 @@ document.addEventListener('DOMContentLoaded', function() {
         return '';
     }
 
+    function parseUtcOffsetMinutes(label) {
+        if (!label) return 0;
+        const m = String(label).match(/([+-])(\d{1,2})(?::(\d{2}))?/);
+        if (!m) return 0;
+        const sign = m[1] === '-' ? -1 : 1;
+        return sign * (parseInt(m[2], 10) * 60 + parseInt(m[3] || '0', 10));
+    }
+
+    function timezoneOptionLabel(iana, meta, offsetLabel) {
+        const city = (meta && (meta.label || meta.short)) || iana;
+        const emoji = (meta && meta.emoji) || '🌍';
+        const utc = offsetLabel || getTimezoneOffsetLabel(iana || undefined) || '';
+        return utc ? (emoji + ' ' + city + ' · ' + utc) : (emoji + ' ' + city);
+    }
+
+    function rebuildTimezoneSelect() {
+        if (!timezoneSelect) return;
+        const prev = timezoneSelect.value;
+        const entries = Object.keys(TIMEZONE_META).filter(function(k) { return k !== ''; }).map(function(iana) {
+            const meta = TIMEZONE_META[iana];
+            const offsetLabel = getTimezoneOffsetLabel(iana);
+            return {
+                iana: iana,
+                meta: meta,
+                offsetLabel: offsetLabel,
+                offsetMinutes: parseUtcOffsetMinutes(offsetLabel),
+                sortName: (meta.label || meta.short || iana).toLowerCase()
+            };
+        });
+        entries.sort(function(a, b) {
+            if (a.offsetMinutes !== b.offsetMinutes) return a.offsetMinutes - b.offsetMinutes;
+            return a.sortName < b.sortName ? -1 : (a.sortName > b.sortName ? 1 : 0);
+        });
+        const frag = document.createDocumentFragment();
+        const autoMeta = TIMEZONE_META[''];
+        const autoOffset = getTimezoneOffsetLabel(undefined);
+        const autoOpt = document.createElement('option');
+        autoOpt.value = '';
+        autoOpt.textContent = timezoneOptionLabel('', autoMeta, autoOffset);
+        frag.appendChild(autoOpt);
+        entries.forEach(function(entry) {
+            const opt = document.createElement('option');
+            opt.value = entry.iana;
+            opt.textContent = timezoneOptionLabel(entry.iana, entry.meta, entry.offsetLabel);
+            frag.appendChild(opt);
+        });
+        timezoneSelect.innerHTML = '';
+        timezoneSelect.appendChild(frag);
+        if (prev && TIMEZONE_META[prev]) timezoneSelect.value = prev;
+        else timezoneSelect.value = '';
+    }
+
     function updateTimezoneIndicator(animate) {
         if (!tzChip) return;
         const iana = getEffectiveTimeZone();
@@ -6248,6 +6284,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ─── Init ───
     installAudioUnlock();
     initFeedbackMailLink();
+    rebuildTimezoneSelect();
     loadAll();
     syncThemeModeUI();
     applyCustomizations();
