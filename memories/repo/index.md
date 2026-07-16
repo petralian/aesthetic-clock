@@ -39,4 +39,4 @@
 
 ## Current priority (2026-07-16)
 
-TZ chip · compact My Themes · Unsplash/upload backgrounds deployed (`560abf3`). Playwright **34/34**. Remaining Bridge polish: lz-string `#i=`, emoji toggle, ambient URL audit.
+Page BG cover + stock picker + Brussels waffle shipped. Playwright **48/48**. Remaining Bridge polish: lz-string `#i=`, emoji toggle, ambient URL audit; MCP config copy-from-example.

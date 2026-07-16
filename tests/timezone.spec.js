@@ -90,6 +90,7 @@ test.describe('Timezone indicator', () => {
     }
 
     const brussels = cityOpts.find((o) => o.value === 'Europe/Brussels');
+    expect(brussels.text).toMatch(/🧇/);
     expect(brussels.text).toMatch(/Brussels/i);
     expect(brussels.text).toMatch(/UTC[+-]/i);
 
@@ -129,5 +130,6 @@ test.describe('Timezone indicator', () => {
     await select.selectOption('Europe/Brussels');
     await page.locator('#settingsCloseBtn').click();
     await expect(page.locator('#tzChipLabel')).toHaveText('Brussels');
+    await expect(page.locator('#tzChipEmoji')).toHaveText('🧇');
   });
 });

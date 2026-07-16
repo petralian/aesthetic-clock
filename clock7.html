@@ -101,7 +101,7 @@
             gap: clamp(10px, 2.5vw, 18px);
             padding: var(--page-pad);
             padding-bottom: calc(var(--page-pad) + env(safe-area-inset-bottom, 0px));
-            transition: background 0.5s ease;
+            transition: background-color 0.5s ease;
         }
 
         .page-shell {
@@ -549,6 +549,17 @@
             opacity: 1;
         }
         .hidden { display: none !important; }
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
         .settings-section-title {
             font-size: 11px;
             font-weight: 700;
@@ -1017,6 +1028,70 @@
             text-align: center;
             line-height: 1.35;
         }
+        .bg-picker-toolbar {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+        .bg-picker-toolbar select,
+        .bg-picker-toolbar input[type="search"],
+        .bg-picker-toolbar input[type="text"],
+        .bg-picker-toolbar input[type="password"] {
+            width: 100%;
+            min-height: 36px;
+            border-radius: 9999px;
+            border: 1px solid rgba(0,0,0,0.12);
+            background: color-mix(in srgb, var(--face) 70%, transparent);
+            color: var(--number);
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 0 14px;
+        }
+        .bg-picker-search-row {
+            display: flex;
+            gap: 6px;
+        }
+        .bg-picker-search-row input { flex: 1 1 auto; min-width: 0; }
+        .bg-picker-search-row button {
+            flex: 0 0 auto;
+            min-height: 36px;
+            padding: 0 14px;
+            border: none;
+            border-radius: 9999px;
+            background: color-mix(in srgb, var(--accent) 70%, #6e6e73);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .bg-picker-advanced {
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .bg-picker-advanced summary {
+            cursor: pointer;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .bg-picker-advanced-hint {
+            margin: 6px 0 0;
+            font-size: 10px;
+            line-height: 1.35;
+            font-weight: 600;
+        }
+        .bg-picker-status {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-align: center;
+            margin: 0 0 6px;
+            min-height: 1.2em;
+        }
         .bg-picker-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -1037,17 +1112,40 @@
             background: #ddd;
             box-shadow: 0 2px 8px rgba(0,0,0,0.12);
         }
+        .bg-picker-item.is-loading::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background: linear-gradient(90deg, #d8d8de 0%, #ececf0 45%, #d8d8de 90%);
+            background-size: 200% 100%;
+            animation: bg-skel-shimmer 1.15s ease-in-out infinite;
+        }
+        @keyframes bg-skel-shimmer {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
         .bg-picker-item img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: block;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            position: relative;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .bg-picker-item img.is-ready { opacity: 1; }
+        .bg-picker-item.is-broken {
+            display: none;
         }
         .bg-picker-item .bg-picker-cap {
             position: absolute;
             left: 0;
             right: 0;
             bottom: 0;
+            z-index: 3;
             padding: 6px 8px;
             font-size: 9px;
             font-weight: 700;
@@ -1055,6 +1153,7 @@
             background: linear-gradient(transparent, rgba(0,0,0,0.65));
             text-align: left;
             line-height: 1.2;
+            pointer-events: none;
         }
         .bg-picker-item.selected {
             outline: 2px solid var(--accent, #6366f1);
@@ -1072,11 +1171,17 @@
             font-weight: 700;
             cursor: pointer;
         }
+        /* Industry-standard cover — longhands also set in JS (inline shorthand was forcing tile) */
         body.has-page-bg {
             background-size: cover;
-            background-position: center;
+            background-position: center center;
             background-repeat: no-repeat;
             background-attachment: fixed;
+        }
+        @supports (-webkit-touch-callout: none) {
+            body.has-page-bg {
+                background-attachment: scroll !important;
+            }
         }
         .page-bg-attrib {
             position: fixed;
@@ -2704,6 +2809,16 @@
             background: #1a1a24;
             border-color: rgba(255,255,255,0.1);
         }
+        body.theme-dark .bg-picker-toolbar select,
+        body.theme-dark .bg-picker-toolbar input {
+            background: #252532;
+            border-color: rgba(255,255,255,0.12);
+            color: #f0f0f5;
+        }
+        body.theme-dark .bg-picker-item.is-loading::before {
+            background: linear-gradient(90deg, #2a2a36 0%, #3a3a48 45%, #2a2a36 90%);
+            background-size: 200% 100%;
+        }
         body.theme-dark .bg-picker-close {
             background: rgba(255,255,255,0.1);
             color: #f0f0f5;
@@ -3179,8 +3294,33 @@
 <div class="bg-picker-overlay" id="bgPickerOverlay" aria-hidden="true">
     <div class="bg-picker-modal" role="dialog" aria-labelledby="bgPickerTitle">
         <h3 id="bgPickerTitle">Stock backgrounds</h3>
-        <p class="bg-picker-sub">Calm Unsplash photos · free to use with credit</p>
+        <p class="bg-picker-sub">Curated calm photos · credit required · optional Pexels search</p>
+        <div class="bg-picker-toolbar">
+            <label class="sr-only" for="bgPickerCategory">Category</label>
+            <select id="bgPickerCategory" aria-label="Background category">
+                <option value="all">All categories</option>
+                <option value="nature">Nature</option>
+                <option value="space">Space</option>
+                <option value="abstract">Abstract</option>
+                <option value="ocean">Ocean</option>
+                <option value="forest">Forest</option>
+                <option value="city">City</option>
+                <option value="soft">Soft / Minimal</option>
+                <option value="mountains">Mountains</option>
+            </select>
+            <div class="bg-picker-search-row">
+                <label class="sr-only" for="bgPickerSearch">Search</label>
+                <input type="search" id="bgPickerSearch" placeholder="Keyword filter…" autocomplete="off" enterkeyhint="search">
+                <button type="button" id="bgPickerSearchBtn">Search</button>
+            </div>
+        </div>
+        <p class="bg-picker-status" id="bgPickerStatus" aria-live="polite"></p>
         <div class="bg-picker-grid" id="bgPickerGrid"></div>
+        <details class="bg-picker-advanced">
+            <summary>Advanced · Pexels API key</summary>
+            <input type="password" id="bgPickerPexelsKey" placeholder="Paste Pexels API key (optional)" autocomplete="off">
+            <p class="bg-picker-advanced-hint">Stored only in this browser. When set, Search hits Pexels; otherwise filters the curated grid instantly.</p>
+        </details>
         <button type="button" class="bg-picker-close" id="bgPickerCloseBtn">Close</button>
     </div>
 </div>
@@ -3193,19 +3333,57 @@ document.addEventListener('DOMContentLoaded', function() {
     const BG_UPLOAD_KEY = 'lunaclock_v7_bg_upload';
     const BG_UPLOAD_MAX_CHARS = 350000;
     const BG_UPLOAD_MAX_DIM = 1600;
+    const PEXELS_KEY_STORAGE = 'lunaclock_v7_pexels_key';
+    const BG_STOCK_META_KEY = 'lunaclock_v7_bg_stock_meta';
     const FLIP_MS = 420;
 
-    // Curated Unsplash hotlinks (no API key) — soft/calm teen aesthetic
+    function unsplashStockUrls(photoId) {
+        const base = 'https://images.unsplash.com/' + photoId + '?auto=format&fit=crop&utm_source=lunaclock&utm_medium=referral';
+        return {
+            thumb: base + '&w=400&q=60',
+            full: base + '&w=1600&q=80'
+        };
+    }
+
+    // Curated Unsplash catalog — URLs verified HTTP 200 (2026-07-16). Categories for client filter.
     const STOCK_BACKGROUNDS = [
-        { id: 'misty-peaks', label: 'Misty peaks', thumb: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=400&q=60&utm_source=lunaclock&utm_medium=referral', full: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1600&q=80&utm_source=lunaclock&utm_medium=referral', photographer: 'Jake Blucker', username: 'jakeblucker', unsplashPath: 'photos/x4RAp9owlO4' },
-        { id: 'soft-lavender', label: 'Lavender field', thumb: 'https://images.unsplash.com/photo-1499002238440-d349b9547636?auto=format&fit=crop&w=400&q=60&utm_source=lunaclock&utm_medium=referral', full: 'https://images.unsplash.com/photo-1499002238440-d349b9547636?auto=format&fit=crop&w=1600&q=80&utm_source=lunaclock&utm_medium=referral', photographer: 'Loc Nguyen', username: 'locnguyen', unsplashPath: 'photos/N3PzeJ0KwN8' },
-        { id: 'peach-bloom', label: 'Peach blooms', thumb: 'https://images.unsplash.com/photo-1490750967868-88aa6486c314?auto=format&fit=crop&w=400&q=60&utm_source=lunaclock&utm_medium=referral', full: 'https://images.unsplash.com/photo-1490750967868-88aa6486c314?auto=format&fit=crop&w=1600&q=80&utm_source=lunaclock&utm_medium=referral', photographer: 'Serge Kutuzov', username: 'sergekutuzov', unsplashPath: 'photos/LqK5fEe3Upw' },
-        { id: 'forest-path', label: 'Forest path', thumb: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=400&q=60&utm_source=lunaclock&utm_medium=referral', full: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1600&q=80&utm_source=lunaclock&utm_medium=referral', photographer: 'Veeterzy', username: 'veeterzy', unsplashPath: 'photos/AsJirOOLN_s' },
-        { id: 'calm-beach', label: 'Calm beach', thumb: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=60&utm_source=lunaclock&utm_medium=referral', full: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80&utm_source=lunaclock&utm_medium=referral', photographer: 'Sean Oulashin', username: 'oulashin', unsplashPath: 'photos/KMn4VEeEPR8' },
-        { id: 'soft-gradient', label: 'Soft glow', thumb: 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=400&q=60&utm_source=lunaclock&utm_medium=referral', full: 'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=1600&q=80&utm_source=lunaclock&utm_medium=referral', photographer: 'Gradienta', username: 'gradienta', unsplashPath: 'photos/m_7pL8_9_5o' },
-        { id: 'pastel-sky', label: 'Pastel sky', thumb: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?auto=format&fit=crop&w=400&q=60&utm_source=lunaclock&utm_medium=referral', full: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?auto=format&fit=crop&w=1600&q=80&utm_source=lunaclock&utm_medium=referral', photographer: 'Kenrick Mills', username: 'kenrickmills', unsplashPath: 'photos/1h2YIBUBrRM' },
-        { id: 'cozy-clouds', label: 'Cozy clouds', thumb: 'https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?auto=format&fit=crop&w=400&q=60&utm_source=lunaclock&utm_medium=referral', full: 'https://images.unsplash.com/photo-1513002749550-c59d786b8e6c?auto=format&fit=crop&w=1600&q=80&utm_source=lunaclock&utm_medium=referral', photographer: 'Alexander Andrews', username: 'alex_andrews', unsplashPath: 'photos/mEdTgcMRH9U' }
-    ];
+        { id: 'misty-peaks', label: 'Misty peaks', category: 'mountains', keywords: 'mountain mist peaks nature', photo: 'photo-1506905925346-21bda4d32df4', photographer: 'Jake Blucker', username: 'jakeblucker', unsplashPath: 'photos/x4RAp9owlO4' },
+        { id: 'alpine-glow', label: 'Alpine glow', category: 'mountains', keywords: 'mountain snow alpine night', photo: 'photo-1519681393784-d120267933ba', photographer: 'Benjamin Voros', username: 'benjaminvoros', unsplashPath: 'photos/phIFdC6lA4E' },
+        { id: 'green-ridge', label: 'Green ridge', category: 'mountains', keywords: 'mountain green ridge hike', photo: 'photo-1464822759023-fed622ff2c3b', photographer: 'Kalen Emsley', username: 'kalenemsley', unsplashPath: 'photos/Bkci_8qcdvQ' },
+        { id: 'lake-valley', label: 'Lake valley', category: 'nature', keywords: 'nature lake valley landscape', photo: 'photo-1506744038136-46273834b3fb', photographer: 'Bailey Zindel', username: 'baileyzindel', unsplashPath: 'photos/NRQV-hCE9KM' },
+        { id: 'foggy-hills', label: 'Foggy hills', category: 'nature', keywords: 'nature fog hills trees mist', photo: 'photo-1470071459604-3b5ec3a7fe05', photographer: 'v2osk', username: 'v2osk', unsplashPath: 'photos/iOykD87qzMs' },
+        { id: 'wild-meadow', label: 'Wild meadow', category: 'nature', keywords: 'nature flowers meadow spring', photo: 'photo-1465146633011-14f8e0781093', photographer: 'Tim Mossholder', username: 'timmossholder', unsplashPath: 'photos/xDwEa2kas7A' },
+        { id: 'spring-bloom', label: 'Spring bloom', category: 'nature', keywords: 'nature flowers blossom soft', photo: 'photo-1462275646964-a0e3386b89fa', photographer: 'Serge Kutuzov', username: 'sergekutuzov', unsplashPath: 'photos/LqK5fEe3Upw' },
+        { id: 'milky-cosmos', label: 'Milky cosmos', category: 'space', keywords: 'space stars milky way night', photo: 'photo-1419242902214-272b3f66ee7a', photographer: 'Vincentiu Solomon', username: 'vincentiu', unsplashPath: 'photos/ln5drpv_ImI' },
+        { id: 'deep-galaxy', label: 'Deep galaxy', category: 'space', keywords: 'space galaxy nebula stars', photo: 'photo-1462331940025-496dfbfc7564', photographer: 'Jeremy Thomas', username: 'jeremythomas', unsplashPath: 'photos/E0AHdsENmDg' },
+        { id: 'earthrise', label: 'Earthrise', category: 'space', keywords: 'space earth nasa orbit', photo: 'photo-1446776877081-d282a0f896e2', photographer: 'NASA', username: 'nasa', unsplashPath: 'photos/Q1p7bh3SHj8' },
+        { id: 'violet-wash', label: 'Violet wash', category: 'abstract', keywords: 'abstract purple gradient soft', photo: 'photo-1557682250-33bd709cbe85', photographer: 'Gradienta', username: 'gradienta', unsplashPath: 'photos/m_7pL8_9_5o' },
+        { id: 'spectrum-glow', label: 'Spectrum glow', category: 'abstract', keywords: 'abstract colorful gradient soft', photo: 'photo-1579546929518-9e396f3cc809', photographer: 'Gradienta', username: 'gradienta', unsplashPath: 'photos/iqeG_7HgI1w' },
+        { id: 'fluid-shapes', label: 'Fluid shapes', category: 'abstract', keywords: 'abstract 3d shapes modern', photo: 'photo-1618005182384-a83a8bd57fbe', photographer: 'Eugene Golovesov', username: 'eugene_golovesov', unsplashPath: 'photos/mWiqIhbnISk' },
+        { id: 'soft-glow', label: 'Soft glow', category: 'soft', keywords: 'abstract gradient soft minimal purple', photo: 'photo-1557683316-973673baf926', photographer: 'Gradienta', username: 'gradienta', unsplashPath: 'photos/m_7pL8_9_5o' },
+        { id: 'blush-haze', label: 'Blush haze', category: 'soft', keywords: 'soft pink minimal abstract', photo: 'photo-1550684848-fac1c5b4e853', photographer: 'Gradienta', username: 'gradienta', unsplashPath: 'photos/8CqDvP5aU9k' },
+        { id: 'pastel-mesh', label: 'Pastel mesh', category: 'soft', keywords: 'soft pastel minimal abstract', photo: 'photo-1614850523459-c2f4c699c52e', photographer: 'Gradienta', username: 'gradienta', unsplashPath: 'photos/iqeG_7HgI1w' },
+        { id: 'pastel-sky', label: 'Pastel sky', category: 'soft', keywords: 'sky pastel clouds soft', photo: 'photo-1534088568595-a066f410bcda', photographer: 'Kenrick Mills', username: 'kenrickmills', unsplashPath: 'photos/1h2YIBUBrRM' },
+        { id: 'cozy-clouds', label: 'Cozy clouds', category: 'soft', keywords: 'clouds sky soft calm', photo: 'photo-1513002749550-c59d786b8e6c', photographer: 'Alexander Andrews', username: 'alex_andrews', unsplashPath: 'photos/mEdTgcMRH9U' },
+        { id: 'calm-beach', label: 'Calm beach', category: 'ocean', keywords: 'ocean beach sand water calm', photo: 'photo-1507525428034-b723cf961d3e', photographer: 'Sean Oulashin', username: 'oulashin', unsplashPath: 'photos/KMn4VEeEPR8' },
+        { id: 'open-sea', label: 'Open sea', category: 'ocean', keywords: 'ocean waves blue water', photo: 'photo-1505142468610-359e7d316be0', photographer: 'Cristian Palmer', username: 'cristianpalmer', unsplashPath: 'photos/XexawAh_4zq' },
+        { id: 'still-lake', label: 'Still lake', category: 'ocean', keywords: 'lake water reflection calm ocean', photo: 'photo-1439066615861-d1af74d74000', photographer: 'Aaron Burden', username: 'aaronburden', unsplashPath: 'photos/5AiWn2U10jY' },
+        { id: 'sunset-shore', label: 'Sunset shore', category: 'ocean', keywords: 'ocean beach sunset shore', photo: 'photo-1475924156734-496f6cac6ec1', photographer: 'Cristofer Maximilian', username: 'cristofer', unsplashPath: 'photos/mY2ZHBU6GKk' },
+        { id: 'forest-path', label: 'Forest path', category: 'forest', keywords: 'forest trees path green', photo: 'photo-1441974231531-c6227db76b6e', photographer: 'Veeterzy', username: 'veeterzy', unsplashPath: 'photos/AsJirOOLN_s' },
+        { id: 'deep-woods', label: 'Deep woods', category: 'forest', keywords: 'forest trees fog green', photo: 'photo-1448375240586-882707db888b', photographer: 'Sebastian Unrau', username: 'sebastian_unrau', unsplashPath: 'photos/sp-p7xjXEhk' },
+        { id: 'pine-canopy', label: 'Pine canopy', category: 'forest', keywords: 'forest pine green trees', photo: 'photo-1511497584788-876760111969', photographer: 'Sergei A', username: 'mosdesign', unsplashPath: 'photos/aZjwOkxIdeQ' },
+        { id: 'city-lights', label: 'City lights', category: 'city', keywords: 'city skyline night urban', photo: 'photo-1480714378408-67cf0d13bc1b', photographer: 'Carlos Quintero', username: 'kace', unsplashPath: 'photos/NURoMwGxswE' },
+        { id: 'urban-dawn', label: 'Urban dawn', category: 'city', keywords: 'city skyline morning urban', photo: 'photo-1449824913935-59a10b8d2000', photographer: 'Pedro Lastra', username: 'pedrolastra', unsplashPath: 'photos/Nyvq2juw4_o' },
+        { id: 'metro-glow', label: 'Metro glow', category: 'city', keywords: 'city night lights urban', photo: 'photo-1514565131-fce0801e5785', photographer: 'Luca Bravo', username: 'lucabravo', unsplashPath: 'photos/EEdI7XRID5E' },
+        { id: 'mountain-lake', label: 'Mountain lake', category: 'mountains', keywords: 'mountain lake nature reflection', photo: 'photo-1493246507139-91e8fad9978e', photographer: 'Florian van Duyn', username: 'florianvanduyn', unsplashPath: 'photos/Dm-qxdqOzSg' },
+        { id: 'sunlit-dunes', label: 'Sunlit dunes', category: 'nature', keywords: 'nature desert dunes sand', photo: 'photo-1500534314209-a25ddb2bd429', photographer: 'Jeremy Bishop', username: 'jeremybishop', unsplashPath: 'photos/1JU4VdZGR8A' }
+    ].map(function(entry) {
+        const urls = unsplashStockUrls(entry.photo);
+        entry.thumb = urls.thumb;
+        entry.full = urls.full;
+        entry.source = 'unsplash';
+        return entry;
+    });
 
     // ─── FlipEngine (canvas perspective flap — cancelable, rAF-driven) ───
     const FlipEngine = (function() {
@@ -3758,7 +3936,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'Asia/Kolkata': { emoji: '🕌', short: 'India', label: 'Mumbai / Delhi', quoteKey: 'india' },
         'Asia/Dubai': { emoji: '🏜️', short: 'Dubai', quoteKey: 'gulf' },
         'Europe/London': { emoji: '☔', short: 'London', quoteKey: 'uk' },
-        'Europe/Brussels': { emoji: '🇧🇪', short: 'Brussels', quoteKey: 'eu' },
+        'Europe/Brussels': { emoji: '🧇', short: 'Brussels', quoteKey: 'eu' },
         'Europe/Paris': { emoji: '🥐', short: 'Paris', quoteKey: 'eu' },
         'Europe/Berlin': { emoji: '🥨', short: 'Berlin', quoteKey: 'eu' },
         'America/New_York': { emoji: '🗽', short: 'New York', quoteKey: 'us_east' },
@@ -3889,6 +4067,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let pageBgMode = 'none';
     let pageBgStockId = '';
     let pageBgUploadDataUrl = '';
+    let pageBgDynamicStock = null;
     let currentSessionInCycle = 0;
     let sessionsCompletedToday = 0;
     let lastStatsDate = '';
@@ -5018,16 +5197,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     function getStockById(id) {
+        if (!id) return null;
         for (let i = 0; i < STOCK_BACKGROUNDS.length; i++) {
             if (STOCK_BACKGROUNDS[i].id === id) return STOCK_BACKGROUNDS[i];
         }
+        if (pageBgDynamicStock && pageBgDynamicStock.id === id) return pageBgDynamicStock;
+        try {
+            const raw = localStorage.getItem(BG_STOCK_META_KEY);
+            if (raw) {
+                const meta = JSON.parse(raw);
+                if (meta && meta.id === id && meta.full) return meta;
+            }
+        } catch (e) { /* ignore */ }
         return null;
+    }
+    function persistDynamicStock(stock) {
+        pageBgDynamicStock = stock || null;
+        try {
+            if (stock) localStorage.setItem(BG_STOCK_META_KEY, JSON.stringify(stock));
+            else localStorage.removeItem(BG_STOCK_META_KEY);
+        } catch (e) { /* ignore */ }
     }
     function stockCreditHtml(stock) {
         if (!stock) return '';
-        const photoUrl = 'https://unsplash.com/' + stock.unsplashPath + '?utm_source=lunaclock&utm_medium=referral';
-        const userUrl = 'https://unsplash.com/@' + stock.username + '?utm_source=lunaclock&utm_medium=referral';
-        return 'Photo by <a href="' + userUrl + '" target="_blank" rel="noopener">' + stock.photographer + '</a> on <a href="' + photoUrl + '" target="_blank" rel="noopener">Unsplash</a>';
+        if (stock.source === 'pexels') {
+            const userUrl = stock.photographerUrl || 'https://www.pexels.com';
+            const photoUrl = stock.creditUrl || 'https://www.pexels.com';
+            return 'Photo by <a href="' + userUrl + '" target="_blank" rel="noopener">' + (stock.photographer || 'Pexels') + '</a> on <a href="' + photoUrl + '" target="_blank" rel="noopener">Pexels</a>';
+        }
+        if (stock.username && stock.unsplashPath) {
+            const photoUrl = 'https://unsplash.com/' + stock.unsplashPath + '?utm_source=lunaclock&utm_medium=referral';
+            const userUrl = 'https://unsplash.com/@' + stock.username + '?utm_source=lunaclock&utm_medium=referral';
+            return 'Photo by <a href="' + userUrl + '" target="_blank" rel="noopener">' + stock.photographer + '</a> on <a href="' + photoUrl + '" target="_blank" rel="noopener">Unsplash</a>';
+        }
+        return 'Photo on <a href="https://unsplash.com/?utm_source=lunaclock&utm_medium=referral" target="_blank" rel="noopener">Unsplash</a>';
     }
     function loadUploadFromStorage() {
         try {
@@ -5059,7 +5262,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (hint) {
             if (pageBgMode === 'none') hint.textContent = 'Theme gradient. Uploads stay on this device only.';
             else if (pageBgMode === 'upload') hint.textContent = pageBgUploadDataUrl ? 'Custom upload (this device only — not shared).' : 'Pick an image to upload.';
-            else hint.textContent = 'Stock photo from Unsplash (with credit).';
+            else hint.textContent = 'Stock photo (with credit). Covers the viewport — no tiling.';
         }
         if (credit) {
             if (pageBgMode === 'stock' && pageBgStockId) {
@@ -5100,11 +5303,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const veil = isEffectivelyDark()
                 ? 'linear-gradient(145deg, rgba(10,10,16,0.55), rgba(10,10,16,0.35))'
                 : 'linear-gradient(145deg, rgba(255,255,255,0.42), rgba(255,255,255,0.18))';
-            body.style.backgroundImage = veil + ', url("' + url.replace(/"/g, '%22') + '")';
+            body.style.background = 'none';
             body.style.backgroundColor = bg;
+            body.style.backgroundImage = veil + ', url("' + url.replace(/"/g, '%22') + '")';
+            body.style.backgroundRepeat = 'no-repeat, no-repeat';
+            body.style.backgroundPosition = 'center center, center center';
+            body.style.backgroundSize = 'cover, cover';
+            body.style.backgroundAttachment = 'fixed, fixed';
             body.classList.add('has-page-bg');
         } else {
             body.style.backgroundImage = '';
+            body.style.backgroundRepeat = '';
+            body.style.backgroundPosition = '';
+            body.style.backgroundSize = '';
+            body.style.backgroundAttachment = '';
+            body.style.backgroundColor = '';
             body.style.background = gradient;
             body.classList.remove('has-page-bg');
         }
@@ -5127,27 +5340,162 @@ document.addEventListener('DOMContentLoaded', function() {
             /* keep upload data unless cleared */
         }
         if (mode === 'stock' && opts.stockId) pageBgStockId = opts.stockId;
+        if (mode === 'stock' && opts.stockMeta) persistDynamicStock(opts.stockMeta);
         applyPageBackground();
         saveAll();
     }
+    function getPexelsApiKey() {
+        try { return (localStorage.getItem(PEXELS_KEY_STORAGE) || '').trim(); } catch (e) { return ''; }
+    }
+    function setPexelsApiKey(key) {
+        try {
+            const v = (key || '').trim();
+            if (v) localStorage.setItem(PEXELS_KEY_STORAGE, v);
+            else localStorage.removeItem(PEXELS_KEY_STORAGE);
+        } catch (e) { /* ignore */ }
+    }
+    function filterCuratedStock(category, keyword) {
+        const cat = (category || 'all').toLowerCase();
+        const q = (keyword || '').trim().toLowerCase();
+        return STOCK_BACKGROUNDS.filter(function(stock) {
+            if (cat !== 'all' && stock.category !== cat) return false;
+            if (!q) return true;
+            const hay = (stock.label + ' ' + (stock.keywords || '') + ' ' + stock.category + ' ' + (stock.photographer || '')).toLowerCase();
+            return hay.indexOf(q) !== -1;
+        });
+    }
+    function setBgPickerStatus(msg) {
+        const el = document.getElementById('bgPickerStatus');
+        if (el) el.textContent = msg || '';
+    }
+    function createBgPickerItem(stock) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'bg-picker-item is-loading' + (pageBgStockId === stock.id ? ' selected' : '');
+        btn.setAttribute('aria-label', stock.label + (stock.photographer ? (' by ' + stock.photographer) : ''));
+        const img = document.createElement('img');
+        img.alt = '';
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.src = stock.thumb;
+        img.addEventListener('load', function() {
+            img.classList.add('is-ready');
+            btn.classList.remove('is-loading');
+        });
+        img.addEventListener('error', function() {
+            btn.classList.add('is-broken');
+            btn.classList.remove('is-loading');
+            btn.setAttribute('aria-hidden', 'true');
+            btn.tabIndex = -1;
+        });
+        const cap = document.createElement('span');
+        cap.className = 'bg-picker-cap';
+        cap.textContent = stock.label;
+        btn.appendChild(img);
+        btn.appendChild(cap);
+        btn.addEventListener('click', function() {
+            if (btn.classList.contains('is-broken')) return;
+            const meta = {
+                id: stock.id,
+                label: stock.label,
+                thumb: stock.thumb,
+                full: stock.full,
+                photographer: stock.photographer || '',
+                username: stock.username || '',
+                unsplashPath: stock.unsplashPath || '',
+                source: stock.source || 'unsplash',
+                creditUrl: stock.creditUrl || '',
+                photographerUrl: stock.photographerUrl || ''
+            };
+            if (stock.source === 'pexels' || !getStockById(stock.id) || String(stock.id).indexOf('pexels-') === 0) {
+                persistDynamicStock(meta);
+            }
+            setPageBgMode('stock', { stockId: stock.id, stockMeta: meta });
+            closeBgPicker();
+            showToast('Background: ' + stock.label);
+        });
+        return btn;
+    }
+    function renderBgPickerGrid(list) {
+        const grid = document.getElementById('bgPickerGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        if (!list || !list.length) {
+            setBgPickerStatus('No photos match — try another category or keyword.');
+            return;
+        }
+        list.forEach(function(stock) {
+            grid.appendChild(createBgPickerItem(stock));
+        });
+    }
+    let bgPickerSearchTimer = null;
+    let bgPickerFetchToken = 0;
+    function refreshBgPickerGrid(opts) {
+        opts = opts || {};
+        const categoryEl = document.getElementById('bgPickerCategory');
+        const searchEl = document.getElementById('bgPickerSearch');
+        const category = categoryEl ? categoryEl.value : 'all';
+        const keyword = searchEl ? searchEl.value : '';
+        const pexelsKey = getPexelsApiKey();
+        const forceApi = !!opts.forceApi;
+
+        if (pexelsKey && (forceApi || (keyword && keyword.trim()))) {
+            const token = ++bgPickerFetchToken;
+            const query = (keyword && keyword.trim())
+                ? keyword.trim()
+                : (category === 'all' ? 'calm nature' : category);
+            setBgPickerStatus('Searching Pexels…');
+            const grid = document.getElementById('bgPickerGrid');
+            if (grid) {
+                grid.innerHTML = '';
+                for (let s = 0; s < 6; s++) {
+                    const sk = document.createElement('div');
+                    sk.className = 'bg-picker-item is-loading';
+                    sk.setAttribute('aria-hidden', 'true');
+                    grid.appendChild(sk);
+                }
+            }
+            fetch('https://api.pexels.com/v1/search?query=' + encodeURIComponent(query) + '&per_page=16&orientation=landscape', {
+                headers: { Authorization: pexelsKey }
+            }).then(function(res) {
+                if (!res.ok) throw new Error('Pexels ' + res.status);
+                return res.json();
+            }).then(function(data) {
+                if (token !== bgPickerFetchToken) return;
+                const photos = (data && data.photos) || [];
+                const mapped = photos.map(function(p) {
+                    return {
+                        id: 'pexels-' + p.id,
+                        label: (p.alt && String(p.alt).slice(0, 40)) || ('Photo ' + p.id),
+                        thumb: (p.src && (p.src.medium || p.src.small)) || '',
+                        full: (p.src && (p.src.large2x || p.src.large || p.src.original)) || '',
+                        photographer: p.photographer || 'Pexels',
+                        photographerUrl: p.photographer_url || '',
+                        creditUrl: p.url || 'https://www.pexels.com',
+                        source: 'pexels',
+                        category: category
+                    };
+                }).filter(function(s) { return s.thumb && s.full; });
+                setBgPickerStatus(mapped.length ? (mapped.length + ' from Pexels') : 'No Pexels results');
+                renderBgPickerGrid(mapped);
+            }).catch(function() {
+                if (token !== bgPickerFetchToken) return;
+                setBgPickerStatus('Pexels unavailable — showing curated photos');
+                renderBgPickerGrid(filterCuratedStock(category, keyword));
+            });
+            return;
+        }
+
+        const curated = filterCuratedStock(category, keyword);
+        setBgPickerStatus(curated.length + ' curated' + (keyword ? ' · filtered' : ''));
+        renderBgPickerGrid(curated);
+    }
     function openBgPicker() {
         const overlay = document.getElementById('bgPickerOverlay');
-        const grid = document.getElementById('bgPickerGrid');
-        if (!overlay || !grid) return;
-        grid.innerHTML = '';
-        STOCK_BACKGROUNDS.forEach(function(stock) {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'bg-picker-item' + (pageBgStockId === stock.id ? ' selected' : '');
-            btn.setAttribute('aria-label', stock.label + ' by ' + stock.photographer);
-            btn.innerHTML = '<img src="' + stock.thumb + '" alt="" loading="lazy"><span class="bg-picker-cap">' + stock.label + '</span>';
-            btn.addEventListener('click', function() {
-                setPageBgMode('stock', { stockId: stock.id });
-                closeBgPicker();
-                showToast('Background: ' + stock.label);
-            });
-            grid.appendChild(btn);
-        });
+        const keyInput = document.getElementById('bgPickerPexelsKey');
+        if (!overlay) return;
+        if (keyInput) keyInput.value = getPexelsApiKey();
+        refreshBgPickerGrid();
         overlay.classList.add('open');
         overlay.setAttribute('aria-hidden', 'false');
     }
@@ -7169,6 +7517,45 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.target === bgPickerOverlayEl) closeBgPicker();
         });
     }
+    const bgPickerCategoryEl = document.getElementById('bgPickerCategory');
+    const bgPickerSearchEl = document.getElementById('bgPickerSearch');
+    const bgPickerSearchBtn = document.getElementById('bgPickerSearchBtn');
+    const bgPickerPexelsKeyEl = document.getElementById('bgPickerPexelsKey');
+    if (bgPickerCategoryEl) {
+        bgPickerCategoryEl.addEventListener('change', function() {
+            refreshBgPickerGrid({ forceApi: !!getPexelsApiKey() });
+        });
+    }
+    if (bgPickerSearchEl) {
+        bgPickerSearchEl.addEventListener('input', function() {
+            clearTimeout(bgPickerSearchTimer);
+            bgPickerSearchTimer = setTimeout(function() {
+                refreshBgPickerGrid();
+            }, 220);
+        });
+        bgPickerSearchEl.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                refreshBgPickerGrid({ forceApi: !!getPexelsApiKey() });
+            }
+        });
+    }
+    if (bgPickerSearchBtn) {
+        bgPickerSearchBtn.addEventListener('click', function() {
+            refreshBgPickerGrid({ forceApi: !!getPexelsApiKey() });
+        });
+    }
+    if (bgPickerPexelsKeyEl) {
+        bgPickerPexelsKeyEl.addEventListener('change', function() {
+            setPexelsApiKey(bgPickerPexelsKeyEl.value);
+            showToast(getPexelsApiKey() ? 'Pexels key saved on this device' : 'Pexels key cleared');
+        });
+    }
+
+    try {
+        const rawMeta = localStorage.getItem(BG_STOCK_META_KEY);
+        if (rawMeta) pageBgDynamicStock = JSON.parse(rawMeta);
+    } catch (e) { pageBgDynamicStock = null; }
 
     if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
