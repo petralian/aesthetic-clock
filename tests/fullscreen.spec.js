@@ -78,11 +78,8 @@ test.describe('LunaClock fullscreen centering', () => {
     expect(Math.abs(layout.clock.centerX - viewCenter), 'clock center X').toBeLessThanOrEqual(CENTER_TOL);
     expect(Math.abs(layout.modeRow.centerX - viewCenter), 'modeRow center X').toBeLessThanOrEqual(CENTER_TOL);
 
-    // Stage should cover the viewport (fixed inset)
     expect(layout.stage.width).toBeGreaterThan(layout.vw * 0.95);
     expect(layout.stage.left).toBeLessThanOrEqual(2);
-
-    // Grey panel should hug content (not a near-full-bleed 1100px slab on wide screens)
     expect(layout.clock.width).toBeLessThan(layout.vw * 0.92);
   });
 
@@ -96,6 +93,21 @@ test.describe('LunaClock fullscreen centering', () => {
       expect(d.right, `${d.id} right`).toBeLessThanOrEqual(layout.clock.right + CONTAIN_TOL);
       expect(d.top, `${d.id} top`).toBeGreaterThanOrEqual(layout.clock.top - CONTAIN_TOL);
       expect(d.bottom, `${d.id} bottom`).toBeLessThanOrEqual(layout.clock.bottom + CONTAIN_TOL);
+    }
+  });
+
+  test('dual productivity fullscreen keeps digits inside #clock', async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 900 });
+    await page.locator('#stopwatchModeBtn').click();
+    await enterFullscreen(page);
+    await expect(page.locator('body')).toHaveClass(/productivity-fs/);
+    await page.waitForTimeout(100);
+
+    const layout = await measureFullscreenLayout(page);
+    expect(layout).toBeTruthy();
+    for (const d of layout.digits) {
+      expect(d.left, `${d.id} left`).toBeGreaterThanOrEqual(layout.clock.left - CONTAIN_TOL);
+      expect(d.right, `${d.id} right`).toBeLessThanOrEqual(layout.clock.right + CONTAIN_TOL);
     }
   });
 
