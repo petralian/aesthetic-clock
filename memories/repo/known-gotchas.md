@@ -10,6 +10,8 @@
 - **Flip digits are canvas** (`FlipEngine`) — CSS 3D faces are unused when `.has-canvas`; mode switch / `stopAllTimers` must call `FlipEngine.cancelAll()` (via `stopDisplayLoop`) so mid-flip never bleeds into the next mode
 - **One rAF display loop** — clock / stopwatch / pomodoro time sampling lives in `displayFrame`; do not reintroduce per-mode `setInterval` for digit updates
 - **Playwright smoke** — `npm test` (desktop + Pixel 7); agent browser QA via Playwright MCP in `.cursor/mcp.json.example` (`npx @playwright/mcp@latest`). Reject rustwright (alpha) for this repo
+- **Mode switch paint order** — always `updateControlsForMode()` then `FlipEngine.afterLayout(...)` before sampling digits; painting while `#hoursCard` is still `.hidden` leaves blank/wrong canvas tiles
+- **Hold reset** — single rAF timer at `HOLD_RESET_MS = 2000` (no parallel setTimeout); label shows `2.0s`…`0.0s`
 
 ## UX constraints
 
