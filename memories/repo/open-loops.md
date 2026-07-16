@@ -11,6 +11,7 @@
 
 ## Recently closed
 
+- **2026-07-16 — Stopwatch MS align · hours · sliders · laps** — always HH; MS bottoms; editable pomo inputs; laps `HH:MM:SS:cs`; deployed `b9398f2`/`6a343cf`
 - **2026-07-16 — Flip digit stretch hotfix** — canvas 300×150 intrinsic + `width:auto`; fixed em box + layout Playwright; deployed `5bdf5f4`
 - **2026-07-16 — Deploy clock.petralian.com** — LIVE (was aaPanel-blocked)
 - **Rounded-corners UX sweep** — shipped 2026-07-15 (`clock7.html`)
