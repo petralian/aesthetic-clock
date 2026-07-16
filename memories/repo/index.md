@@ -39,4 +39,4 @@
 
 ## Current priority (2026-07-16)
 
-TZ UTC dropdown (Brussels/HK, offset sort) + stopwatch centiseconds deployed (`b49acc1`, `40f2ca9`, `339df67`). Playwright **26/26**. Remaining Bridge polish: lz-string `#i=`, emoji toggle, ambient URL audit.
+TZ chip · compact My Themes · Unsplash/upload backgrounds deployed (`560abf3`). Playwright **34/34**. Remaining Bridge polish: lz-string `#i=`, emoji toggle, ambient URL audit.
