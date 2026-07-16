@@ -16,13 +16,14 @@
 - **Flip tick sound** — coalesce to one tick per frame / ~45ms; fixed gain envelope; stop prior oscillator so 6 digit flips never stack
 - **One rAF display loop** — clock / stopwatch / pomodoro time sampling lives in `displayFrame`; do not reintroduce per-mode `setInterval` for digit updates
 - **Clock animates / stopwatch instant** — `flipDigit` forces `setInstant` in stopwatch mode; clock flips on second change only
-- **Timezone override** — settings `timezoneSelect` rebuilt by `rebuildTimezoneSelect()` (Auto pinned, UTC± via `Intl` shortOffset, sort by offset minutes, Brussels + Hong Kong); chip `#tzChip`; digits via `getZonedParts()`; persist `timeZone` in share payload
+- **Timezone override** — settings `timezoneSelect` rebuilt by `rebuildTimezoneSelect()` (Auto pinned, UTC± via `Intl` shortOffset, sort by offset minutes, Brussels + Hong Kong); chip `#tzChip` in `#modeRow` beside `#modeIndicator` — **Clock mode only** (`.tz-chip.visible`); digits via `getZonedParts()`; persist `timeZone` in share payload
+- **Page background** — Appearance Default / Upload / Browse stock. Stock = curated Unsplash `images.unsplash.com` URLs (no API key) + attribution chip. Upload = compressed JPEG data URL in `lunaclock_v7_bg_upload` localStorage only (never cookie/share). Compact keys `pbm`/`pbs` for stock mode+id only
+- **My Themes compact** — pill rows with swatch + icon Save/Apply (💾/✓); denser than full Save/Apply text buttons
 - **Stopwatch ms** — `#millisecondsCard` only in stopwatch; `formatTime` centiseconds (`ms%1000/10`); smaller `--flip-size` on ms card; `setInstant` (no flip spam); layout test asserts containment with ms visible
-- **Playwright** — `npm test` / `npx playwright test` (smoke + visual-qa + timezone + layout; desktop + Pixel 7). Reject rustwright (alpha) for this repo
+- **Playwright** — `npm test` / `npx playwright test` (smoke + visual-qa + timezone + layout + fullscreen; desktop + Pixel 7). Reject rustwright (alpha) for this repo
 - **Mode switch paint order** — always `updateControlsForMode()` then `FlipEngine.afterLayout(...)` before sampling digits; painting while `#hoursCard` is still `.hidden` leaves blank/wrong canvas tiles
 - **Hold reset** — single rAF timer at `HOLD_RESET_MS = 2000` (no parallel setTimeout); label shows `2.0s`…`0.0s`
 - **Deploy** — `scp clock7.html root@46.224.49.175:/www/wwwroot/clock.petralian.com/index.html` then `chown www:www` (user-authorized for this repo)
-- **Timezone** — `timezoneOverride` (compact key `tz`); empty = device local. Clock digits / greeting / small time use `getZonedParts()`. Chip `#tzChip` above clock; zone quotes on change via `TIMEZONE_QUOTES`
 
 ## UX constraints
 

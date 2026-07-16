@@ -139,14 +139,17 @@ test.describe('LunaClock flip layout containment', () => {
   test('mode switch keeps digits inside #clock', async ({ page }, testInfo) => {
     await page.locator('#stopwatchModeBtn').click();
     await expect(page.locator('#clock')).toHaveAttribute('data-mode', 'stopwatch');
+    await expect(page.locator('#tzChip')).not.toBeVisible();
     await page.waitForTimeout(100);
 
     await page.locator('#pomodoroModeBtn').click();
     await expect(page.locator('#clock')).toHaveAttribute('data-mode', 'pomodoro');
+    await expect(page.locator('#tzChip')).not.toBeVisible();
     await page.waitForTimeout(100);
 
     await page.locator('#clockModeBtn').click();
     await expect(page.locator('#clock')).toHaveAttribute('data-mode', 'clock');
+    await expect(page.locator('#tzChip')).toBeVisible();
     await page.waitForTimeout(120);
 
     const layout = await measureClockLayout(page);

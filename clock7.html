@@ -1746,8 +1746,23 @@
         }
         .fullscreen-pomo-pause.show { display: block; }
 
-        /* Fullscreen */
-        .fullscreen-mode { overflow: hidden; }
+        /* Fullscreen — stage is viewport-fixed; avoid 100vw (scrollbar bias) */
+        .fullscreen-mode {
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            max-width: 100%;
+            align-items: stretch;
+        }
+        .fullscreen-mode .page-shell {
+            max-width: none;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            gap: 0;
+            min-height: 100dvh;
+        }
         .fullscreen-mode .page-shell > .greeting-banner,
         .fullscreen-mode .page-shell > .top-bar,
         .fullscreen-mode .page-shell > .mode-bar,
@@ -1756,7 +1771,14 @@
         }
         .fullscreen-mode #fullscreenStage {
             position: fixed;
-            inset: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            max-width: none;
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -1765,19 +1787,28 @@
             background: linear-gradient(160deg, var(--bg), var(--bg2));
             gap: clamp(16px, 3vmin, 28px);
             padding: clamp(12px, 3vmin, 24px);
-            margin-top: 0;
+            margin: 0;
+        }
+        .fullscreen-mode .mode-row {
+            align-self: center;
+            margin-inline: auto;
+            max-width: 100%;
+            width: fit-content;
         }
         .fullscreen-mode .clock {
-            width: min(96vw, 1100px);
-            max-width: 96vw;
-            padding: clamp(28px, 5vmin, 56px) clamp(16px, 4vw, 80px) clamp(20px, 4vmin, 48px);
-            --flip-size: clamp(56px, 16vmin, 180px);
+            /* Hug digits — fixed 1100px / 96vw left a wide grey slab that looked off-center */
+            width: fit-content;
+            max-width: 100%;
+            margin-inline: auto;
+            align-self: center;
+            padding: clamp(28px, 5vmin, 56px) clamp(16px, 3.5vmin, 64px) clamp(20px, 4vmin, 48px);
+            --flip-size: clamp(56px, min(14vmin, 12vw), 160px);
             overflow: visible;
             flex-wrap: nowrap;
         }
         .fullscreen-mode .clock.stopwatch-mode {
             width: fit-content;
-            max-width: min(96vw, 100%);
+            max-width: 100%;
             gap: clamp(6px, 2vmin, 16px);
         }
         .fullscreen-mode .clock.stopwatch-mode .flip-card {
@@ -1788,13 +1819,16 @@
             --flip-size: clamp(28px, 7vmin, 72px);
         }
         .fullscreen-mode .mode-indicator {
-            margin-bottom: clamp(6px, 1.5vmin, 12px);
+            margin-bottom: 0;
             font-size: clamp(10px, 2vmin, 13px);
             padding: 6px clamp(12px, 2.5vmin, 20px);
         }
         .fullscreen-mode .quote-display {
             font-size: clamp(14px, 2.8vmin, 22px);
-            max-width: min(80vw, 640px);
+            max-width: min(640px, 100%);
+            margin-inline: auto;
+            align-self: center;
+            text-align: center;
         }
         .fullscreen-mode .fullscreen-pomo-pause {
             bottom: max(32px, env(safe-area-inset-bottom, 32px));
@@ -1941,13 +1975,17 @@
                 max-width: min(160px, 52vw);
             }
             .fullscreen-mode .clock {
-                --flip-size: clamp(40px, 13vmin, 110px);
-                width: min(98vw, 100%);
-                max-width: 98vw;
+                --flip-size: clamp(40px, min(13vmin, 11vw), 110px);
+                width: fit-content;
+                max-width: 100%;
+            }
+            .fullscreen-mode .clock .flip-card {
+                flex: 0 0 auto;
+                max-width: none;
             }
             .fullscreen-mode .clock.stopwatch-mode {
                 width: fit-content;
-                max-width: min(98vw, 100%);
+                max-width: 100%;
                 gap: clamp(4px, 1.5vw, 12px);
             }
             .fullscreen-mode .clock.stopwatch-mode .flip-card {
@@ -1956,6 +1994,8 @@
             }
             .fullscreen-mode #fullscreenStage {
                 padding: 10px;
+                width: 100%;
+                height: 100%;
             }
         }
 
@@ -2073,8 +2113,8 @@
             }
             .clock.stopwatch-mode { --flip-size: clamp(44px, 6.5vw, 72px); }
             .clock.pomodoro-mode { --flip-size: clamp(48px, 7vw, 80px); }
-            .fullscreen-mode .clock { --flip-size: clamp(64px, 14vmin, 160px); }
-            .fullscreen-mode .clock.stopwatch-mode { --flip-size: clamp(56px, 12vmin, 140px); }
+            .fullscreen-mode .clock { --flip-size: clamp(64px, min(14vmin, 11vw), 150px); }
+            .fullscreen-mode .clock.stopwatch-mode { --flip-size: clamp(56px, min(12vmin, 10vw), 130px); }
         }
 
         /* Desktop: 1024px+ */
@@ -2093,8 +2133,8 @@
                 grid-template-columns: minmax(14rem, 1.4fr) minmax(96px, 1fr) min-content;
             }
             .clock.stopwatch-mode { --flip-size: clamp(48px, 6vw, 76px); }
-            .fullscreen-mode .clock { --flip-size: clamp(72px, 14vmin, 180px); }
-            .fullscreen-mode .clock.stopwatch-mode { --flip-size: clamp(64px, 12vmin, 160px); }
+            .fullscreen-mode .clock { --flip-size: clamp(72px, min(14vmin, 10vw), 160px); }
+            .fullscreen-mode .clock.stopwatch-mode { --flip-size: clamp(64px, min(12vmin, 9vw), 140px); }
         }
 
         /* Landscape / short viewport: tight clock cluster + compact settings chrome */

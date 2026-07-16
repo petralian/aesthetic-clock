@@ -7,9 +7,28 @@ test.describe('Timezone indicator', () => {
     await expect(page.locator('#clock')).toBeVisible();
   });
 
-  test('shows cute tz chip and overrides clock via settings', async ({ page }) => {
+  test('shows cute tz chip beside clock mode indicator', async ({ page }) => {
     await expect(page.locator('#tzChip')).toBeVisible();
+    await expect(page.locator('#tzChip')).toHaveClass(/visible/);
     await expect(page.locator('#tzChipLabel')).not.toBeEmpty();
+
+    const beside = await page.evaluate(() => {
+      const row = document.getElementById('modeRow');
+      const mode = document.getElementById('modeIndicator');
+      const chip = document.getElementById('tzChip');
+      if (!row || !mode || !chip) return null;
+      const mr = mode.getBoundingClientRect();
+      const cr = chip.getBoundingClientRect();
+      return {
+        chipInRow: row.contains(chip) && row.contains(mode),
+        sameRow: Math.abs(mr.top - cr.top) < 28,
+        chipRightOfMode: cr.left >= mr.left - 4,
+      };
+    });
+    expect(beside).toBeTruthy();
+    expect(beside.chipInRow).toBe(true);
+    expect(beside.sameRow).toBe(true);
+    expect(beside.chipRightOfMode).toBe(true);
 
     await page.locator('#settingsOpenBtn').click();
     await page.locator('#timezoneSelect').selectOption('Asia/Tokyo');
@@ -22,6 +41,24 @@ test.describe('Timezone indicator', () => {
 
     await page.waitForTimeout(150);
     await expect(page.locator('body')).toHaveAttribute('data-mode', 'clock');
+  });
+
+  test('hides tz chip in stopwatch and pomodoro', async ({ page }) => {
+    await expect(page.locator('#tzChip')).toBeVisible();
+
+    await page.locator('#stopwatchModeBtn').click();
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'stopwatch');
+    await expect(page.locator('#tzChip')).not.toBeVisible();
+    await expect(page.locator('#tzChip')).not.toHaveClass(/visible/);
+
+    await page.locator('#pomodoroModeBtn').click();
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'pomodoro');
+    await expect(page.locator('#tzChip')).not.toBeVisible();
+
+    await page.locator('#clockModeBtn').click();
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'clock');
+    await expect(page.locator('#tzChip')).toBeVisible();
+    await expect(page.locator('#tzChip')).toHaveClass(/visible/);
   });
 
   test('dropdown includes Brussels + Hong Kong, UTC labels, offset sort', async ({ page }) => {
