@@ -1268,6 +1268,60 @@
             box-shadow: 0 4px 14px rgba(107,74,122,0.08);
             margin-bottom: 2px;
         }
+
+        .tz-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35em;
+            align-self: center;
+            flex-shrink: 0;
+            margin: 2px 0 4px;
+            padding: 4px 12px 4px 10px;
+            border-radius: 9999px;
+            background: color-mix(in srgb, var(--face) 78%, transparent);
+            border: 1px solid color-mix(in srgb, var(--number) 12%, transparent);
+            box-shadow: 0 2px 10px color-mix(in srgb, var(--number) 8%, transparent);
+            color: var(--text-secondary);
+            font-family: var(--font-caption);
+            font-size: clamp(10px, 2.4vw, 12px);
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            line-height: 1.2;
+            max-width: calc(100% - 24px);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            user-select: none;
+            backdrop-filter: blur(6px);
+        }
+        .tz-chip-emoji {
+            font-size: 1.05em;
+            line-height: 1;
+            filter: saturate(1.1);
+        }
+        .tz-chip-label {
+            color: var(--text-primary);
+            font-weight: 800;
+        }
+        .tz-chip-offset {
+            opacity: 0.72;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+        .tz-chip.pop {
+            animation: tz-chip-pop 0.5s cubic-bezier(0.34, 1.45, 0.64, 1);
+        }
+        @keyframes tz-chip-pop {
+            0% { transform: scale(0.88) translateY(4px); opacity: 0.35; }
+            55% { transform: scale(1.06) translateY(-1px); opacity: 1; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        body.theme-dark .tz-chip {
+            background: color-mix(in srgb, var(--face) 55%, rgba(0,0,0,0.35));
+            border-color: rgba(255,255,255,0.12);
+        }
+
         .session-badge {
             display: block;
             font-size: clamp(8px, 2vw, 10px);
@@ -2238,6 +2292,11 @@
             <span id="modeIndicatorText">⏰ Clock</span>
             <span class="session-badge" id="sessionBadge" style="display:none;"></span>
         </div>
+        <div class="tz-chip" id="tzChip" title="Clock timezone" aria-live="polite">
+            <span class="tz-chip-emoji" id="tzChipEmoji" aria-hidden="true">🌍</span>
+            <span class="tz-chip-label" id="tzChipLabel">Local</span>
+            <span class="tz-chip-offset" id="tzChipOffset"></span>
+        </div>
         <span class="stage-time-display" id="stageTimeDisplay" aria-hidden="true"></span>
 
         <div class="clock" id="clock">
@@ -2386,6 +2445,33 @@
                 <div class="settings-row">
                     <label for="userNameInput">Your name</label>
                     <input type="text" class="settings-text-input typo-ui" id="userNameInput" placeholder="Your name" maxlength="20" value="">
+                </div>
+                <div class="settings-row">
+                    <label for="timezoneSelect">Timezone</label>
+                    <select id="timezoneSelect" class="typo-ui" title="Clock timezone">
+                        <option value="">🏠 Auto (device local)</option>
+                        <option value="Asia/Singapore">🦁 Singapore</option>
+                        <option value="Asia/Kuala_Lumpur">🌴 Kuala Lumpur</option>
+                        <option value="Asia/Jakarta">🌋 Jakarta</option>
+                        <option value="Asia/Manila">🌅 Manila</option>
+                        <option value="Asia/Bangkok">🛕 Bangkok</option>
+                        <option value="Asia/Hong_Kong">🏙️ Hong Kong</option>
+                        <option value="Asia/Shanghai">🐉 Shanghai</option>
+                        <option value="Asia/Tokyo">🗼 Tokyo</option>
+                        <option value="Asia/Seoul">🌸 Seoul</option>
+                        <option value="Asia/Kolkata">🕌 Mumbai / Delhi</option>
+                        <option value="Asia/Dubai">🏜️ Dubai</option>
+                        <option value="Europe/London">☔ London</option>
+                        <option value="Europe/Paris">🥐 Paris</option>
+                        <option value="Europe/Berlin">🥨 Berlin</option>
+                        <option value="America/New_York">🗽 New York</option>
+                        <option value="America/Chicago">🌽 Chicago</option>
+                        <option value="America/Denver">⛰️ Denver</option>
+                        <option value="America/Los_Angeles">🎬 Los Angeles</option>
+                        <option value="America/Sao_Paulo">🎭 São Paulo</option>
+                        <option value="Australia/Sydney">🦘 Sydney</option>
+                        <option value="Pacific/Auckland">🥝 Auckland</option>
+                    </select>
                 </div>
             </div>
 
@@ -2961,6 +3047,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const timeDisplay = document.getElementById('timeDisplay');
     const stageTimeDisplay = document.getElementById('stageTimeDisplay');
     const userNameInput = document.getElementById('userNameInput');
+    const timezoneSelect = document.getElementById('timezoneSelect');
+    const tzChip = document.getElementById('tzChip');
+    const tzChipEmoji = document.getElementById('tzChipEmoji');
+    const tzChipLabel = document.getElementById('tzChipLabel');
+    const tzChipOffset = document.getElementById('tzChipOffset');
     const quoteDisplay = document.getElementById('quoteDisplay');
     const quotesEnabled = document.getElementById('quotesEnabled');
     const quotesIntervalSelect = document.getElementById('quotesInterval');
@@ -3051,6 +3142,115 @@ document.addEventListener('DOMContentLoaded', function() {
         return localQuoteEmojis[i % localQuoteEmojis.length] + ' ' + q;
     });
 
+    const TIMEZONE_META = {
+        '': { emoji: '🏠', short: 'Local', quoteKey: 'local' },
+        'Asia/Singapore': { emoji: '🦁', short: 'Singapore', quoteKey: 'sea' },
+        'Asia/Kuala_Lumpur': { emoji: '🌴', short: 'Kuala Lumpur', quoteKey: 'sea' },
+        'Asia/Jakarta': { emoji: '🌋', short: 'Jakarta', quoteKey: 'sea' },
+        'Asia/Manila': { emoji: '🌅', short: 'Manila', quoteKey: 'sea' },
+        'Asia/Bangkok': { emoji: '🛕', short: 'Bangkok', quoteKey: 'sea' },
+        'Asia/Hong_Kong': { emoji: '🏙️', short: 'Hong Kong', quoteKey: 'eastasia' },
+        'Asia/Shanghai': { emoji: '🐉', short: 'Shanghai', quoteKey: 'eastasia' },
+        'Asia/Tokyo': { emoji: '🗼', short: 'Tokyo', quoteKey: 'jp' },
+        'Asia/Seoul': { emoji: '🌸', short: 'Seoul', quoteKey: 'kr' },
+        'Asia/Kolkata': { emoji: '🕌', short: 'India', quoteKey: 'india' },
+        'Asia/Dubai': { emoji: '🏜️', short: 'Dubai', quoteKey: 'gulf' },
+        'Europe/London': { emoji: '☔', short: 'London', quoteKey: 'uk' },
+        'Europe/Paris': { emoji: '🥐', short: 'Paris', quoteKey: 'eu' },
+        'Europe/Berlin': { emoji: '🥨', short: 'Berlin', quoteKey: 'eu' },
+        'America/New_York': { emoji: '🗽', short: 'New York', quoteKey: 'us_east' },
+        'America/Chicago': { emoji: '🌽', short: 'Chicago', quoteKey: 'us_central' },
+        'America/Denver': { emoji: '⛰️', short: 'Denver', quoteKey: 'us_mountain' },
+        'America/Los_Angeles': { emoji: '🎬', short: 'Los Angeles', quoteKey: 'us_west' },
+        'America/Sao_Paulo': { emoji: '🎭', short: 'São Paulo', quoteKey: 'latam' },
+        'Australia/Sydney': { emoji: '🦘', short: 'Sydney', quoteKey: 'aus' },
+        'Pacific/Auckland': { emoji: '🥝', short: 'Auckland', quoteKey: 'nz' }
+    };
+
+    const TIMEZONE_QUOTES = {
+        local: [
+            '✨ Right here, right now — your time is enough.',
+            '🌙 Local vibes only. Soft focus, steady pace.',
+            '🏠 Home clock energy: small steps still count.'
+        ],
+        sea: [
+            '🦁 Merlion mode: calm waters, sharp focus.',
+            '🌴 Tropical discipline — cool mind, warm heart.',
+            '🌋 Island time can still be intentional time.',
+            '🌅 Sunrise hustle, sunset soft landing.'
+        ],
+        eastasia: [
+            '🏙️ Neon nights, clear goals.',
+            '🐉 Steady as bamboo — bend, don’t break.',
+            '🌉 Harbor lights and quiet ambition.'
+        ],
+        jp: [
+            '🗼 Ichigo ichie — this hour only happens once.',
+            '🍜 Small rituals, big momentum.',
+            '🌸 Bloom where your focus is planted.'
+        ],
+        kr: [
+            '🌸 Soft power, strong study streak.',
+            '🎵 K-focus: one track, full heart.',
+            '🏙️ City lights, calm mind.'
+        ],
+        india: [
+            '🕌 Jugaad energy: creative, determined, kind.',
+            '🪔 Light one task at a time.',
+            '🚂 Long journey, steady stations.'
+        ],
+        gulf: [
+            '🏜️ Desert clear: protect your focus oasis.',
+            '✨ Golden hour mindset — shine without rush.',
+            '🏙️ Skyline goals, ground-level habits.'
+        ],
+        uk: [
+            '☔ Keep calm and flip one minute at a time.',
+            '🫖 Tea break earned — then back to it.',
+            '🕰️ Proper pace beats perfect plans.'
+        ],
+        eu: [
+            '🥐 Pause, breathe, then continue beautifully.',
+            '🚲 Slow ride to big destinations.',
+            '🎨 Make the hour artful, not frantic.'
+        ],
+        us_east: [
+            '🗽 City that never sleeps — you still can rest.',
+            '🥯 Start strong, finish softer.',
+            '🚇 Next stop: done for today.'
+        ],
+        us_central: [
+            '🌽 Midwestern steady — reliable wins.',
+            '🌤️ Wide sky, wide focus.',
+            '🚂 On track, not on edge.'
+        ],
+        us_mountain: [
+            '⛰️ Climb in quiet steps.',
+            '🌲 Altitude attitude: clear air, clear mind.',
+            '❄️ Cool head for hot goals.'
+        ],
+        us_west: [
+            '🎬 Take one more take — then call cut.',
+            '🌊 Pacific calm between big scenes.',
+            '☀️ Golden hour focus, soft landing.'
+        ],
+        latam: [
+            '🎭 Rhythm first — then the grind feels lighter.',
+            '☕ Cafezinho courage for the next block.',
+            '🌴 Warm hearts, sharp plans.'
+        ],
+        aus: [
+            '🦘 Bounce forward — one hop at a time.',
+            '🌊 Surf the hard bits, rest in the calm.',
+            '☀️ Bright day energy, kind self-talk.'
+        ],
+        nz: [
+            '🥝 Fresh start energy from the edge of the map.',
+            '🏔️ Tall goals, soft landings.',
+            '🌿 Clean air for a clear mind.'
+        ]
+    };
+
     let quoteInterval = null;
     let quotesIntervalMinutes = 10;
     let currentQuoteText = '';
@@ -3064,6 +3264,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let timerInterval = null;
     let laps = [];
     let is12Hour = false;
+    let timezoneOverride = '';
     let isPomodoroMode = false;
     let pomodoroRemaining = 25 * 60 * 1000;
     let pomodoroRunning = false;
