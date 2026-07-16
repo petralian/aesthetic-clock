@@ -1,17 +1,19 @@
 # LunaClock — open loops (sync with vault)
 
-**Updated:** 2026-07-15 — mirror of `Operations/Open Loops.md`
+**Updated:** 2026-07-16 — mirror of `Operations/Open Loops.md`
 
 ## Active
 
-- **Deploy clock.petralian.com — BLOCKED** — aaPanel site not created; docroot missing; SSH works; unblock via aaPanel site + `scp clock7.html`
+- **clock7 polish** — lz-string `#i=` share, emoji toggle, ambient URL audit; MCP config copy-from-example
 - **v8 task list** — not started
 - **Lo-fi ambient sounds** — future feature
 - **Streaks / daily habit tracking** — future feature
 
 ## Recently closed
 
-- **Rounded-corners UX sweep** — shipped 2026-07-15 (`clock7.html`); color pickers 12px, full audit shipped
+- **2026-07-16 — Flip digit stretch hotfix** — canvas 300×150 intrinsic + `width:auto`; fixed em box + layout Playwright; deployed `5bdf5f4`
+- **2026-07-16 — Deploy clock.petralian.com** — LIVE (was aaPanel-blocked)
+- **Rounded-corners UX sweep** — shipped 2026-07-15 (`clock7.html`)
 
 ## Closed
 
