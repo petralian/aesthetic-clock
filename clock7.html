@@ -1645,7 +1645,7 @@
         .clock.stopwatch-mode,
         .clock.pomodoro-mode { --flip-size: clamp(44px, 12vw, 72px); }
 
-        /* Stopwatch MM | SS — fixed pair layout, no flex squeeze */
+        /* Stopwatch MM | SS | ms — fixed pair layout, no flex squeeze */
         .clock.stopwatch-mode .flip-card {
             flex: 0 0 auto;
             max-width: none;
@@ -1653,6 +1653,17 @@
         .clock.stopwatch-mode .flip-digit-group {
             width: auto;
             flex: 0 0 auto;
+        }
+        /* Centiseconds stay compact so H/M/S tiles keep their size inside #clock */
+        .clock.stopwatch-mode #millisecondsCard {
+            --flip-size: clamp(22px, 5.5vw, 34px);
+            align-self: flex-end;
+            margin-bottom: 0.15em;
+        }
+        .clock.stopwatch-mode #millisecondsCard .label {
+            margin-top: clamp(4px, 1vw, 8px);
+            font-size: clamp(8px, 1.8vw, 10px);
+            letter-spacing: 0.08em;
         }
         .clock.stopwatch-mode .flipper-digit .digit-top2:not(.r) {
             visibility: hidden !important;
@@ -1740,6 +1751,9 @@
         .fullscreen-mode .clock.stopwatch-mode .flip-card {
             flex: 0 0 auto;
             max-width: none;
+        }
+        .fullscreen-mode .clock.stopwatch-mode #millisecondsCard {
+            --flip-size: clamp(28px, 7vmin, 72px);
         }
         .fullscreen-mode .mode-indicator {
             margin-bottom: clamp(6px, 1.5vmin, 12px);
@@ -5299,7 +5313,7 @@ document.addEventListener('DOMContentLoaded', function() {
         clock.classList.toggle('pomodoro-mode', mode === 'pomodoro');
         clock.setAttribute('data-mode', mode);
         body.setAttribute('data-mode', mode);
-        millisecondsCard.classList.add('hidden');
+        millisecondsCard.classList.toggle('hidden', mode !== 'stopwatch');
         setPomodoroLayout(mode === 'pomodoro');
         if (mode === 'stopwatch') {
             const t = formatTime(stopwatchTime);
@@ -5416,6 +5430,10 @@ document.addEventListener('DOMContentLoaded', function() {
             flipPair(digitEls.hoursTens, digitEls.hoursOnes, pad(t.hours), animate);
             flipPair(digitEls.minutesTens, digitEls.minutesOnes, pad(t.minutes), animate);
             flipPair(digitEls.secondsTens, digitEls.secondsOnes, pad(t.seconds), animate);
+            if (isStopwatchMode) {
+                // Centiseconds (ms/10); stopwatch path always setInstant — no flip spam
+                flipPair(digitEls.millisTens, digitEls.millisOnes, pad(t.millis), false);
+            }
         }
     }
 
