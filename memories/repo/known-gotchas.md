@@ -12,6 +12,7 @@
 - **Playwright smoke** — `npm test` (desktop + Pixel 7); agent browser QA via Playwright MCP in `.cursor/mcp.json.example` (`npx @playwright/mcp@latest`). Reject rustwright (alpha) for this repo
 - **Mode switch paint order** — always `updateControlsForMode()` then `FlipEngine.afterLayout(...)` before sampling digits; painting while `#hoursCard` is still `.hidden` leaves blank/wrong canvas tiles
 - **Hold reset** — single rAF timer at `HOLD_RESET_MS = 2000` (no parallel setTimeout); label shows `2.0s`…`0.0s`
+- **Timezone** — `timezoneOverride` (compact key `tz`); empty = device local. Clock digits / greeting / small time use `getZonedParts()`. Chip `#tzChip` above clock; zone quotes on change via `TIMEZONE_QUOTES`
 
 ## UX constraints
 
