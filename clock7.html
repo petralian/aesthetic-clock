@@ -1030,7 +1030,8 @@
             font-size: var(--flip-size);
             line-height: 1;
             min-width: 0;
-            width: 100%;
+            width: auto;
+            flex: 0 0 auto;
             justify-content: center;
             perspective: 600px;
             -webkit-perspective: 600px;
@@ -1041,9 +1042,12 @@
             position: relative;
             display: inline-block;
             flex: 0 0 auto;
+            box-sizing: border-box;
             height: 1.2em;
-            width: auto;
+            /* Fixed em width — never width:auto with canvas (default 300×150 intrinsic stretches tiles) */
+            width: var(--flip-digit-w);
             min-width: var(--flip-digit-w);
+            max-width: var(--flip-digit-w);
             overflow: hidden;
             color: var(--number);
             white-space: nowrap;
@@ -1208,11 +1212,17 @@
         /* Canvas flip digits (replaces CSS 3D faces; calm mode hides canvas) */
         .flipper-digit.has-canvas {
             overflow: hidden;
+            /* Keep tile box from canvas intrinsic size (HTML default 300×150) */
+            width: var(--flip-digit-w);
+            max-width: var(--flip-digit-w);
         }
         .flipper-digit.has-canvas .digit-canvas {
             display: block;
-            width: 100%;
-            height: 100%;
+            box-sizing: border-box;
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100%;
+            max-height: 100%;
             border-radius: 0.1em;
             pointer-events: none;
         }
@@ -2738,15 +2748,49 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const STORAGE_KEY = 'lunaclock_v7';
-    const FLIP_MS = 400;
+    const FLIP_MS = 420;
 
-    // ─── FlipEngine (canvas 2.5D flip — cancelable, rAF-driven) ───
+    // ─── FlipEngine (canvas perspective flap — cancelable, rAF-driven) ───
     const FlipEngine = (function() {
         const units = new Map();
+        const PERSPECTIVE = 3.4;
+        let tokenCache = null;
+
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
 
         function readToken(name, fallback) {
             const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
             return v || fallback;
+        }
+
+        function invalidateTokens() {
+            tokenCache = null;
+        }
+
+        function getTokens() {
+            if (tokenCache) return tokenCache;
+            tokenCache = {
+                face: readToken('--face', '#f5f5f7'),
+                faceDim: readToken('--face-dim', '#d8d8de'),
+                number: readToken('--number', '#2c2c2e'),
+                fontFamily: readToken('--font-display', readToken('--font', 'sans-serif'))
+            };
+            return tokenCache;
+        }
+
+        // angle01: 0 = flat face-on, 1 = edge-on (90°)
+        function perspectiveScale(angle01) {
+            const a = Math.max(0, Math.min(1, angle01));
+            const theta = a * Math.PI / 2;
+            const cos = Math.cos(theta);
+            const sin = Math.sin(theta);
+            return {
+                sx: 1 - 0.07 * sin,
+                sy: Math.max(0.0012, cos / (1 + sin / PERSPECTIVE)),
+                shade: 0.08 + sin * 0.38
+            };
         }
 
         function syncSize(state) {
@@ -2760,10 +2804,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const cssW = Math.max(1, Math.round(rect.width || container.offsetWidth || 40));
             const cssH = Math.max(1, Math.round(rect.height || container.offsetHeight || 48));
             const dpr = Math.min(2.5, window.devicePixelRatio || 1);
-            if (state.cssW === cssW && state.cssH === cssH && state.dpr === dpr && !state.needsLayout) {
+            state.needsLayout = false;
+            // Only reset the canvas buffer when size/DPR actually changed — never mid-flip churn
+            if (state.cssW === cssW && state.cssH === cssH && state.dpr === dpr) {
                 return true;
             }
-            state.needsLayout = false;
             state.cssW = cssW;
             state.cssH = cssH;
             state.dpr = dpr;
@@ -2787,8 +2832,15 @@ document.addEventListener('DOMContentLoaded', function() {
         function drawDigitHalf(ctx, digit, w, h, half, face, number, font) {
             const mid = h / 2;
             ctx.save();
-            if (half === 'top') ctx.beginPath(), ctx.rect(0, 0, w, mid), ctx.clip();
-            else if (half === 'bottom') ctx.beginPath(), ctx.rect(0, mid, w, mid), ctx.clip();
+            if (half === 'top') {
+                ctx.beginPath();
+                ctx.rect(0, 0, w, mid);
+                ctx.clip();
+            } else if (half === 'bottom') {
+                ctx.beginPath();
+                ctx.rect(0, mid, w, mid);
+                ctx.clip();
+            }
             roundRect(ctx, 0, 0, w, h, h * 0.08);
             ctx.fillStyle = face;
             ctx.fill();
@@ -2800,59 +2852,112 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.restore();
         }
 
-        function paint(state, progress) {
+        function drawHinge(ctx, w, h) {
+            const mid = h / 2;
+            const g = ctx.createLinearGradient(0, mid - 3, 0, mid + 3);
+            g.addColorStop(0, 'rgba(0,0,0,0)');
+            g.addColorStop(0.45, 'rgba(0,0,0,0.18)');
+            g.addColorStop(0.5, 'rgba(0,0,0,0.28)');
+            g.addColorStop(0.55, 'rgba(0,0,0,0.18)');
+            g.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = g;
+            ctx.fillRect(0, mid - 3, w, 6);
+            ctx.fillStyle = 'rgba(255,255,255,0.12)';
+            ctx.fillRect(0, mid - 0.5, w, 1);
+        }
+
+        function paint(state, linearProgress) {
             if (!syncSize(state)) return;
             const ctx = state.ctx;
             const w = state.cssW;
             const h = state.cssH;
-            const face = readToken('--face', '#f5f5f7');
-            const faceDim = readToken('--face-dim', '#d8d8de');
-            const number = readToken('--number', '#2c2c2e');
-            const fontFamily = readToken('--font-display', readToken('--font', 'sans-serif'));
-            const font = '800 ' + Math.round(h * 0.72) + 'px ' + fontFamily;
+            const tokens = getTokens();
+            const face = tokens.face;
+            const faceDim = tokens.faceDim;
+            const number = tokens.number;
+            const font = '800 ' + Math.round(h * 0.72) + 'px ' + tokens.fontFamily;
             const from = state.from;
             const to = state.to;
-            const p = Math.max(0, Math.min(1, progress));
+            const t = Math.max(0, Math.min(1, linearProgress));
+            const p = easeInOutCubic(t);
 
-            // Opaque clear — avoid transparent canvas showing page gradient through "wrong" cards
             ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
             ctx.fillStyle = face;
             ctx.fillRect(0, 0, w, h);
 
-            if (p <= 0) {
+            if (p <= 0.0005) {
                 drawDigitHalf(ctx, from, w, h, 'full', face, number, font);
-            } else if (p >= 1) {
+                drawHinge(ctx, w, h);
+                return;
+            }
+            if (p >= 0.9995) {
                 drawDigitHalf(ctx, to, w, h, 'full', face, number, font);
-            } else if (p < 0.5) {
-                const fold = 1 - (p / 0.5);
+                drawHinge(ctx, w, h);
+                return;
+            }
+
+            if (p < 0.5) {
+                // Top flap of `from` folds down toward edge-on; reveal `to` top underneath
+                const angle01 = p / 0.5;
+                const ps = perspectiveScale(angle01);
                 drawDigitHalf(ctx, from, w, h, 'bottom', face, number, font);
                 drawDigitHalf(ctx, to, w, h, 'top', face, number, font);
+
                 ctx.save();
                 ctx.beginPath();
                 ctx.rect(0, 0, w, h / 2);
                 ctx.clip();
-                ctx.translate(0, h / 2);
-                ctx.scale(1, Math.max(0.02, fold));
-                ctx.translate(0, -h / 2);
+                ctx.translate(w / 2, h / 2);
+                ctx.scale(ps.sx, ps.sy);
+                ctx.translate(-w / 2, -h / 2);
                 drawDigitHalf(ctx, from, w, h, 'top', faceDim, number, font);
+                ctx.fillStyle = 'rgba(0,0,0,' + ps.shade + ')';
+                ctx.fillRect(0, 0, w, h / 2);
                 ctx.restore();
-            } else {
-                const rise = (p - 0.5) / 0.5;
-                drawDigitHalf(ctx, to, w, h, 'top', face, number, font);
-                drawDigitHalf(ctx, from, w, h, 'bottom', face, number, font);
+
+                // Cast soft shadow onto the lower static half
                 ctx.save();
                 ctx.beginPath();
                 ctx.rect(0, h / 2, w, h / 2);
                 ctx.clip();
-                ctx.translate(0, h / 2);
-                ctx.scale(1, Math.max(0.02, rise));
-                ctx.translate(0, -h / 2);
+                const shadow = ctx.createLinearGradient(0, h / 2, 0, h / 2 + h * 0.22 * angle01);
+                shadow.addColorStop(0, 'rgba(0,0,0,' + (0.22 * angle01) + ')');
+                shadow.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = shadow;
+                ctx.fillRect(0, h / 2, w, h / 2);
+                ctx.restore();
+            } else {
+                // Bottom flap of `to` rises from edge-on to flat
+                const rise01 = (p - 0.5) / 0.5;
+                const ps = perspectiveScale(1 - rise01);
+                drawDigitHalf(ctx, to, w, h, 'top', face, number, font);
+                drawDigitHalf(ctx, from, w, h, 'bottom', face, number, font);
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(0, h / 2, w, h / 2);
+                ctx.clip();
+                ctx.translate(w / 2, h / 2);
+                ctx.scale(ps.sx, ps.sy);
+                ctx.translate(-w / 2, -h / 2);
                 drawDigitHalf(ctx, to, w, h, 'bottom', face, number, font);
+                ctx.fillStyle = 'rgba(0,0,0,' + (ps.shade * 0.85) + ')';
+                ctx.fillRect(0, h / 2, w, h / 2);
+                ctx.restore();
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(0, 0, w, h / 2);
+                ctx.clip();
+                const shadow = ctx.createLinearGradient(0, h / 2, 0, h / 2 - h * 0.18 * (1 - rise01));
+                shadow.addColorStop(0, 'rgba(0,0,0,' + (0.16 * (1 - rise01)) + ')');
+                shadow.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = shadow;
+                ctx.fillRect(0, 0, w, h / 2);
                 ctx.restore();
             }
 
-            ctx.fillStyle = 'rgba(0,0,0,0.14)';
-            ctx.fillRect(0, h / 2 - 0.5, w, 1);
+            drawHinge(ctx, w, h);
         }
 
         function snapState(state, value) {
@@ -2873,13 +2978,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 canvas = document.createElement('canvas');
                 canvas.className = 'digit-canvas';
                 canvas.setAttribute('aria-hidden', 'true');
+                // Neutralize HTML canvas default intrinsic 300×150 before first layout
+                canvas.width = 1;
+                canvas.height = 1;
                 container.insertBefore(canvas, container.firstChild);
             }
             container.classList.add('has-canvas');
             const state = {
                 container: container,
                 canvas: canvas,
-                ctx: canvas.getContext('2d'),
+                ctx: canvas.getContext('2d', { alpha: false }),
                 onComplete: onComplete,
                 value: '0',
                 from: '0',
@@ -2960,17 +3068,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function repaintAll() {
+            invalidateTokens();
             units.forEach(function(state) {
-                paint(state, state.flipping ? state.progress : 0);
+                paint(state, state.flipping ? state.progress : (state.value === state.to ? 1 : 0));
             });
         }
 
         function resizeAll() {
+            // Re-measure only — do not zero cssW/cssH (that forced buffer reset mid-flip)
             units.forEach(function(state) {
                 state.needsLayout = true;
-                state.cssW = 0;
-                state.cssH = 0;
-                paint(state, state.flipping ? state.progress : 0);
+                paint(state, state.flipping ? state.progress : (state.value === state.to ? 1 : 0));
             });
         }
 
@@ -2989,10 +3097,10 @@ document.addEventListener('DOMContentLoaded', function() {
             tickAnimations: tickAnimations,
             repaintAll: repaintAll,
             resizeAll: resizeAll,
-            afterLayout: afterLayout
+            afterLayout: afterLayout,
+            invalidateTokens: invalidateTokens
         };
     })();
-
     // ─── Digit elements ───
     const digitEls = {
         hoursTens: document.getElementById('hoursTens'),

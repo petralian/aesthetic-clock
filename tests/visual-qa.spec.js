@@ -118,4 +118,35 @@ test.describe('LunaClock canvas visual QA', () => {
     expect(elapsed).toBeGreaterThanOrEqual(1900);
     expect(elapsed).toBeLessThan(2600);
   });
+
+  test('clock flip settles opaque without blanking mid-animation', async ({ page }) => {
+    await expect(page.locator('#clock')).toHaveAttribute('data-mode', 'clock');
+
+    const before = await page.evaluate(() => {
+      const canvas = document.querySelector('#secondsOnes canvas.digit-canvas');
+      const ctx = canvas.getContext('2d');
+      return { w: canvas.width, h: canvas.height, a: ctx.getImageData(2, 2, 1, 1).data[3] };
+    });
+    expect(before.w).toBeGreaterThan(10);
+    expect(before.a).toBe(255);
+
+    // Wait across a second boundary so FlipEngine animates, then assert still opaque
+    await page.waitForTimeout(1200);
+    const after = await page.evaluate(() => {
+      const c = document.querySelector('#secondsOnes canvas.digit-canvas');
+      const ctx = c.getContext('2d');
+      const corner = ctx.getImageData(2, 2, 1, 1).data;
+      const midY = ctx.getImageData(Math.floor(c.width / 2), Math.floor(c.height / 2), 1, 1).data;
+      return {
+        w: c.width,
+        h: c.height,
+        cornerA: corner[3],
+        midA: midY[3]
+      };
+    });
+    expect(after.w).toBeGreaterThan(10);
+    expect(after.h).toBeGreaterThan(10);
+    expect(after.cornerA).toBe(255);
+    expect(after.midA).toBe(255);
+  });
 });
